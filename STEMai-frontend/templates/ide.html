@@ -2163,6 +2163,12 @@ html, body {
 <script>
 'use strict';
 
+// ── Auth gate — redirect to login if not authenticated ──
+if(!localStorage.getItem('auth_token')){
+  alert('Please log in first to use the Firmware Studio.');
+  window.location.href = '/';
+}
+
 // ═══════════════════════════════════════════
 //  CONSTANTS & STATE
 // ═══════════════════════════════════════════
@@ -2298,10 +2304,30 @@ function safeJsonParse(txt){
 async function apiFetchJSON(url, options={}, timeoutMs=45000){
   const controller = new AbortController();
   const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  
+  // Inject auth token from localStorage (shared with main app.js)
+  const authToken = localStorage.getItem('auth_token');
+  if(!options.headers) options.headers = {};
+  if(authToken && !options.headers['Authorization']){
+    options.headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  
   try{
     const res = await fetch(url, { ...options, signal: controller.signal });
     const raw = await res.text();
     const data = raw ? (safeJsonParse(raw) || { raw_text: raw }) : {};
+    
+    // Handle 401 — token expired/invalid, redirect to login
+    if(res.status === 401){
+      console.warn('[IDE] Auth token invalid (401). Redirecting to login...');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('current_user');
+      localStorage.removeItem('user_role');
+      toast('🔒 Session expired. Redirecting to login...');
+      setTimeout(()=> window.location.href = '/', 1500);
+      throw new Error('Session expired. Please log in again.');
+    }
+    
     if(!res.ok){
       const msg = normText(data) || data.error || data.detail || `HTTP ${res.status}`;
       throw new Error(msg);
