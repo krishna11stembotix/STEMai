@@ -196,11 +196,11 @@ async def chat(req: ChatReq, user=Depends(get_current_user)):
     if rules_text:
         answer = answer + "\n\n" + rules_text
 
-    prog = get_progress(req.user_id) or {}
+    prog = get_progress(user_id) or {}
     prog.setdefault("history", [])
     prog["history"].append({"q": req.text[:300], "has_image": bool(req.image_data_url)})
     prog["history"] = prog["history"][-30:]
-    save_progress(req.user_id, prog)
+    save_progress(user_id, prog)
     print("[chat] progress saved")
 
     audio_b64 = None
