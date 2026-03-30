@@ -117,7 +117,9 @@ from app.api.routes import (
     iot,
     firmware,
     agents,
-    blockzie_generate
+    blockzie_generate,
+    programming_lab,
+    esp32_simulator
 )
 
 # ---------------------------------------------------
@@ -132,7 +134,9 @@ app.include_router(iot.router, prefix="/api")
 app.include_router(firmware.router, prefix="/api")
 app.include_router(agents.router, prefix="/api")
 app.include_router(blockzie_generate.router)
-app.include_router(blockzie_generate.router, prefix="/api") 
+app.include_router(blockzie_generate.router, prefix="/api")
+app.include_router(programming_lab.router)        # prefix="/api/lab" built into router
+app.include_router(esp32_simulator.router)         # prefix-less, routes use /api/sim_ai etc.
 
 # ---------------------------------------------------
 # Root / Health
