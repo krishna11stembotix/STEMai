@@ -1,0 +1,4316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEMbotix Virtual Lab</title>
+
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='stembot_coder.png') }}"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #1a1d2e;
+    --bg2: #20243a;
+    --bg3: #252945;
+    --panel: #1e2235;
+    --border: #2e3458;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --orange: #f97316;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* HEADER */
+  #header {
+    background: linear-gradient(135deg, #0f1629 0%, #1a1d2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo .chip-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .header-logo h1 {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header-logo span {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 400;
+    margin-left: 4px;
+    -webkit-text-fill-color: var(--text3);
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0099cc);
+    color: #000;
+    font-weight: 600;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { opacity: 0.9; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { opacity: 0.9; }
+  .sim-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .sim-status .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: all 0.3s;
+  }
+  .sim-status.running .dot { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* MAIN LAYOUT */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT SIDEBAR */
+  #sidebar-left {
+    width: 200px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-title {
+    padding: 12px 14px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .components-list {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .comp-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: grab;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .comp-item:hover {
+    background: var(--bg3);
+    border-color: var(--border);
+    transform: translateX(2px);
+  }
+  .comp-item:active { cursor: grabbing; }
+  .comp-icon {
+    width: 36px; height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .comp-info { flex: 1; min-width: 0; }
+  .comp-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .comp-desc {
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.2;
+    margin-top: 1px;
+  }
+  .section-divider {
+    padding: 8px 14px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  .tool-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .tool-item:hover { background: var(--bg3); border-color: var(--border); }
+  .tool-item.active { background: rgba(0,212,255,0.1); border-color: var(--accent); }
+
+  /* CENTER CANVAS */
+  #canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: #141728;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  #sim-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  #components-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  /* RIGHT SIDEBAR */
+  #sidebar-right {
+    width: 340px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .right-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: var(--text2); }
+  .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .tab-content.active { display: flex; }
+
+  /* CODE EDITOR */
+  #code-controls {
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #code-controls .btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    flex: 0 0 auto;
+  }
+  #code-editor {
+    flex: 1;
+    padding: 12px;
+    background: #0d0f1a;
+    color: #a8b3cf;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    border: none;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    tab-size: 2;
+  }
+  #code-editor::selection { background: rgba(0,212,255,0.2); }
+
+  /* EXAMPLES PANEL */
+  #examples-list {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .example-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .example-item:hover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+  .example-item .ex-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .example-item .ex-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* SERIAL MONITOR */
+  #serial-panel {
+    height: 160px;
+    background: #0a0c16;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .serial-header {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .serial-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #serial-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--green);
+  }
+  .serial-line { margin-bottom: 1px; display: flex; gap: 8px; }
+  .serial-ts { color: var(--text3); font-size: 10px; flex-shrink: 0; }
+  .serial-warn { color: var(--yellow); }
+  .serial-err { color: var(--red); }
+  .serial-info { color: var(--accent); }
+
+  /* COMPONENT ON CANVAS */
+  .canvas-component {
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    transition: filter 0.15s;
+  }
+  .canvas-component:hover { filter: brightness(1.1); }
+  .canvas-component.selected { filter: brightness(1.15) drop-shadow(0 0 8px rgba(0,212,255,0.6)); }
+  .canvas-component.dragging { opacity: 0.85; cursor: grabbing; z-index: 1000; }
+
+  .component-label {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    pointer-events: none;
+  }
+
+  .pin-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ffd700;
+    border: 1.5px solid #b8860b;
+    cursor: crosshair;
+    transition: all 0.15s;
+    z-index: 10;
+  }
+  .pin-dot:hover {
+    width: 12px; height: 12px;
+    margin: -2px;
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .pin-dot.connected {
+    background: var(--green);
+    border-color: #15803d;
+    box-shadow: 0 0 4px var(--green);
+  }
+  .pin-dot.active-wire {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: wireActive 0.5s infinite alternate;
+  }
+  @keyframes wireActive { from{transform:scale(1)} to{transform:scale(1.4)} }
+
+  .pin-tooltip {
+    position: absolute;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 10px;
+    color: var(--text);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 200;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pin-dot:hover .pin-tooltip { display: block; }
+
+  /* Context menu */
+  #context-menu {
+    position: fixed;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 9999;
+    display: none;
+    min-width: 140px;
+    box-shadow: var(--shadow);
+  }
+  .ctx-item {
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .ctx-item:hover { background: var(--bg); }
+  .ctx-item.danger { color: var(--red); }
+
+  /* Tooltip for info */
+  #tooltip {
+    position: fixed;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+    max-width: 200px;
+  }
+
+  /* Wiring verification panel */
+  #wiring-status-bar {
+    display: none;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  #wiring-status-bar.show { display: flex; }
+  .ws-ok   { color: var(--green); }
+  .ws-warn { color: var(--yellow); }
+  .ws-err  { color: var(--red); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Wire delete btn */
+  .wire-delete-btn {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--red);
+    border: none;
+    cursor: pointer;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Sensor controls popup */
+  .sensor-popup {
+    position: absolute;
+    background: var(--bg3);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    z-index: 100;
+    min-width: 160px;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    font-size: 11px;
+  }
+  .canvas-component:hover .sensor-popup { display: block; }
+  .sensor-popup input[type=range] { width: 100%; margin: 4px 0; }
+  .sensor-popup label { color: var(--text2); font-size: 10px; }
+
+  /* LED glow effect */
+  .led-glow { transition: all 0.2s; }
+
+  /* Button press animation */
+  .btn-press { transition: transform 0.1s; }
+  .btn-press:active { transform: scale(0.95); }
+
+  /* Buzzer animation */
+  @keyframes buzzerPulse {
+    0% { box-shadow: 0 0 0 0 rgba(234,179,8,0.6); }
+    100% { box-shadow: 0 0 0 10px rgba(234,179,8,0); }
+  }
+
+  /* Servo needle animation */
+  .servo-needle {
+    transform-origin: bottom center;
+    transition: transform 0.4s ease;
+  }
+
+  /* Motor spin animation */
+  @keyframes motorSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .motor-spinning { animation: motorSpin 0.5s linear infinite; }
+
+  /* Relay toggle */
+  .relay-on { filter: brightness(1.3) hue-rotate(90deg); }
+
+  /* bottom layout */
+  #bottom-area {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .wire-drawing-line {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  /* ====== ENHANCED ANIMATION KEYFRAMES ====== */
+
+  /* LED Glow pulse when ON */
+  @keyframes ledGlowPulse {
+    0%   { filter: drop-shadow(0 0 6px var(--led-color)) drop-shadow(0 0 14px var(--led-color)) brightness(1.1); }
+    50%  { filter: drop-shadow(0 0 12px var(--led-color)) drop-shadow(0 0 28px var(--led-color)) drop-shadow(0 0 48px var(--led-color)) brightness(1.3); }
+    100% { filter: drop-shadow(0 0 6px var(--led-color)) drop-shadow(0 0 14px var(--led-color)) brightness(1.1); }
+  }
+  @keyframes ledRayFan {
+    0%   { opacity: 0.9; }
+    50%  { opacity: 0.3; }
+    100% { opacity: 0.9; }
+  }
+  .led-on-red   { --led-color: #ff4444; animation: ledGlowPulse 1.2s ease-in-out infinite; }
+  .led-on-green { --led-color: #44ff88; animation: ledGlowPulse 1.2s ease-in-out infinite; }
+  .led-on-blue  { --led-color: #44aaff; animation: ledGlowPulse 1.2s ease-in-out infinite; }
+
+  /* Buzzer vibrate + ring */
+  @keyframes buzzerShake {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    15%  { transform: translate(-1px,0) rotate(-1deg); }
+    30%  { transform: translate(1px,0) rotate(1deg); }
+    45%  { transform: translate(-1px,0) rotate(-0.5deg); }
+    60%  { transform: translate(1px,0) rotate(0.5deg); }
+    75%  { transform: translate(0,-1px); }
+  }
+  @keyframes buzzerGlow {
+    0%,100% { filter: drop-shadow(0 0 4px #eab308) drop-shadow(0 0 10px #eab308); }
+    50%      { filter: drop-shadow(0 0 10px #fde047) drop-shadow(0 0 22px #fde047) drop-shadow(0 0 40px #eab308); }
+  }
+  .buzzer-on { animation: buzzerShake 0.15s linear infinite, buzzerGlow 0.6s ease-in-out infinite; }
+
+  /* Motor spin */
+  @keyframes motorRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes motorGlow {
+    0%,100% { filter: drop-shadow(0 0 4px #f97316); }
+    50%      { filter: drop-shadow(0 0 14px #f97316) drop-shadow(0 0 28px #f97316); }
+  }
+  .motor-rotor { transform-origin: 50% 50%; }
+  .motor-spinning .motor-rotor { animation: motorRotate 0.25s linear infinite; }
+  .motor-spinning { animation: motorGlow 0.5s ease-in-out infinite; }
+
+  /* Servo needle smooth sweep */
+  .servo-needle-el {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: 50% 100%;
+  }
+
+  /* Ultrasonic sonar waves */
+  @keyframes sonarWave {
+    0%   { transform: scaleX(1) scaleY(1); opacity: 0.8; }
+    100% { transform: scaleX(3) scaleY(2.5); opacity: 0; }
+  }
+  .sonar-wave-1 { animation: sonarWave 1.2s ease-out infinite; }
+  .sonar-wave-2 { animation: sonarWave 1.2s ease-out 0.4s infinite; }
+  .sonar-wave-3 { animation: sonarWave 1.2s ease-out 0.8s infinite; }
+
+  /* Button press ripple */
+  @keyframes btnRipple {
+    0%   { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+  .btn-ripple { animation: btnRipple 0.4s ease-out forwards; }
+
+  /* DHT sensor data flicker */
+  @keyframes dhtFlicker {
+    0%,90%,100% { opacity: 1; }
+    95%          { opacity: 0.4; }
+  }
+  .dht-active { animation: dhtFlicker 2s ease-in-out infinite; }
+
+  /* ESP32 board LED blink */
+  @keyframes boardLedBlink {
+    0%,49% { opacity: 1; }
+    50%,100%{ opacity: 0.1; }
+  }
+  .esp32-led-active { animation: boardLedBlink 0.5s steps(1) infinite; }
+
+  /* Wire flow (electricity running) */
+  @keyframes wireFlow {
+    from { stroke-dashoffset: 20; }
+    to   { stroke-dashoffset: 0; }
+  }
+  .wire-active {
+    stroke-dasharray: 8 4;
+    animation: wireFlow 0.4s linear infinite;
+  }
+
+  /* LDR light rays */
+  @keyframes ldrRays {
+    0%,100% { opacity: 0.8; transform: scale(1); }
+    50%      { opacity: 0.3; transform: scale(1.3); }
+  }
+  .ldr-bright { animation: ldrRays 1s ease-in-out infinite; }
+
+  /* Potentiometer value shimmer */
+  @keyframes potShimmer {
+    0%,100% { filter: none; }
+    50%      { filter: drop-shadow(0 0 3px #ffd700); }
+  }
+  .pot-active { animation: potShimmer 0.8s ease-in-out infinite; }
+
+  /* Component spawn */
+  @keyframes compSpawn {
+    from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .canvas-component { animation: compSpawn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* Canvas background animated grid */
+  @keyframes gridPulse {
+    0%,100% { opacity: 0.05; }
+    50%      { opacity: 0.08; }
+  }
+
+  /* Relay click */
+  @keyframes relayClick {
+    0%  { transform: translateY(0); }
+    30% { transform: translateY(-2px); }
+    60% { transform: translateY(1px); }
+    100%{ transform: translateY(0); }
+  }
+
+  /* ====== ENHANCED AGENTIC MODE ====== */
+  #agentic-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:10px 18px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg, rgba(0,212,255,0.06), rgba(124,58,237,0.06));
+    flex-shrink:0;
+  }
+  .agentic-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex:1;
+    min-width:0;
+  }
+  .agentic-badge{
+    padding:7px 12px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    color:#08111f;
+    background:linear-gradient(135deg, #22d3ee, #60a5fa);
+    white-space:nowrap;
+    box-shadow:0 4px 14px rgba(34,211,238,0.22);
+    flex-shrink:0;
+  }
+  #agentic-prompt{
+    flex:1;
+    min-width:200px;
+    height:38px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.05);
+    color:#fff;
+    outline:none;
+    padding:0 14px;
+    font-size:13px;
+    font-family:'Outfit',sans-serif;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  #agentic-prompt:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(0,212,255,0.12);
+    background:rgba(255,255,255,0.07);
+  }
+  #agentic-prompt::placeholder{ color:rgba(255,255,255,0.4); }
+
+  .agentic-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+
+  /* Loading spinner for agentic build button */
+  .agentic-spinner {
+    display:inline-block;
+    width:12px; height:12px;
+    border:2px solid rgba(0,0,0,0.2);
+    border-top-color:#000;
+    border-radius:50%;
+    animation:spinnerRot 0.7s linear infinite;
+    vertical-align:middle;
+    margin-right:2px;
+  }
+  @keyframes spinnerRot { to { transform:rotate(360deg); } }
+
+  #ai-guide-box{
+    display:none;
+    margin:8px 18px;
+    padding:14px 16px;
+    border-radius:12px;
+    background:rgba(34,211,238,0.07);
+    border:1px solid rgba(34,211,238,0.18);
+    color:#d9f6ff;
+    font-size:12px;
+    line-height:1.5;
+    box-shadow:0 8px 24px rgba(0,0,0,0.18);
+    max-height:180px;
+    overflow-y:auto;
+    flex-shrink:0;
+  }
+  #ai-guide-box h3{ margin:0 0 6px; font-size:14px; color:#fff; }
+  #ai-guide-box ul,#ai-guide-box ol{ margin:6px 0 0; padding-left:16px; }
+  #ai-guide-box li{ margin-bottom:3px; }
+
+  @media (max-width:1100px){
+    #agentic-bar{ flex-direction:column; align-items:stretch; padding:8px 14px; }
+    .agentic-left{ flex-wrap:wrap; }
+    .agentic-actions{ justify-content:flex-end; }
+  }
+  @media (max-width:700px){
+    #agentic-prompt{ min-width:120px; font-size:12px; }
+    .agentic-badge{ font-size:10px; padding:5px 9px; }
+  }</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-logo">
+    <div class="chip-icon">⚡</div>
+    <h1>STEMbotix Virtual Lab <span>v1.0</span></h1>
+  </div>
+  <div class="header-actions">
+    <div class="sim-status" id="sim-status">
+      <div class="dot"></div>
+      <span id="sim-status-text">Stopped</span>
+    </div>
+    <button class="btn btn-success" id="btn-run" onclick="runSimulation()">▶ Run</button>
+    <button class="btn btn-danger" id="btn-stop" onclick="stopSimulation()" style="display:none">⏹ Stop</button>
+    <button class="btn btn-ghost" onclick="resetSimulation()">↺ Reset</button>
+    <button class="btn btn-ghost" onclick="checkWiringManually()" title="Verify all component connections before running" style="border-color:var(--accent);color:var(--accent)">🔌 Check Wiring</button>
+    <button class="btn btn-ghost" onclick="saveProject()">💾 Save</button>
+    <button class="btn btn-ghost" onclick="loadProjectFile()">📂 Load</button>
+  </div>
+</div>
+
+
+<!-- AGENTIC MODE -->
+<div id="agentic-bar">
+  <div class="agentic-left">
+    <div class="agentic-badge">✨ Agentic AI</div>
+    <input
+      id="agentic-prompt"
+      type="text"
+      placeholder="Describe your project... e.g. Blink 3 LEDs with a button, or Smart alarm with DHT11 + buzzer"
+    />
+  </div>
+  <div class="agentic-actions">
+    <button class="btn btn-success" id="btn-auto-build" title="AI will design and wire the full project">⚡ Auto Build</button>
+    <button class="btn btn-ghost" id="btn-ai-suggest" title="Get a random project idea">💡 Suggest</button>
+  </div>
+</div>
+
+<div id="ai-guide-box"></div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT SIDEBAR -->
+  <div id="sidebar-left">
+    <div class="sidebar-title">🔧 Components</div>
+    <div class="components-list">
+      <div class="section-divider">Controllers</div>
+      <div class="comp-item" draggable="true" data-type="esp32" title="Drag to canvas">
+        <div class="comp-icon" id="mini-esp32"></div>
+        <div class="comp-info">
+          <div class="comp-name">ESP32</div>
+          <div class="comp-desc">30-pin dev board</div>
+        </div>
+      </div>
+
+      <div class="section-divider">Outputs</div>
+      <div class="comp-item" draggable="true" data-type="led_red">
+        <div class="comp-icon" id="mini-led-r"></div>
+        <div class="comp-info"><div class="comp-name">LED Red</div><div class="comp-desc">Digital output</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="led_green">
+        <div class="comp-icon" id="mini-led-g"></div>
+        <div class="comp-info"><div class="comp-name">LED Green</div><div class="comp-desc">Digital output</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="led_blue">
+        <div class="comp-icon" id="mini-led-b"></div>
+        <div class="comp-info"><div class="comp-name">LED Blue</div><div class="comp-desc">Digital output</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="buzzer">
+        <div class="comp-icon" id="mini-buzzer"></div>
+        <div class="comp-info"><div class="comp-name">Buzzer</div><div class="comp-desc">Audio output</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="servo">
+        <div class="comp-icon" id="mini-servo"></div>
+        <div class="comp-info"><div class="comp-name">Servo</div><div class="comp-desc">PWM motor</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="motor">
+        <div class="comp-icon" id="mini-motor"></div>
+        <div class="comp-info"><div class="comp-name">DC Motor</div><div class="comp-desc">Spinning output</div></div>
+      </div>
+
+      <div class="section-divider">Inputs</div>
+      <div class="comp-item" draggable="true" data-type="button">
+        <div class="comp-icon" id="mini-button"></div>
+        <div class="comp-info"><div class="comp-name">Push Button</div><div class="comp-desc">Digital input</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="potentiometer">
+        <div class="comp-icon" id="mini-pot"></div>
+        <div class="comp-info"><div class="comp-name">Potentiometer</div><div class="comp-desc">Analog input</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="ldr">
+        <div class="comp-icon" id="mini-ldr"></div>
+        <div class="comp-info"><div class="comp-name">LDR Sensor</div><div class="comp-desc">Light sensor</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="ultrasonic">
+        <div class="comp-icon" id="mini-ultrasonic"></div>
+        <div class="comp-info"><div class="comp-name">HC-SR04</div><div class="comp-desc">Ultrasonic sensor</div></div>
+      </div>
+      <div class="comp-item" draggable="true" data-type="dht11">
+        <div class="comp-icon" id="mini-dht"></div>
+        <div class="comp-info"><div class="comp-name">DHT11</div><div class="comp-desc">Temp/Humidity</div></div>
+      </div>
+
+      <div class="section-divider">Passive</div>
+      <div class="comp-item" draggable="true" data-type="resistor">
+        <div class="comp-icon" id="mini-resistor"></div>
+        <div class="comp-info"><div class="comp-name">Resistor</div><div class="comp-desc">330Ω limiting</div></div>
+      </div>
+
+      <div class="section-divider">Tools</div>
+      <div class="tool-item" id="wire-tool" onclick="selectTool('wire')">
+        <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 10 Q10 2 18 10" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <div class="comp-info"><div class="comp-name">Wire Tool</div><div class="comp-desc">Click to connect</div></div>
+      </div>
+      <div class="tool-item" id="delete-tool" onclick="selectTool('delete')">
+        <svg width="20" height="20" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="comp-info"><div class="comp-name">Delete Tool</div><div class="comp-desc">Remove components</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER CANVAS -->
+  <div id="canvas-area" ondragover="allowDrop(event)" ondrop="dropComponent(event)">
+    <svg id="sim-canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="components-layer"></div>
+    <div id="canvas-hint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0.3;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="font-size:48px">⚡</div>
+      <div style="font-size:16px;color:var(--text2);margin-top:8px;font-weight:500">Drag components from left panel</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">Connect pins with the Wire Tool</div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div id="sidebar-right">
+    <div class="right-tabs">
+      <button class="tab-btn active" onclick="switchTab('code')">Code Editor</button>
+      <button class="tab-btn" onclick="switchTab('examples')">Examples</button>
+      <button class="tab-btn" onclick="switchTab('info')">Board Info</button>
+    </div>
+
+    <div class="tab-content active" id="tab-code">
+      <div id="code-controls">
+        <button class="btn btn-success" onclick="runSimulation()" style="font-size:11px;padding:4px 10px">▶ Run</button>
+        <button class="btn btn-danger" onclick="stopSimulation()" style="font-size:11px;padding:4px 10px">⏹ Stop</button>
+        <button class="btn btn-ghost" onclick="resetSimulation()" style="font-size:11px;padding:4px 10px">↺ Reset</button>
+        <button class="btn btn-ghost" onclick="checkWiringManually()" style="font-size:11px;padding:4px 10px;border-color:var(--accent);color:var(--accent)" title="Check wiring">🔌 Verify</button>
+        <button class="btn btn-ghost" onclick="clearCode()" style="font-size:11px;padding:4px 10px">🗑 Clear</button>
+      </div>
+      <textarea id="code-editor" spellcheck="false" placeholder="// ── Your ESP32 Arduino Code ──────────────────────────
+// Write standard Arduino syntax — it runs in the simulator!
+// Supported: pinMode, digitalWrite, digitalRead, analogRead,
+//            Serial.print/println, delay, servoWrite, tone,
+//            getDistance(trig,echo), dhtReadTemp(pin), dhtReadHumidity(pin)
+//
+// Press ▶ Run or F5 to start. Press 🔌 Verify to check wiring first.
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(5, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(5, HIGH);
+  delay(500);
+  digitalWrite(5, LOW);
+  delay(500);
+}"></textarea>
+    </div>
+
+    <div class="tab-content" id="tab-examples">
+      <div id="examples-list">
+        <div class="example-item" onclick="loadExample('blink')">
+          <div class="ex-title">💡 Blink LED</div>
+          <div class="ex-desc">Toggle LED on GPIO 5 every 500ms</div>
+        </div>
+        <div class="example-item" onclick="loadExample('button_led')">
+          <div class="ex-title">🔘 Button → LED</div>
+          <div class="ex-desc">Button on GPIO 4 controls LED on GPIO 5</div>
+        </div>
+        <div class="example-item" onclick="loadExample('buzzer')">
+          <div class="ex-title">🔊 Buzzer Beep</div>
+          <div class="ex-desc">Buzzer beeps on GPIO 18</div>
+        </div>
+        <div class="example-item" onclick="loadExample('servo_sweep')">
+          <div class="ex-title">⚙️ Servo Sweep</div>
+          <div class="ex-desc">Servo sweeps 0°→180°→0°</div>
+        </div>
+        <div class="example-item" onclick="loadExample('potentiometer')">
+          <div class="ex-title">🔄 Potentiometer Read</div>
+          <div class="ex-desc">Read analog value from GPIO 34</div>
+        </div>
+        <div class="example-item" onclick="loadExample('ultrasonic')">
+          <div class="ex-title">📡 Ultrasonic Distance</div>
+          <div class="ex-desc">Print distance via HC-SR04</div>
+        </div>
+        <div class="example-item" onclick="loadExample('dht')">
+          <div class="ex-title">🌡️ DHT11 Monitor</div>
+          <div class="ex-desc">Read temperature and humidity</div>
+        </div>
+        <div class="example-item" onclick="loadExample('ldr_led')">
+          <div class="ex-title">☀️ LDR → LED</div>
+          <div class="ex-desc">Turn LED on in dark conditions</div>
+        </div>
+        <div class="example-item" onclick="loadExample('multi_blink')">
+          <div class="ex-title">🌈 Multi LED</div>
+          <div class="ex-desc">Multiple LEDs blink in sequence</div>
+        </div>
+        <div class="example-item" onclick="loadExample('motor_ctrl')">
+          <div class="ex-title">🔄 DC Motor</div>
+          <div class="ex-desc">Motor spin on GPIO 5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-info">
+      <div style="padding:12px;overflow-y:auto;flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:8px">ESP32 GPIO Pinout</div>
+        <div id="pin-info-table" style="font-family:'JetBrains Mono',monospace;font-size:11px"></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.6">
+          <div style="color:var(--text2);font-weight:600;margin-bottom:4px">Supported Commands:</div>
+          pinMode(pin, INPUT/OUTPUT)<br>
+          digitalWrite(pin, HIGH/LOW)<br>
+          digitalRead(pin)<br>
+          analogRead(pin) → 0-4095<br>
+          delay(ms)<br>
+          Serial.begin(baud)<br>
+          Serial.print(text)<br>
+          Serial.println(text)<br>
+          servoWrite(pin, angle)<br>
+          tone(pin, freq, duration)<br>
+          noTone(pin)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERIAL MONITOR -->
+<div id="serial-panel">
+  <div class="serial-header">
+    <div class="serial-title">
+      <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" rx="2" stroke="var(--text3)" stroke-width="1.5" fill="none"/><path d="M3 4h6M3 6h4M3 8h5" stroke="var(--text3)" stroke-width="1" stroke-linecap="round"/></svg>
+      Serial Monitor
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span id="serial-baud" style="font-size:10px;color:var(--text3);font-family:monospace">115200 baud</span>
+      <button class="btn btn-ghost" onclick="clearSerial()" style="padding:2px 8px;font-size:11px">Clear</button>
+    </div>
+  </div>
+  <div id="serial-output"></div>
+</div>
+
+<!-- Context Menu -->
+<div id="context-menu">
+  <div class="ctx-item" onclick="ctxRotate()">↻ Rotate 90°</div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑 Delete</div>
+  <div class="ctx-item" onclick="hideContextMenu()">✕ Cancel</div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+let components = [];
+let wires = [];
+let selectedComponent = null;
+let contextTarget = null;
+let currentTool = 'select'; // select | wire | delete
+let wireStart = null; // { compId, pinId, x, y }
+let isSimRunning = false;
+let simInterval = null;
+let loopFn = null;
+let setupDone = false;
+let simulationTick = 0;
+let nextId = 1;
+
+// ESP32 pin state
+let esp32Pins = {};
+for (let i = 0; i <= 39; i++) {
+  esp32Pins[i] = { mode: 'INPUT', value: 0, analog: 0 };
+}
+
+// Sensor values (user-configurable)
+let sensorValues = {
+  potentiometer: {},
+  ldr: {},
+  ultrasonic: {},
+  dht11: {}
+};
+
+let consoleLogs = [];
+let codeExecState = { running: false, loopCount: 0 };
+
+// ============================================================
+// COMPONENT DEFINITIONS
+// ============================================================
+const COMPONENT_DEFS = {
+  esp32: {
+    label: 'ESP32',
+    width: 120,
+    height: 260,
+    pins: [
+      // Left side pins (x=0)
+      { id:'3V3',  label:'3V3',  x:0,   y:30,  type:'power' },
+      { id:'EN',   label:'EN',   x:0,   y:48,  type:'special' },
+      { id:'VP',   label:'VP',   x:0,   y:66,  type:'analog' },
+      { id:'VN',   label:'VN',   x:0,   y:84,  type:'analog' },
+      { id:'34',   label:'34',   x:0,   y:102, type:'analog' },
+      { id:'35',   label:'35',   x:0,   y:120, type:'analog' },
+      { id:'32',   label:'32',   x:0,   y:138, type:'gpio' },
+      { id:'33',   label:'33',   x:0,   y:156, type:'gpio' },
+      { id:'25',   label:'25',   x:0,   y:174, type:'gpio' },
+      { id:'26',   label:'26',   x:0,   y:192, type:'gpio' },
+      { id:'27',   label:'27',   x:0,   y:210, type:'gpio' },
+      { id:'14',   label:'14',   x:0,   y:228, type:'gpio' },
+      { id:'12',   label:'12',   x:0,   y:246, type:'gpio' },
+      // Right side pins (x=120)
+      { id:'GND1', label:'GND',  x:120, y:30,  type:'gnd' },
+      { id:'23',   label:'23',   x:120, y:48,  type:'gpio' },
+      { id:'22',   label:'22',   x:120, y:66,  type:'gpio' },
+      { id:'TX',   label:'TX',   x:120, y:84,  type:'uart' },
+      { id:'RX',   label:'RX',   x:120, y:102, type:'uart' },
+      { id:'GND2', label:'GND',  x:120, y:120, type:'gnd' },
+      { id:'21',   label:'21',   x:120, y:138, type:'gpio' },
+      { id:'19',   label:'19',   x:120, y:156, type:'gpio' },
+      { id:'18',   label:'18',   x:120, y:174, type:'gpio' },
+      { id:'5',    label:'5',    x:120, y:192, type:'gpio' },
+      { id:'17',   label:'17',   x:120, y:210, type:'gpio' },
+      { id:'16',   label:'16',   x:120, y:228, type:'gpio' },
+      { id:'4',    label:'4',    x:120, y:246, type:'gpio' },
+    ],
+    color: '#1a1a2e'
+  },
+  led_red:   { label:'LED', color:'#ef4444', glowColor:'#ff6666', pins:[{id:'anode',label:'A+',x:0,y:20,type:'anode'},{id:'cathode',label:'K-',x:0,y:50,type:'cathode'}], width:40, height:60 },
+  led_green: { label:'LED', color:'#22c55e', glowColor:'#4ade80', pins:[{id:'anode',label:'A+',x:0,y:20,type:'anode'},{id:'cathode',label:'K-',x:0,y:50,type:'cathode'}], width:40, height:60 },
+  led_blue:  { label:'LED', color:'#3b82f6', glowColor:'#60a5fa', pins:[{id:'anode',label:'A+',x:0,y:20,type:'anode'},{id:'cathode',label:'K-',x:0,y:50,type:'cathode'}], width:40, height:60 },
+  resistor:  { label:'330Ω', pins:[{id:'p1',label:'P1',x:0,y:20,type:'passive'},{id:'p2',label:'P2',x:80,y:20,type:'passive'}], width:80, height:40 },
+  button:    { label:'Button', pins:[{id:'p1',label:'P1',x:10,y:0,type:'passive'},{id:'p2',label:'P2',x:10,y:60,type:'passive'}], width:50, height:60 },
+  buzzer:    { label:'Buzzer', pins:[{id:'pos',label:'+',x:20,y:60,type:'anode'},{id:'neg',label:'-',x:50,y:60,type:'cathode'}], width:70, height:70 },
+  servo:     { label:'Servo', pins:[{id:'sig',label:'SIG',x:10,y:70,type:'signal'},{id:'vcc',label:'VCC',x:30,y:70,type:'power'},{id:'gnd',label:'GND',x:50,y:70,type:'gnd'}], width:80, height:80 },
+  potentiometer: { label:'Pot', pins:[{id:'vcc',label:'VCC',x:0,y:30,type:'power'},{id:'out',label:'OUT',x:40,y:60,type:'analog'},{id:'gnd',label:'GND',x:80,y:30,type:'gnd'}], width:80, height:70 },
+  ldr:       { label:'LDR', pins:[{id:'p1',label:'P1',x:0,y:25,type:'passive'},{id:'p2',label:'P2',x:50,y:25,type:'passive'}], width:50, height:50 },
+  ultrasonic:{ label:'HC-SR04', pins:[{id:'vcc',label:'VCC',x:10,y:60,type:'power'},{id:'trig',label:'TRIG',x:30,y:60,type:'signal'},{id:'echo',label:'ECHO',x:50,y:60,type:'signal'},{id:'gnd',label:'GND',x:70,y:60,type:'gnd'}], width:120, height:70 },
+  dht11:     { label:'DHT11', pins:[{id:'vcc',label:'VCC',x:16,y:86,type:'power'},{id:'data',label:'DATA',x:40,y:86,type:'signal'},{id:'gnd',label:'GND',x:64,y:86,type:'gnd'}], width:80, height:92 },
+  motor:     { label:'DC Motor', pins:[{id:'pos',label:'+',x:22,y:84,type:'anode'},{id:'neg',label:'-',x:36,y:84,type:'cathode'}], width:90, height:90 },
+};
+
+// ============================================================
+// RENDER MINI ICONS IN SIDEBAR
+// ============================================================
+function renderSidebarIcons() {
+  const el = id => document.getElementById(id);
+  el('mini-esp32').innerHTML = drawESP32Mini();
+  el('mini-led-r').innerHTML = drawLEDMini('#ef4444');
+  el('mini-led-g').innerHTML = drawLEDMini('#22c55e');
+  el('mini-led-b').innerHTML = drawLEDMini('#3b82f6');
+  el('mini-buzzer').innerHTML = drawBuzzerMini();
+  el('mini-servo').innerHTML = drawServoMini();
+  el('mini-button').innerHTML = drawButtonMini();
+  el('mini-pot').innerHTML = drawPotMini();
+  el('mini-ldr').innerHTML = drawLDRMini();
+  el('mini-ultrasonic').innerHTML = drawUltrasonicMini();
+  el('mini-dht').innerHTML = drawDHTMini();
+  el('mini-resistor').innerHTML = drawResistorMini();
+  el('mini-motor') && (el('mini-motor').innerHTML = drawMotorMini());
+}
+
+function drawESP32Mini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="4" y="2" width="28" height="32" rx="2" fill="#1a1a2e" stroke="#444" stroke-width="1"/>
+    <rect x="8" y="5" width="20" height="16" rx="2" fill="#2d2d4e" stroke="#555" stroke-width="0.5"/>
+    <text x="18" y="16" text-anchor="middle" fill="#aaa" font-size="5" font-family="sans-serif">ESP32</text>
+    ${[0,1,2,3,4].map(i=>`<rect x="2" y="${7+i*4}" width="3" height="2" rx="0.5" fill="#ffd700"/>`).join('')}
+    ${[0,1,2,3,4].map(i=>`<rect x="31" y="${7+i*4}" width="3" height="2" rx="0.5" fill="#ffd700"/>`).join('')}
+    <rect x="14" y="30" width="8" height="3" rx="1" fill="#333"/>
+  </svg>`;
+}
+
+function drawLEDMini(color) {
+  return `<svg width="30" height="36" viewBox="0 0 30 36">
+    <polygon points="15,4 24,16 6,16" fill="${color}" stroke="${color}" stroke-width="1"/>
+    <line x1="6" y1="16" x2="24" y2="16" stroke="${color}" stroke-width="2"/>
+    <line x1="15" y1="16" x2="15" y2="24" stroke="#aaa" stroke-width="1.5"/>
+    <line x1="11" y1="24" x2="19" y2="24" stroke="#aaa" stroke-width="1.5"/>
+    <line x1="12" y1="27" x2="12" y2="34" stroke="#888" stroke-width="1"/>
+    <line x1="18" y1="24" x2="18" y2="34" stroke="#888" stroke-width="1"/>
+    <circle cx="21" cy="8" r="3" fill="${color}" opacity="0.5"/>
+    <line x1="20" y1="3" x2="23" y2="1" stroke="${color}" stroke-width="1"/>
+    <line x1="23" y1="5" x2="26" y2="4" stroke="${color}" stroke-width="1"/>
+  </svg>`;
+}
+
+function drawBuzzerMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <circle cx="18" cy="16" r="12" fill="#2a2a2a" stroke="#555" stroke-width="1.5"/>
+    <circle cx="18" cy="16" r="8" fill="#1a1a1a" stroke="#444" stroke-width="1"/>
+    <circle cx="18" cy="16" r="3" fill="#444"/>
+    <line x1="13" y1="28" x2="13" y2="34" stroke="#888" stroke-width="1.5"/>
+    <line x1="23" y1="28" x2="23" y2="34" stroke="#888" stroke-width="1.5"/>
+    <text x="18" y="17" text-anchor="middle" fill="#666" font-size="4">+</text>
+  </svg>`;
+}
+
+function drawServoMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="4" y="8" width="28" height="20" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+    <circle cx="18" cy="18" r="7" fill="#333" stroke="#666" stroke-width="1"/>
+    <circle cx="18" cy="18" r="4" fill="#222"/>
+    <line x1="18" y1="18" x2="18" y2="12" stroke="#ef4444" stroke-width="2"/>
+    <line x1="10" y1="28" x2="10" y2="34" stroke="#f00" stroke-width="1.5"/>
+    <line x1="18" y1="28" x2="18" y2="34" stroke="#f00" stroke-width="1.5"/>
+    <line x1="26" y1="28" x2="26" y2="34" stroke="#888" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawButtonMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="8" y="8" width="20" height="20" rx="2" fill="#333" stroke="#555" stroke-width="1.5"/>
+    <circle cx="18" cy="18" r="7" fill="#22c55e"/>
+    <circle cx="18" cy="18" r="4" fill="#166534"/>
+    <line x1="11" y1="4" x2="11" y2="8" stroke="#888" stroke-width="1.5"/>
+    <line x1="25" y1="4" x2="25" y2="8" stroke="#888" stroke-width="1.5"/>
+    <line x1="11" y1="28" x2="11" y2="32" stroke="#888" stroke-width="1.5"/>
+    <line x1="25" y1="28" x2="25" y2="32" stroke="#888" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawPotMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <circle cx="18" cy="14" r="10" fill="#3a2a10" stroke="#7a5a30" stroke-width="1.5"/>
+    <circle cx="18" cy="14" r="6" fill="#2a1a08" stroke="#5a4020" stroke-width="1"/>
+    <line x1="18" y1="8" x2="18" y2="14" stroke="#ffd700" stroke-width="2"/>
+    <line x1="8" y1="24" x2="8" y2="32" stroke="#888" stroke-width="1.5"/>
+    <line x1="18" y1="26" x2="18" y2="32" stroke="#888" stroke-width="1.5"/>
+    <line x1="28" y1="24" x2="28" y2="32" stroke="#888" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawLDRMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <ellipse cx="18" cy="16" rx="10" ry="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+    <path d="M 8 16 Q 13 10 18 16 Q 23 22 28 16" stroke="#4a5568" stroke-width="1.5" fill="none"/>
+    <text x="18" y="12" text-anchor="middle" fill="#e2a800" font-size="8">☀</text>
+    <line x1="10" y1="26" x2="10" y2="34" stroke="#888" stroke-width="1.5"/>
+    <line x1="26" y1="26" x2="26" y2="34" stroke="#888" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawUltrasonicMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="2" y="8" width="32" height="18" rx="2" fill="#1a4a8a" stroke="#4a8acc" stroke-width="1"/>
+    <circle cx="10" cy="17" r="5" fill="#3a3a3a" stroke="#555" stroke-width="1"/>
+    <circle cx="10" cy="17" r="3" fill="#222"/>
+    <circle cx="26" cy="17" r="5" fill="#3a3a3a" stroke="#555" stroke-width="1"/>
+    <circle cx="26" cy="17" r="3" fill="#222"/>
+    <line x1="9" y1="26" x2="9" y2="32" stroke="#888" stroke-width="1.2"/>
+    <line x1="15" y1="26" x2="15" y2="32" stroke="#888" stroke-width="1.2"/>
+    <line x1="21" y1="26" x2="21" y2="32" stroke="#888" stroke-width="1.2"/>
+    <line x1="27" y1="26" x2="27" y2="32" stroke="#888" stroke-width="1.2"/>
+  </svg>`;
+}
+
+function drawDHTMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="6" y="4" width="24" height="22" rx="12" fill="#1a5a3a" stroke="#2a8a5a" stroke-width="1.5"/>
+    <text x="18" y="17" text-anchor="middle" fill="#4ade80" font-size="7" font-weight="bold">DHT</text>
+    <line x1="10" y1="26" x2="10" y2="34" stroke="#888" stroke-width="1.5"/>
+    <line x1="18" y1="26" x2="18" y2="34" stroke="#888" stroke-width="1.5"/>
+    <line x1="26" y1="26" x2="26" y2="34" stroke="#888" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawResistorMini() {
+  return `<svg width="36" height="24" viewBox="0 0 36 24">
+    <line x1="0" y1="12" x2="7" y2="12" stroke="#aaa" stroke-width="1.5"/>
+    <rect x="7" y="6" width="22" height="12" rx="3" fill="#d4a876" stroke="#b8860b" stroke-width="1"/>
+    <line x1="10" y1="6" x2="10" y2="18" stroke="#333" stroke-width="2"/>
+    <line x1="16" y1="6" x2="16" y2="18" stroke="#ef4444" stroke-width="2"/>
+    <line x1="22" y1="6" x2="22" y2="18" stroke="#333" stroke-width="2"/>
+    <line x1="25" y1="6" x2="25" y2="18" stroke="#ffd700" stroke-width="2"/>
+    <line x1="29" y1="12" x2="36" y2="12" stroke="#aaa" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function drawMotorMini() {
+  return `<svg width="36" height="36" viewBox="0 0 36 36">
+    <rect x="2" y="8" width="32" height="22" rx="4" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
+    <circle cx="18" cy="19" r="9" fill="#111827" stroke="#374151" stroke-width="1.5"/>
+    <circle cx="18" cy="19" r="5" fill="#0f172a"/>
+    ${Array(4).fill(0).map((_,i)=>{const a=(i*90)*Math.PI/180;return `<line x1="${18+4*Math.cos(a)}" y1="${19+4*Math.sin(a)}" x2="${18+8*Math.cos(a+0.3)}" y2="${19+8*Math.sin(a+0.3)}" stroke="#f97316" stroke-width="1.5"/>`;}).join('')}
+    <circle cx="18" cy="19" r="2.5" fill="#6b7280"/>
+    <line x1="13" y1="30" x2="13" y2="36" stroke="#dc2626" stroke-width="1.5"/>
+    <line x1="23" y1="30" x2="23" y2="36" stroke="#333" stroke-width="1.5"/>
+  </svg>`;
+}
+
+// ============================================================
+// DRAW COMPONENTS ON CANVAS (SVG-based realistic drawings)
+// ============================================================
+function createComponentElement(comp) {
+  const el = document.createElement('div');
+  el.className = 'canvas-component';
+  el.id = 'comp-' + comp.id;
+  el.style.left = comp.x + 'px';
+  el.style.top = comp.y + 'px';
+  el.style.width = comp.w + 'px';
+  el.style.height = comp.h + 'px';
+
+  const svg = getComponentSVG(comp);
+  el.innerHTML = svg;
+
+  // Add pin dots
+  const def = COMPONENT_DEFS[comp.type];
+  if (def && def.pins) {
+    def.pins.forEach(pin => {
+      const dot = document.createElement('div');
+      dot.className = 'pin-dot';
+      dot.id = `pin-${comp.id}-${pin.id}`;
+      dot.style.left = (pin.x - 4) + 'px';
+      dot.style.top = (pin.y - 4) + 'px';
+      dot.dataset.compId = comp.id;
+      dot.dataset.pinId = pin.id;
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'pin-tooltip';
+      tooltip.textContent = pin.label;
+      dot.appendChild(tooltip);
+
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handlePinClick(comp.id, pin.id, e);
+      });
+      el.appendChild(dot);
+    });
+  }
+
+  // Label
+  const label = document.createElement('div');
+  label.className = 'component-label';
+  label.textContent = comp.label || def?.label || comp.type;
+  el.appendChild(label);
+
+  // Drag
+  el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.classList.contains('pin-dot')) return;
+    if (currentTool === 'delete') {
+      deleteComponent(comp.id);
+      return;
+    }
+    startDrag(e, comp.id);
+  });
+
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    showContextMenu(e, comp.id);
+  });
+
+  return el;
+}
+
+function getComponentSVG(comp) {
+  switch(comp.type) {
+    case 'esp32': return drawESP32(comp);
+    case 'led_red': return drawLED(comp, '#ef4444', '#ff6666', '#ff0000');
+    case 'led_green': return drawLED(comp, '#22c55e', '#4ade80', '#00ff00');
+    case 'led_blue': return drawLED(comp, '#3b82f6', '#60a5fa', '#0088ff');
+    case 'resistor': return drawResistor(comp);
+    case 'button': return drawButton(comp);
+    case 'buzzer': return drawBuzzer(comp);
+    case 'servo': return drawServo(comp);
+    case 'potentiometer': return drawPotentiometer(comp);
+    case 'ldr': return drawLDR(comp);
+    case 'ultrasonic': return drawUltrasonic(comp);
+    case 'dht11': return drawDHT(comp);
+    case 'motor': return drawMotor(comp);
+    default: return `<svg width="${comp.w}" height="${comp.h}"><rect width="${comp.w}" height="${comp.h}" rx="4" fill="#333" stroke="#555"/><text x="${comp.w/2}" y="${comp.h/2}" text-anchor="middle" fill="#aaa" font-size="10">${comp.type}</text></svg>`;
+  }
+}
+
+function drawESP32(comp) {
+  const w = comp.w, h = comp.h;
+  const pinSpacing = 18;
+  const leftPins = ['3V3','EN','VP','VN','34','35','32','33','25','26','27','14','12'];
+  const rightPins = ['GND','23','22','TX','RX','GND','21','19','18','5','17','16','4'];
+  const pinColors = { gpio:'#ffd700', gnd:'#888', power:'#ef4444', analog:'#22c55e', uart:'#3b82f6', special:'#a855f7' };
+
+  let pinsSVG = '';
+  // Left pins
+  leftPins.forEach((name, i) => {
+    const y = 30 + i * 18;
+    const isGnd = name === 'GND' || name === 'GND2';
+    const isVcc = name === '3V3';
+    const color = isGnd ? '#888' : isVcc ? '#ef4444' : ['34','35','VP','VN'].includes(name) ? '#22c55e' : ['TX','RX'].includes(name) ? '#3b82f6' : '#ffd700';
+    pinsSVG += `
+      <rect x="-8" y="${y-3}" width="12" height="6" rx="1.5" fill="${color}" opacity="0.9"/>
+      <rect x="-2" y="${y-2}" width="6" height="4" rx="1" fill="#b8960b"/>
+      <text x="4" y="${y+3.5}" font-size="7" fill="#ccc" font-family="monospace">${name}</text>
+    `;
+  });
+  // Right pins
+  rightPins.forEach((name, i) => {
+    const y = 30 + i * 18;
+    const isGnd = name === 'GND';
+    const color = isGnd ? '#888' : ['23','22','21','19','18','5','17','16','4'].includes(name) ? '#ffd700' : ['TX','RX'].includes(name) ? '#3b82f6' : '#ffd700';
+    pinsSVG += `
+      <rect x="${w-4}" y="${y-3}" width="12" height="6" rx="1.5" fill="${color}" opacity="0.9"/>
+      <rect x="${w-2}" y="${y-2}" width="6" height="4" rx="1" fill="#b8960b"/>
+      <text x="${w-6}" y="${y+3.5}" font-size="7" fill="#ccc" text-anchor="end" font-family="monospace">${name}</text>
+    `;
+  });
+
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs>
+      <linearGradient id="esp32bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#16213e"/>
+        <stop offset="100%" stop-color="#0f1429"/>
+      </linearGradient>
+      <radialGradient id="moduleGrad" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#3a3a5c"/>
+        <stop offset="100%" stop-color="#1a1a3a"/>
+      </radialGradient>
+    </defs>
+    <!-- PCB body -->
+    <rect x="4" y="0" width="${w-8}" height="${h}" rx="3" fill="url(#esp32bg)" stroke="#2a3a6a" stroke-width="1.5"/>
+    <!-- PCB texture lines -->
+    <rect x="4" y="0" width="${w-8}" height="${h}" rx="3" fill="none" stroke="#1e2a4a" stroke-width="0.5" stroke-dasharray="2,8"/>
+
+    <!-- WiFi Module -->
+    <rect x="22" y="4" width="76" height="54" rx="4" fill="url(#moduleGrad)" stroke="#3a3a6a" stroke-width="1.5"/>
+    <!-- antenna notch -->
+    <rect x="42" y="0" width="36" height="8" rx="2" fill="#2a2a4a" stroke="#3a3a6a" stroke-width="1"/>
+    <!-- antenna pattern -->
+    ${[0,1,2,3].map(i=>`<rect x="${48+i*7}" y="1" width="4" height="6" rx="1" fill="#444"/>`).join('')}
+    <!-- module label -->
+    <text x="60" y="34" text-anchor="middle" fill="#ccc" font-size="13" font-family="'Outfit',sans-serif" font-weight="700" letter-spacing="-0.5">ESP32</text>
+    <!-- wifi icon -->
+    <path d="M52 44 Q60 38 68 44" stroke="#4a6a9a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M48 48 Q60 38 72 48" stroke="#3a5a8a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="50" r="2" fill="#4a6aaa"/>
+    <!-- 2 LED indicators -->
+    <circle cx="46" cy="10" r="2" fill="#00ff88" opacity="${isSimRunning ? '1' : '0.3'}" class="${isSimRunning ? 'esp32-led-active' : ''}">
+      ${isSimRunning ? `<animate attributeName="opacity" values="1;0.1;1" dur="0.5s" repeatCount="indefinite"/>` : ''}
+    </circle>
+    <circle cx="52" cy="10" r="2" fill="#ff4444" opacity="0.5"/>
+
+    <!-- USB connector -->
+    <rect x="42" y="${h-12}" width="36" height="12" rx="2" fill="#333" stroke="#555" stroke-width="1"/>
+    <rect x="47" y="${h-10}" width="26" height="8" rx="1" fill="#222"/>
+    <!-- USB notch -->
+    <rect x="52" y="${h-8}" width="4" height="4" rx="1" fill="#444"/>
+    <rect x="64" y="${h-8}" width="4" height="4" rx="1" fill="#444"/>
+
+    <!-- Chip bottom -->
+    <rect x="32" y="${h-50}" width="56" height="30" rx="2" fill="#111" stroke="#333" stroke-width="1"/>
+    <rect x="36" y="${h-46}" width="48" height="22" rx="2" fill="#1a1a1a" stroke="#222" stroke-width="0.5"/>
+    <!-- chip markings -->
+    ${Array(4).fill(0).map((_,i)=>Array(6).fill(0).map((_,j)=>`<rect x="${38+j*7}" y="${h-44+i*5}" width="4" height="3" rx="0.5" fill="#2a2a2a"/>`).join('')).join('')}
+
+    <!-- Capacitors/resistors -->
+    <rect x="18" y="${h-55}" width="6" height="8" rx="1" fill="#1a3a1a" stroke="#2a5a2a" stroke-width="0.5"/>
+    <rect x="94" y="${h-55}" width="6" height="8" rx="1" fill="#1a3a1a" stroke="#2a5a2a" stroke-width="0.5"/>
+
+    <!-- Pin dots visual on PCB -->
+    ${pinsSVG}
+
+    <!-- Boot/EN buttons -->
+    <rect x="36" y="${h-28}" width="12" height="8" rx="2" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/>
+    <text x="42" y="${h-23}" text-anchor="middle" fill="#666" font-size="4" font-family="monospace">EN</text>
+    <rect x="72" y="${h-28}" width="16" height="8" rx="2" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/>
+    <text x="80" y="${h-23}" text-anchor="middle" fill="#666" font-size="4" font-family="monospace">Boot</text>
+  </svg>`;
+}
+
+function drawLED(comp, baseColor, glowColor, litColor) {
+  const isOn = comp.state?.on || false;
+  const color = isOn ? litColor : baseColor;
+  const colorKey = baseColor === '#ef4444' ? 'red' : baseColor === '#22c55e' ? 'green' : 'blue';
+
+  // Build animated rays when ON
+  const rays = isOn ? Array(8).fill(0).map((_,i) => {
+    const a = (i * 45) * Math.PI / 180;
+    const r1 = 18, r2 = 26 + (i%3)*4;
+    return `<line x1="${20 + r1*Math.cos(a)}" y1="${18 + r1*Math.sin(a)}" 
+      x2="${20 + r2*Math.cos(a)}" y2="${18 + r2*Math.sin(a)}" 
+      stroke="${glowColor}" stroke-width="1.5" opacity="${0.4 + (i%3)*0.2}"
+      class="led-ray">
+      <animate attributeName="opacity" values="${0.8-(i%3)*0.2};${0.2+(i%3)*0.1};${0.8-(i%3)*0.2}" dur="${0.8+i*0.1}s" repeatCount="indefinite"/>
+    </line>`;
+  }).join('') : '';
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="-10 -10 60 90" id="led-${comp.id}" class="${isOn ? 'led-on-'+colorKey : ''}">
+    <defs>
+      <radialGradient id="ledgrad-${comp.id}" cx="38%" cy="28%" r="62%">
+        <stop offset="0%" stop-color="${isOn ? '#ffffff' : '#cccccc'}"/>
+        <stop offset="35%" stop-color="${color}"/>
+        <stop offset="100%" stop-color="${isOn ? baseColor : '#444'}"/>
+      </radialGradient>
+      <radialGradient id="ledenv-${comp.id}" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="${glowColor}" stop-opacity="${isOn ? '0.55' : '0'}"/>
+        <stop offset="60%" stop-color="${glowColor}" stop-opacity="${isOn ? '0.2' : '0'}"/>
+        <stop offset="100%" stop-color="${glowColor}" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="ledblur-${comp.id}">
+        <feGaussianBlur stdDeviation="${isOn ? '3' : '0'}"/>
+      </filter>
+    </defs>
+
+    <!-- Ambient glow halo (animated when ON) -->
+    ${isOn ? `<ellipse cx="20" cy="20" rx="28" ry="26" fill="url(#ledenv-${comp.id})">
+      <animate attributeName="rx" values="24;32;24" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="22;30;22" dur="1.2s" repeatCount="indefinite"/>
+    </ellipse>` : ''}
+
+    <!-- Light rays -->
+    ${rays}
+
+    <!-- LED dome outer -->
+    <ellipse cx="20" cy="20" rx="13" ry="11" fill="url(#ledgrad-${comp.id})" stroke="${isOn ? glowColor : '#555'}" stroke-width="${isOn ? 1.5 : 1}"/>
+    <!-- LED cylindrical body -->
+    <path d="M 7 24 L 7 38 Q 7 47 20 47 Q 33 47 33 38 L 33 24 Z" fill="url(#ledgrad-${comp.id})" stroke="${isOn ? glowColor : '#555'}" stroke-width="${isOn ? 1.5 : 1}"/>
+    <!-- Dome top cap -->
+    <ellipse cx="20" cy="24" rx="13" ry="4" fill="${isOn ? color : baseColor}" opacity="0.6"/>
+    <!-- Flat top ring -->
+    <ellipse cx="20" cy="38" rx="13" ry="3" fill="#2a2a2a"/>
+    <!-- Specular highlight -->
+    <ellipse cx="15" cy="17" rx="4.5" ry="3.5" fill="${isOn ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.2)'}">
+      ${isOn ? `<animate attributeName="opacity" values="0.7;0.95;0.7" dur="1.2s" repeatCount="indefinite"/>` : ''}
+    </ellipse>
+    <!-- Inner reflection line -->
+    <ellipse cx="24" cy="19" rx="2" ry="1.5" fill="${isOn ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.1)'}"/>
+    <!-- Bottom rim flange -->
+    <rect x="7" y="40" width="26" height="5" rx="1" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
+    <!-- Legs (anode longer) -->
+    <line x1="14" y1="45" x2="14" y2="66" stroke="#c0c0c0" stroke-width="1.8"/>
+    <line x1="26" y1="45" x2="26" y2="62" stroke="#c0c0c0" stroke-width="1.8"/>
+    <!-- Anode bend mark -->
+    <line x1="10" y1="64" x2="14" y2="64" stroke="#c0c0c0" stroke-width="1.5"/>
+    <!-- On/off state indicator dot -->
+    <circle cx="20" cy="44" r="2" fill="${isOn ? glowColor : '#333'}" opacity="${isOn ? '1' : '0.4'}">
+      ${isOn ? `<animate attributeName="r" values="1.5;2.5;1.5" dur="0.8s" repeatCount="indefinite"/>` : ''}
+    </circle>
+  </svg>`;
+}
+
+function drawResistor(comp) {
+  const w = comp.w, h = comp.h;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 80 40">
+    <!-- Left wire -->
+    <line x1="0" y1="20" x2="14" y2="20" stroke="#bbb" stroke-width="2"/>
+    <!-- Body -->
+    <rect x="14" y="10" width="52" height="20" rx="5" fill="#d4a876"/>
+    <!-- Shade -->
+    <rect x="14" y="10" width="52" height="8" rx="5" fill="rgba(255,255,255,0.15)"/>
+    <!-- Color bands -->
+    <rect x="19" y="10" width="5" height="20" fill="#222"/>
+    <rect x="27" y="10" width="5" height="20" fill="#ef4444"/>
+    <rect x="35" y="10" width="5" height="20" fill="#ef4444"/>
+    <rect x="43" y="10" width="5" height="20" fill="#111"/>
+    <rect x="54" y="10" width="5" height="20" fill="#ffd700"/>
+    <!-- Right wire -->
+    <line x1="66" y1="20" x2="80" y2="20" stroke="#bbb" stroke-width="2"/>
+    <!-- End caps -->
+    <rect x="14" y="10" width="4" height="20" rx="2" fill="#c4986a"/>
+    <rect x="62" y="10" width="4" height="20" rx="2" fill="#c4986a"/>
+  </svg>`;
+}
+
+function drawButton(comp) {
+  const isPressed = comp.state?.pressed || false;
+  const btnY = isPressed ? 22 : 17;
+  const stemH = isPressed ? 7 : 10;
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 50 64" id="btn-${comp.id}">
+    <defs>
+      <linearGradient id="btnbody-${comp.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#52525b"/>
+        <stop offset="100%" stop-color="#18181b"/>
+      </linearGradient>
+      <radialGradient id="btncap-${comp.id}" cx="35%" cy="28%" r="65%">
+        <stop offset="0%" stop-color="${isPressed ? '#16a34a' : '#4ade80'}"/>
+        <stop offset="70%" stop-color="${isPressed ? '#15803d' : '#22c55e'}"/>
+        <stop offset="100%" stop-color="${isPressed ? '#14532d' : '#166534'}"/>
+      </radialGradient>
+    </defs>
+
+    <!-- PCB mount body -->
+    <rect x="5" y="12" width="40" height="34" rx="4" fill="url(#btnbody-${comp.id})" stroke="${isPressed ? '#4ade80' : '#52525b'}" stroke-width="${isPressed ? 1.5 : 1}"/>
+    <!-- PCB surface texture -->
+    <rect x="7" y="14" width="36" height="10" rx="2" fill="rgba(255,255,255,0.04)"/>
+
+    <!-- Corner solder pads -->
+    <rect x="5" y="12" width="7" height="7" rx="1" fill="#27272a"/>
+    <rect x="38" y="12" width="7" height="7" rx="1" fill="#27272a"/>
+    <rect x="5" y="35" width="7" height="7" rx="1" fill="#27272a"/>
+    <rect x="38" y="35" width="7" height="7" rx="1" fill="#27272a"/>
+
+    <!-- Actuator stem (moves down when pressed) -->
+    <rect x="21" y="${isPressed ? 19 : 14}" width="8" height="${stemH}" rx="2" fill="#3f3f46" stroke="#52525b" stroke-width="1"/>
+
+    <!-- Button cap -->
+    <ellipse cx="25" cy="${btnY}" rx="11" ry="${isPressed ? 5 : 7}" fill="url(#btncap-${comp.id})" stroke="${isPressed ? '#4ade80' : '#86efac'}" stroke-width="${isPressed ? 1.5 : 1}"/>
+    <!-- Cap highlight -->
+    <ellipse cx="21" cy="${btnY - (isPressed ? 1.5 : 2)}" rx="4" ry="${isPressed ? 2 : 2.5}" fill="rgba(255,255,255,${isPressed ? 0.25 : 0.4})"/>
+    <!-- Cap rim -->
+    <ellipse cx="25" cy="${btnY + (isPressed ? 3 : 4)}" rx="11" ry="2" fill="${isPressed ? '#14532d' : '#15803d'}" opacity="0.7"/>
+
+    <!-- Ripple when pressed -->
+    ${isPressed ? `
+    <circle cx="25" cy="${btnY}" r="8" fill="none" stroke="rgba(74,222,128,0.6)" stroke-width="2">
+      <animate attributeName="r" values="8;20" dur="0.4s" repeatCount="1" fill="freeze"/>
+      <animate attributeName="opacity" values="0.7;0" dur="0.4s" repeatCount="1" fill="freeze"/>
+    </circle>` : ''}
+
+    <!-- Metal legs (pins) -->
+    <line x1="12" y1="0" x2="12" y2="12" stroke="#d4d4d8" stroke-width="2"/>
+    <line x1="38" y1="0" x2="38" y2="12" stroke="#d4d4d8" stroke-width="2"/>
+    <line x1="12" y1="46" x2="12" y2="64" stroke="#d4d4d8" stroke-width="2"/>
+    <line x1="38" y1="46" x2="38" y2="64" stroke="#d4d4d8" stroke-width="2"/>
+    <!-- Pin tips (gold) -->
+    <rect x="10" y="-2" width="4" height="4" rx="1" fill="#ffd700"/>
+    <rect x="36" y="-2" width="4" height="4" rx="1" fill="#ffd700"/>
+    <rect x="10" y="62" width="4" height="4" rx="1" fill="#ffd700"/>
+    <rect x="36" y="62" width="4" height="4" rx="1" fill="#ffd700"/>
+
+    <!-- Contact rails inside body -->
+    <rect x="3" y="22" width="4" height="8" rx="1.5" fill="#a1a1aa" stroke="#71717a" stroke-width="0.5"/>
+    <rect x="43" y="22" width="4" height="8" rx="1.5" fill="#a1a1aa" stroke="#71717a" stroke-width="0.5"/>
+    <rect x="3" y="32" width="4" height="8" rx="1.5" fill="#a1a1aa" stroke="#71717a" stroke-width="0.5"/>
+    <rect x="43" y="32" width="4" height="8" rx="1.5" fill="#a1a1aa" stroke="#71717a" stroke-width="0.5"/>
+  </svg>`;
+}
+
+function drawMotor(comp) {
+  const isOn = comp.state?.on || false;
+  const speed = comp.state?.speed || 0;
+  const numBlades = 6;
+  const cx = 45, cy = 40;
+  const R = 20;
+
+  const blades = Array(numBlades).fill(0).map((_,i) => {
+    const baseA = (i * 360/numBlades) * Math.PI / 180;
+    const tipA  = baseA + 0.45;
+    const bx1 = cx + 6 * Math.cos(baseA - 0.25);
+    const by1 = cy + 6 * Math.sin(baseA - 0.25);
+    const bx2 = cx + 6 * Math.cos(baseA + 0.25);
+    const by2 = cy + 6 * Math.sin(baseA + 0.25);
+    const tx  = cx + R * Math.cos(tipA);
+    const ty  = cy + R * Math.sin(tipA);
+    return `<path d="M ${bx1} ${by1} Q ${tx} ${ty} ${bx2} ${by2} Z" fill="${isOn ? '#f97316' : '#374151'}" stroke="${isOn ? '#ea580c' : '#4b5563'}" stroke-width="0.5" opacity="${isOn ? '0.9' : '0.6'}"/>`;
+  }).join('');
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 90 90" id="mtr-${comp.id}" class="${isOn ? 'motor-spinning' : ''}">
+    <defs>
+      <radialGradient id="motorbody-${comp.id}" cx="40%" cy="30%" r="70%">
+        <stop offset="0%" stop-color="#6b7280"/>
+        <stop offset="100%" stop-color="#1f2937"/>
+      </radialGradient>
+      <radialGradient id="motorshaft-${comp.id}" cx="35%" cy="30%" r="65%">
+        <stop offset="0%" stop-color="${isOn ? '#fb923c' : '#9ca3af'}"/>
+        <stop offset="100%" stop-color="${isOn ? '#c2410c' : '#4b5563'}"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Motor housing (back plate) -->
+    <rect x="4" y="18" width="82" height="52" rx="6" fill="url(#motorbody-${comp.id})" stroke="#6b7280" stroke-width="2"/>
+    <!-- Mounting bracket sides -->
+    <rect x="0" y="22" width="8" height="20" rx="3" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+    <rect x="82" y="22" width="8" height="20" rx="3" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+
+    <!-- Motor can body -->
+    <circle cx="${cx}" cy="${cy}" r="28" fill="#111827" stroke="${isOn ? '#f97316' : '#374151'}" stroke-width="${isOn ? 2.5 : 1.5}"/>
+    <circle cx="${cx}" cy="${cy}" r="24" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Motor winding pattern (decorative) -->
+    ${Array(8).fill(0).map((_,i) => {
+      const a = i * 45 * Math.PI / 180;
+      return `<line x1="${cx+10*Math.cos(a)}" y1="${cy+10*Math.sin(a)}" x2="${cx+20*Math.cos(a)}" y2="${cy+20*Math.sin(a)}" stroke="${isOn ? '#f97316' : '#334155'}" stroke-width="1.5" opacity="0.6"/>`;
+    }).join('')}
+
+    <!-- Rotor blades (spinning group) -->
+    <g class="motor-rotor" id="rotor-${comp.id}" style="transform-origin:${cx}px ${cy}px">
+      ${blades}
+      <!-- Rotor core -->
+      <circle cx="${cx}" cy="${cy}" r="7" fill="url(#motorshaft-${comp.id})" stroke="${isOn ? '#fb923c' : '#6b7280'}" stroke-width="1.5"/>
+      <circle cx="${cx}" cy="${cy}" r="3.5" fill="${isOn ? '#fff7ed' : '#374151'}"/>
+      <!-- Rotor cross -->
+      <line x1="${cx-6}" y1="${cy}" x2="${cx+6}" y2="${cy}" stroke="${isOn ? '#fed7aa' : '#4b5563'}" stroke-width="1"/>
+      <line x1="${cx}" y1="${cy-6}" x2="${cx}" y2="${cy+6}" stroke="${isOn ? '#fed7aa' : '#4b5563'}" stroke-width="1"/>
+    </g>
+
+    <!-- Speed sparks when running -->
+    ${isOn ? Array(4).fill(0).map((_,i) => {
+      const sa = (i*90 + 22) * Math.PI/180;
+      return `<circle cx="${cx+22*Math.cos(sa)}" cy="${cy+22*Math.sin(sa)}" r="1.5" fill="#fde047">
+        <animate attributeName="opacity" values="0;1;0" dur="${0.3 + i*0.1}s" repeatCount="indefinite" begin="${i*0.08}s"/>
+        <animate attributeName="r" values="1;3;0" dur="${0.3+i*0.1}s" repeatCount="indefinite" begin="${i*0.08}s"/>
+      </circle>`;
+    }).join('') : ''}
+
+    <!-- Shaft extension -->
+    <rect x="73" y="36" width="14" height="8" rx="2" fill="#9ca3af" stroke="#6b7280" stroke-width="1"/>
+    <rect x="85" y="38" width="5" height="4" rx="1" fill="#d1d5db"/>
+
+    <!-- Wire terminals at bottom -->
+    <rect x="22" y="70" width="10" height="14" rx="3" fill="#dc2626"/>
+    <rect x="36" y="70" width="10" height="14" rx="3" fill="#111"/>
+    <text x="27" y="82" text-anchor="middle" fill="#fff" font-size="5" font-family="monospace">+</text>
+    <text x="41" y="82" text-anchor="middle" fill="#fff" font-size="5" font-family="monospace">-</text>
+    <!-- RPM label -->
+    <text x="${cx}" y="84" text-anchor="middle" fill="${isOn ? '#f97316' : '#4b5563'}" font-size="6.5" font-family="monospace" font-weight="bold">${isOn ? 'SPIN' : 'IDLE'}</text>
+  </svg>`;
+}
+
+function drawBuzzer(comp) {
+  const isOn = comp.state?.on || false;
+
+  const rings = isOn ? [0,1,2].map(i => `
+    <circle cx="35" cy="30" r="${14 + i*6}" fill="none" stroke="rgba(253,224,71,${0.6 - i*0.15})" stroke-width="${2 - i*0.4}" class="sonar-wave-${i+1}" style="transform-origin:35px 30px">
+      <animate attributeName="r" values="${14+i*6};${26+i*8};${14+i*6}" dur="${0.9+i*0.25}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="${0.7-i*0.15};0;${0.7-i*0.15}" dur="${0.9+i*0.25}s" repeatCount="indefinite"/>
+    </circle>`).join('') : '';
+
+  // Membrane concentric grooves
+  const grooves = [13,9,5].map(r =>
+    `<circle cx="35" cy="30" r="${r}" fill="none" stroke="${isOn ? 'rgba(253,224,71,0.3)' : '#2a2a2a'}" stroke-width="1"/>`
+  ).join('');
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 70 80" id="buz-${comp.id}" class="${isOn ? 'buzzer-on' : ''}">
+    <defs>
+      <radialGradient id="buzzbody-${comp.id}" cx="40%" cy="30%" r="70%">
+        <stop offset="0%" stop-color="${isOn ? '#6b6b10' : '#555'}"/>
+        <stop offset="60%" stop-color="${isOn ? '#3a3a08' : '#2a2a2a'}"/>
+        <stop offset="100%" stop-color="#111"/>
+      </radialGradient>
+      <radialGradient id="buzzmem-${comp.id}" cx="35%" cy="30%" r="65%">
+        <stop offset="0%" stop-color="${isOn ? '#fde047' : '#3a3a3a'}"/>
+        <stop offset="100%" stop-color="${isOn ? '#ca8a04' : '#111'}"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Outer sound rings (animated) -->
+    ${rings}
+
+    <!-- PCB base ring -->
+    <circle cx="35" cy="30" r="28" fill="#1a1a1a" stroke="${isOn ? '#ca8a04' : '#3a3a3a'}" stroke-width="2"/>
+    <!-- Metal housing -->
+    <circle cx="35" cy="30" r="24" fill="url(#buzzbody-${comp.id})" stroke="${isOn ? '#eab308' : '#555'}" stroke-width="${isOn ? 2 : 1.5}"/>
+    <!-- Top edge highlight -->
+    <path d="M 12 22 A 24 24 0 0 1 58 22" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+    <!-- Membrane -->
+    <circle cx="35" cy="30" r="16" fill="url(#buzzmem-${comp.id})" stroke="${isOn ? '#fde047' : '#444'}" stroke-width="1.5">
+      ${isOn ? `<animate attributeName="r" values="16;17.5;16" dur="0.12s" repeatCount="indefinite"/>` : ''}
+    </circle>
+    <!-- Membrane grooves -->
+    ${grooves}
+    <!-- Center hole -->
+    <circle cx="35" cy="30" r="3.5" fill="${isOn ? '#7a6000' : '#111'}" stroke="${isOn ? '#eab308' : '#333'}" stroke-width="1"/>
+    <!-- Plus/minus labels -->
+    <text x="22" y="58" fill="${isOn ? '#fde047' : '#666'}" font-size="8" font-weight="bold" font-family="monospace">+</text>
+    <text x="46" y="58" fill="${isOn ? '#94a3b8' : '#444'}" font-size="8" font-family="monospace">-</text>
+    <!-- Pins -->
+    <line x1="24" y1="54" x2="24" y2="70" stroke="${isOn ? '#ef4444' : '#888'}" stroke-width="2"/>
+    <line x1="46" y1="54" x2="46" y2="70" stroke="${isOn ? '#555' : '#555'}" stroke-width="2"/>
+    <!-- State label -->
+    <text x="35" y="78" text-anchor="middle" fill="${isOn ? '#fde047' : '#555'}" font-size="7" font-family="monospace" font-weight="bold">${isOn ? '♫ BEEP' : 'SILENT'}</text>
+    <!-- Mounting holes -->
+    <circle cx="12" cy="12" r="2.5" fill="none" stroke="${isOn ? '#7a6000' : '#333'}" stroke-width="1"/>
+    <circle cx="58" cy="12" r="2.5" fill="none" stroke="${isOn ? '#7a6000' : '#333'}" stroke-width="1"/>
+  </svg>`;
+}
+
+function drawServo(comp) {
+  const angle = comp.state?.angle || 90;
+  // Servo needle rotation in SVG: 0° = up, positive = clockwise
+  const svgAngle = angle - 90; // -90..+90 range maps to svg rotation
+  const rad = svgAngle * Math.PI / 180;
+  const cx = 40, cy = 34;
+  const needleLen = 22;
+  const nx = cx + needleLen * Math.sin(rad);
+  const ny = cy - needleLen * Math.cos(rad);
+  // Horn end pos
+  const hx = cx + (needleLen + 4) * Math.sin(rad);
+  const hy = cy - (needleLen + 4) * Math.cos(rad);
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 80 90" id="srv-${comp.id}">
+    <defs>
+      <linearGradient id="servobody-${comp.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6b7280"/>
+        <stop offset="100%" stop-color="#1f2937"/>
+      </linearGradient>
+      <linearGradient id="servoTop-${comp.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#9ca3af"/>
+        <stop offset="100%" stop-color="#4b5563"/>
+      </linearGradient>
+    </defs>
+    <!-- Mounting ears -->
+    <rect x="0" y="18" width="10" height="28" rx="3" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+    <rect x="70" y="18" width="10" height="28" rx="3" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+    <circle cx="5" cy="24" r="2.5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+    <circle cx="75" cy="24" r="2.5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+    <circle cx="5" cy="40" r="2.5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+    <circle cx="75" cy="40" r="2.5" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+
+    <!-- Main body -->
+    <rect x="8" y="10" width="64" height="52" rx="5" fill="url(#servobody-${comp.id})" stroke="#6b7280" stroke-width="1.5"/>
+    <!-- Top cap -->
+    <rect x="10" y="6" width="60" height="10" rx="4" fill="url(#servoTop-${comp.id})" stroke="#9ca3af" stroke-width="1"/>
+    <!-- Body details - PCB inside -->
+    <rect x="14" y="36" width="24" height="18" rx="2" fill="#1a2a1a" stroke="#2a3a2a" stroke-width="0.5"/>
+    <rect x="16" y="38" width="8" height="5" rx="1" fill="#111" stroke="#333" stroke-width="0.5"/>
+    <rect x="26" y="38" width="8" height="5" rx="1" fill="#111" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Rotation arc guide -->
+    <path d="M ${cx-18} ${cy+2} A 18 18 0 0 1 ${cx+18} ${cy+2}" fill="none" stroke="#374151" stroke-width="2" stroke-dasharray="3,2"/>
+    <!-- Arc fill indicator -->
+    <path d="M ${cx} ${cy} L ${cx-18} ${cy+2} A 18 18 0 0 1 ${cx + 18*Math.sin(rad*2)} ${cy - 18*Math.cos(rad*2) + 18}" fill="rgba(59,130,246,0.12)" stroke="none"/>
+
+    <!-- Servo output shaft -->
+    <circle cx="${cx}" cy="${cy}" r="20" fill="#111827" stroke="#374151" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="15" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Tick marks on disk -->
+    ${Array(13).fill(0).map((_,i) => {
+      const ta = (-90 + i*15) * Math.PI/180;
+      const r1 = 13, r2 = i%3===0 ? 16 : 15;
+      const isCurrent = Math.abs(angle - i*15) < 8;
+      return `<line x1="${cx+r1*Math.cos(ta)}" y1="${cy+r1*Math.sin(ta)}" x2="${cx+r2*Math.cos(ta)}" y2="${cy+r2*Math.sin(ta)}" stroke="${isCurrent ? '#3b82f6' : '#374151'}" stroke-width="${i%3===0 ? 1.5 : 0.8}"/>`;
+    }).join('')}
+
+    <!-- Servo horn arm -->
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    <!-- Horn tip circle -->
+    <circle cx="${hx}" cy="${hy}" r="4" fill="#e2e8f0" stroke="#ef4444" stroke-width="1.5"/>
+    <circle cx="${hx}" cy="${hy}" r="2" fill="#ef4444"/>
+    <!-- Center hub -->
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="${cy}" r="2.5" fill="#9ca3af"/>
+
+    <!-- Wire connectors at bottom -->
+    <rect x="10" y="62" width="9" height="16" rx="2.5" fill="#f97316"/>
+    <rect x="22" y="62" width="9" height="16" rx="2.5" fill="#ef4444"/>
+    <rect x="34" y="62" width="9" height="16" rx="2.5" fill="#94a3b8"/>
+    <text x="14" y="78" text-anchor="middle" fill="#fff" font-size="5.5" font-family="monospace" font-weight="bold">S</text>
+    <text x="26" y="78" text-anchor="middle" fill="#fff" font-size="5.5" font-family="monospace" font-weight="bold">+</text>
+    <text x="38" y="78" text-anchor="middle" fill="#fff" font-size="5.5" font-family="monospace" font-weight="bold">-</text>
+
+    <!-- Angle readout -->
+    <rect x="50" y="62" width="24" height="14" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="62" y="72" text-anchor="middle" fill="#00d4ff" font-size="8" font-family="monospace" font-weight="bold">${angle}°</text>
+  </svg>`;
+}
+
+function drawPotentiometer(comp) {
+  const val = comp.state?.value || 2048;
+  const pct = val / 4095;
+  const angle = -135 + pct * 270;
+  const rad = angle * Math.PI / 180;
+  const cx = 40, cy = 32;
+  const nlen = 14;
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 80 70">
+    <defs>
+      <radialGradient id="potbody-${comp.id}" cx="40%" cy="30%" r="70%">
+        <stop offset="0%" stop-color="#6b3a10"/>
+        <stop offset="100%" stop-color="#2a1408"/>
+      </radialGradient>
+    </defs>
+    <!-- Body -->
+    <rect x="4" y="8" width="72" height="44" rx="5" fill="#2a1a08" stroke="#7a5a30" stroke-width="1.5"/>
+    <!-- Main knob -->
+    <circle cx="${cx}" cy="${cy}" r="20" fill="url(#potbody-${comp.id})" stroke="#7a5a30" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="14" fill="#1a0e04" stroke="#4a3018" stroke-width="1"/>
+    <!-- Tick marks -->
+    ${Array(9).fill(0).map((_,i)=>{
+      const a = (-135 + i*33.75)*Math.PI/180;
+      return `<line x1="${cx+12*Math.cos(a)}" y1="${cy+12*Math.sin(a)}" x2="${cx+15*Math.cos(a)}" y2="${cy+15*Math.sin(a)}" stroke="#5a4020" stroke-width="1"/>`;
+    }).join('')}
+    <!-- Pointer indicator -->
+    <line x1="${cx}" y1="${cy}" x2="${cx+nlen*Math.cos(rad)}" y2="${cy+nlen*Math.sin(rad)}" stroke="#ffd700" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="3" fill="#ffd700"/>
+    <!-- Pins -->
+    <line x1="16" y1="52" x2="16" y2="66" stroke="#ef4444" stroke-width="2"/>
+    <line x1="40" y1="54" x2="40" y2="66" stroke="#ffd700" stroke-width="2"/>
+    <line x1="64" y1="52" x2="64" y2="66" stroke="#222" stroke-width="2"/>
+    <!-- Value display -->
+    <text x="${cx}" y="${cy+32}" text-anchor="middle" fill="#ffd700" font-size="8" font-family="monospace">${val}</text>
+  </svg>`;
+}
+
+function drawLDR(comp) {
+  const val = comp.state?.value || 2048;
+  const pct = val / 4095;
+  const brightness = Math.floor(pct * 200 + 55);
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 50 50">
+    <!-- Body -->
+    <ellipse cx="25" cy="22" rx="18" ry="18" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+    <ellipse cx="25" cy="22" rx="14" ry="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <!-- LDR pattern (squiggle) -->
+    <path d="M 11 22 Q 14 17 17 22 Q 20 27 23 22 Q 26 17 29 22 Q 32 27 35 22 Q 38 17 41 22" stroke="#4a5568" stroke-width="1.5" fill="none"/>
+    <!-- Light indicator -->
+    <text x="25" y="14" text-anchor="middle" fill="rgb(${brightness},${brightness},0)" font-size="10">☀</text>
+    <!-- Leads -->
+    <line x1="10" y1="22" x2="0" y2="32" stroke="#bbb" stroke-width="1.5"/>
+    <line x1="40" y1="22" x2="50" y2="32" stroke="#bbb" stroke-width="1.5"/>
+    <!-- Value -->
+    <text x="25" y="46" text-anchor="middle" fill="#94a3b8" font-size="7" font-family="monospace">${val}</text>
+  </svg>`;
+}
+
+function drawUltrasonic(comp) {
+  const dist = comp.state?.distance || 20;
+  const isActive = comp.state?.active || false;
+  const pct = Math.min(1, dist / 200);
+  const barW = Math.round(pct * 50);
+
+  const sonarWaves = [0,1,2].map(i => `
+    <ellipse cx="60" cy="28" rx="${8+i*10}" ry="${5+i*7}" fill="none" 
+      stroke="rgba(147,197,253,${0.6 - i*0.18})" stroke-width="${1.5 - i*0.3}">
+      <animate attributeName="rx" values="${8+i*10};${18+i*12};${8+i*10}" dur="${1+i*0.35}s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="${5+i*7};${12+i*8};${5+i*7}" dur="${1+i*0.35}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="${0.7-i*0.2};0;${0.7-i*0.2}" dur="${1+i*0.35}s" repeatCount="indefinite"/>
+    </ellipse>`).join('');
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 120 80">
+    <defs>
+      <linearGradient id="ussensor-${comp.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1d4ed8"/>
+        <stop offset="100%" stop-color="#1e3a8a"/>
+      </linearGradient>
+    </defs>
+    <!-- PCB board -->
+    <rect x="2" y="4" width="116" height="56" rx="4" fill="url(#ussensor-${comp.id})" stroke="#3b82f6" stroke-width="1.5"/>
+    <!-- PCB trace lines -->
+    <line x1="8" y1="54" x2="38" y2="54" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="52" y1="54" x2="82" y2="54" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3,2"/>
+    <!-- Label -->
+    <text x="60" y="15" text-anchor="middle" fill="#93c5fd" font-size="7.5" font-family="monospace" font-weight="bold">HC-SR04</text>
+
+    <!-- Sonar waves emanating right -->
+    ${sonarWaves}
+
+    <!-- Left transducer TX -->
+    <circle cx="28" cy="30" r="16" fill="#1f2937" stroke="#6b7280" stroke-width="2"/>
+    <circle cx="28" cy="30" r="12" fill="#111827" stroke="#374151" stroke-width="1.5"/>
+    <circle cx="28" cy="30" r="7" fill="#0a0a14"/>
+    <circle cx="28" cy="30" r="3" fill="#1e3a8a" stroke="#3b82f6" stroke-width="0.5"/>
+    <!-- TX label -->
+    <text x="28" y="50" text-anchor="middle" fill="#6b7280" font-size="5.5" font-family="monospace">TX</text>
+    <!-- TX outer ring -->
+    <circle cx="28" cy="30" r="15" fill="none" stroke="rgba(59,130,246,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Right transducer RX -->
+    <circle cx="92" cy="30" r="16" fill="#1f2937" stroke="#6b7280" stroke-width="2"/>
+    <circle cx="92" cy="30" r="12" fill="#111827" stroke="#374151" stroke-width="1.5"/>
+    <circle cx="92" cy="30" r="7" fill="#0a0a14"/>
+    <circle cx="92" cy="30" r="3" fill="#1e3a8a" stroke="#3b82f6" stroke-width="0.5"/>
+    <text x="92" y="50" text-anchor="middle" fill="#6b7280" font-size="5.5" font-family="monospace">RX</text>
+    <circle cx="92" cy="30" r="15" fill="none" stroke="rgba(59,130,246,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Mounting holes -->
+    <circle cx="8" cy="9" r="3" fill="none" stroke="#374151" stroke-width="1.5"/>
+    <circle cx="112" cy="9" r="3" fill="none" stroke="#374151" stroke-width="1.5"/>
+
+    <!-- Distance display panel -->
+    <rect x="40" y="16" width="40" height="16" rx="3" fill="#0f172a" stroke="#1e3a8a" stroke-width="1"/>
+    <text x="60" y="27" text-anchor="middle" fill="#00d4ff" font-size="8" font-family="monospace" font-weight="bold">${dist} cm</text>
+
+    <!-- Distance bar -->
+    <rect x="40" y="35" width="50" height="4" rx="2" fill="#1e3a8a"/>
+    <rect x="40" y="35" width="${barW}" height="4" rx="2" fill="#3b82f6">
+      <animate attributeName="width" values="${barW};${barW+2};${barW}" dur="1s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Pins with colored connectors -->
+    <rect x="10" y="60" width="8" height="14" rx="2" fill="#dc2626"/>
+    <rect x="24" y="60" width="8" height="14" rx="2" fill="#22c55e"/>
+    <rect x="38" y="60" width="8" height="14" rx="2" fill="#3b82f6"/>
+    <rect x="52" y="60" width="8" height="14" rx="2" fill="#222"/>
+    <text x="14" y="72" text-anchor="middle" fill="#fff" font-size="4.5" font-family="monospace">VCC</text>
+    <text x="28" y="72" text-anchor="middle" fill="#fff" font-size="4.5" font-family="monospace">TRG</text>
+    <text x="42" y="72" text-anchor="middle" fill="#fff" font-size="4.5" font-family="monospace">ECH</text>
+    <text x="56" y="72" text-anchor="middle" fill="#fff" font-size="4.5" font-family="monospace">GND</text>
+  </svg>`;
+}
+
+function drawDHT(comp) {
+  const temp = comp.state?.temp || 25;
+  const hum = comp.state?.humidity || 60;
+  const isActive = isSimRunning;
+  // Heat color interpolation
+  const t = Math.min(1, Math.max(0, (temp + 10) / 60));
+  const r = Math.round(t * 100 + 22);
+  const g = Math.round((1-t) * 155 + 78);
+
+  return `<svg width="${comp.w}" height="${comp.h}" viewBox="0 0 80 80" class="${isActive ? 'dht-active' : ''}">
+    <defs>
+      <linearGradient id="dhtbody-${comp.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#166534"/>
+        <stop offset="100%" stop-color="#052e16"/>
+      </linearGradient>
+      <linearGradient id="dhttempbar-${comp.id}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3b82f6"/>
+        <stop offset="50%" stop-color="#22c55e"/>
+        <stop offset="100%" stop-color="#ef4444"/>
+      </linearGradient>
+    </defs>
+    <!-- Body (pill shape) -->
+    <rect x="4" y="2" width="72" height="54" rx="28" fill="url(#dhtbody-${comp.id})" stroke="#22c55e" stroke-width="1.5"/>
+    <!-- Top shine -->
+    <rect x="10" y="4" width="60" height="12" rx="12" fill="rgba(255,255,255,0.08)"/>
+    <!-- Label -->
+    <text x="40" y="17" text-anchor="middle" fill="#86efac" font-size="9.5" font-family="monospace" font-weight="bold">DHT11</text>
+    <!-- Humidity sensing holes grid -->
+    ${Array(3).fill(0).map((_,i)=>Array(4).fill(0).map((_,j)=>`
+      <rect x="${14+j*13}" y="${22+i*7}" width="9" height="4" rx="1.5" fill="rgba(0,0,0,0.55)" stroke="#166534" stroke-width="0.5"/>
+    `).join('')).join('')}
+    <!-- Scanning line (animation) -->
+    ${isActive ? `<line x1="10" y1="0" x2="10" y2="56" stroke="rgba(74,222,128,0.5)" stroke-width="2">
+      <animate attributeName="x1" values="10;70;10" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="10;70;10" dur="2s" repeatCount="indefinite"/>
+    </line>` : ''}
+    <!-- Readout panel -->
+    <rect x="4" y="56" width="72" height="20" rx="4" fill="#0a1a0a" stroke="#166534" stroke-width="1"/>
+    <!-- Temp bar -->
+    <rect x="8" y="60" width="30" height="6" rx="2" fill="#1a2a1a"/>
+    <rect x="8" y="60" width="${Math.round(t * 30)}" height="6" rx="2" fill="url(#dhttempbar-${comp.id})"/>
+    <!-- Humidity bar -->
+    <rect x="42" y="60" width="30" height="6" rx="2" fill="#1a2a1a"/>
+    <rect x="42" y="60" width="${Math.round(hum/100 * 30)}" height="6" rx="2" fill="#3b82f6"/>
+    <!-- Values -->
+    <text x="23" y="73" text-anchor="middle" fill="rgb(${r},${g},80)" font-size="7" font-family="monospace" font-weight="bold">${temp}°C</text>
+    <text x="57" y="73" text-anchor="middle" fill="#60a5fa" font-size="7" font-family="monospace" font-weight="bold">${hum}%</text>
+    <!-- Pins -->
+    <line x1="16" y1="76" x2="16" y2="88" stroke="#ef4444" stroke-width="2"/>
+    <line x1="40" y1="76" x2="40" y2="88" stroke="#ffd700" stroke-width="2"/>
+    <line x1="64" y1="76" x2="64" y2="88" stroke="#555" stroke-width="2"/>
+    <rect x="13" y="86" width="6" height="4" rx="1" fill="#ffd700"/>
+    <rect x="37" y="86" width="6" height="4" rx="1" fill="#ffd700"/>
+    <rect x="61" y="86" width="6" height="4" rx="1" fill="#ffd700"/>
+  </svg>`;
+}
+
+// ============================================================
+// CANVAS COMPONENT MANAGEMENT
+// ============================================================
+function spawnComponent(type, x, y) {
+  const def = COMPONENT_DEFS[type];
+  if (!def) return;
+
+  const comp = {
+    id: nextId++,
+    type,
+    x, y,
+    w: def.width || 80,
+    h: def.height || 60,
+    label: def.label || type,
+    state: getDefaultState(type),
+    pins: def.pins ? JSON.parse(JSON.stringify(def.pins)) : []
+  };
+
+  components.push(comp);
+
+  const el = createComponentElement(comp);
+  document.getElementById('components-layer').appendChild(el);
+  document.getElementById('canvas-hint').style.display = 'none';
+
+  // Attach interactive behaviors
+  attachComponentBehavior(comp, el);
+
+  updatePinInfoTable();
+  return comp;
+}
+
+function getDefaultState(type) {
+  switch(type) {
+    case 'led_red': case 'led_green': case 'led_blue': return { on: false };
+    case 'button': return { pressed: false };
+    case 'buzzer': return { on: false };
+    case 'servo': return { angle: 90 };
+    case 'potentiometer': return { value: 2048 };
+    case 'ldr': return { value: 2048 };
+    case 'ultrasonic': return { distance: 20 };
+    case 'dht11': return { temp: 25, humidity: 60 };
+    case 'motor': return { on: false, speed: 0 };
+    default: return {};
+  }
+}
+
+function attachComponentBehavior(comp, el) {
+  if (comp.type === 'button') {
+    const btnEl = el.querySelector('ellipse') || el;
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('pin-dot')) return;
+      if (currentTool !== 'select') return;
+      comp.state.pressed = true;
+      updateComponentVisual(comp.id);
+      serialLog(`Button ${comp.id} PRESSED`, 'info');
+    });
+    el.addEventListener('mouseup', () => {
+      if (comp.state.pressed) {
+        comp.state.pressed = false;
+        updateComponentVisual(comp.id);
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if (comp.state.pressed) {
+        comp.state.pressed = false;
+        updateComponentVisual(comp.id);
+      }
+    });
+  }
+
+  if (comp.type === 'potentiometer') {
+    addSensorSlider(comp, el, 'value', 0, 4095, 'Value');
+  }
+  if (comp.type === 'ldr') {
+    addSensorSlider(comp, el, 'value', 0, 4095, 'Light');
+  }
+  if (comp.type === 'ultrasonic') {
+    addSensorSlider(comp, el, 'distance', 2, 400, 'Dist(cm)');
+  }
+  if (comp.type === 'dht11') {
+    addDHTControls(comp, el);
+  }
+}
+
+function addSensorSlider(comp, el, prop, min, max, label) {
+  const popup = document.createElement('div');
+  popup.className = 'sensor-popup';
+  popup.style.pointerEvents = 'auto';
+  popup.innerHTML = `
+    <label style="color:var(--text2);font-size:10px;font-weight:600">${label}: <span id="sv-${comp.id}-${prop}">${comp.state[prop]}</span></label>
+    <input type="range" min="${min}" max="${max}" value="${comp.state[prop]}" 
+      style="width:100%;margin:4px 0;accent-color:var(--accent)"
+      oninput="updateSensorVal(${comp.id},'${prop}',this.value)">
+  `;
+  popup.addEventListener('mousedown', e => e.stopPropagation());
+  el.appendChild(popup);
+}
+
+function addDHTControls(comp, el) {
+  const popup = document.createElement('div');
+  popup.className = 'sensor-popup';
+  popup.style.pointerEvents = 'auto';
+  popup.style.minWidth = '170px';
+  popup.innerHTML = `
+    <label>Temp: <span id="sv-${comp.id}-temp">${comp.state.temp}</span>°C</label>
+    <input type="range" min="-10" max="50" value="${comp.state.temp}" style="width:100%;accent-color:var(--accent)"
+      oninput="updateSensorVal(${comp.id},'temp',this.value)">
+    <label>Humidity: <span id="sv-${comp.id}-humidity">${comp.state.humidity}</span>%</label>
+    <input type="range" min="0" max="100" value="${comp.state.humidity}" style="width:100%;accent-color:var(--accent)"
+      oninput="updateSensorVal(${comp.id},'humidity',this.value)">
+  `;
+  popup.addEventListener('mousedown', e => e.stopPropagation());
+  el.appendChild(popup);
+}
+
+function updateSensorVal(compId, prop, val) {
+  const comp = components.find(c => c.id == compId);
+  if (!comp) return;
+  comp.state[prop] = parseFloat(val);
+  const span = document.getElementById(`sv-${compId}-${prop}`);
+  if (span) span.textContent = val;
+  updateComponentVisual(compId);
+}
+
+function updateComponentVisual(compId) {
+  const comp = components.find(c => c.id == compId);
+  if (!comp) return;
+  const el = document.getElementById('comp-' + compId);
+  if (!el) return;
+
+  const svgEl = el.querySelector('svg');
+  if (svgEl) {
+    const newSVG = getComponentSVG(comp);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = newSVG;
+    const newSvgEl = tmp.querySelector('svg');
+    if (newSvgEl) {
+      svgEl.innerHTML = newSvgEl.innerHTML;
+      // Copy attributes
+      Array.from(newSvgEl.attributes).forEach(a => {
+        if (a.name !== 'id') svgEl.setAttribute(a.name, a.value);
+      });
+      if (newSvgEl.style.cssText) svgEl.style.cssText = newSvgEl.style.cssText;
+    }
+  }
+}
+
+// ============================================================
+// DRAG & DROP
+// ============================================================
+let dragComp = null;
+let dragOffX = 0, dragOffY = 0;
+
+function allowDrop(e) { e.preventDefault(); }
+
+function dropComponent(e) {
+  e.preventDefault();
+  const type = e.dataTransfer.getData('type');
+  if (!type) return;
+  const rect = document.getElementById('canvas-area').getBoundingClientRect();
+  const x = e.clientX - rect.left - 40;
+  const y = e.clientY - rect.top - 40;
+  spawnComponent(type, Math.max(10, x), Math.max(10, y));
+}
+
+// Drag from sidebar
+document.querySelectorAll('.comp-item[draggable]').forEach(el => {
+  el.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('type', el.dataset.type);
+  });
+});
+
+function startDrag(e, compId) {
+  const comp = components.find(c => c.id === compId);
+  if (!comp) return;
+  dragComp = comp;
+  const el = document.getElementById('comp-' + compId);
+  const rect = el.getBoundingClientRect();
+  dragOffX = e.clientX - rect.left;
+  dragOffY = e.clientY - rect.top;
+  el.classList.add('dragging');
+  e.preventDefault();
+
+  const move = (me) => {
+    const cRect = document.getElementById('canvas-area').getBoundingClientRect();
+    const nx = me.clientX - cRect.left - dragOffX;
+    const ny = me.clientY - cRect.top - dragOffY;
+    comp.x = Math.max(0, nx);
+    comp.y = Math.max(0, ny);
+    el.style.left = comp.x + 'px';
+    el.style.top = comp.y + 'px';
+    redrawWires();
+  };
+  const up = () => {
+    el.classList.remove('dragging');
+    dragComp = null;
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', up);
+  };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+
+  selectComponent(compId);
+}
+
+function selectComponent(compId) {
+  document.querySelectorAll('.canvas-component').forEach(el => el.classList.remove('selected'));
+  if (compId) {
+    const el = document.getElementById('comp-' + compId);
+    if (el) el.classList.add('selected');
+  }
+  selectedComponent = compId;
+}
+
+function deleteComponent(compId) {
+  // Remove connected wires
+  wires = wires.filter(w => {
+    if (w.fromComp === compId || w.toComp === compId) {
+      const wireEl = document.getElementById('wire-' + w.id);
+      if (wireEl) wireEl.remove();
+      return false;
+    }
+    return true;
+  });
+  // Remove component
+  components = components.filter(c => c.id !== compId);
+  const el = document.getElementById('comp-' + compId);
+  if (el) el.remove();
+  updatePinInfoTable();
+}
+
+// ============================================================
+// WIRE SYSTEM
+// ============================================================
+let wireDrawing = false;
+let wireFrom = null;
+let tempWireLine = null;
+let wireCount = 0;
+
+const WIRE_COLORS = ['#00d4ff','#22c55e','#f97316','#a855f7','#ef4444','#eab308','#ec4899'];
+
+function selectTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-item').forEach(el => el.classList.remove('active'));
+  if (tool === 'wire') document.getElementById('wire-tool').classList.add('active');
+  if (tool === 'delete') document.getElementById('delete-tool').classList.add('active');
+  document.getElementById('canvas-area').style.cursor = tool === 'wire' ? 'crosshair' : tool === 'delete' ? 'not-allowed' : 'default';
+}
+
+function handlePinClick(compId, pinId, e) {
+  if (currentTool !== 'wire' && currentTool !== 'select') return;
+
+  if (!wireDrawing) {
+    // Start wire
+    wireFrom = { compId, pinId };
+    wireDrawing = true;
+    const pinEl = document.getElementById(`pin-${compId}-${pinId}`);
+    if (pinEl) pinEl.classList.add('active-wire');
+    serialLog(`Wire started from ${getCompLabel(compId)}.${pinId}  — click another pin to connect`, 'info');
+
+    // Create temp drawing line
+    if (!tempWireLine) {
+      tempWireLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      tempWireLine.setAttribute('stroke', '#00d4ff');
+      tempWireLine.setAttribute('stroke-width', '2');
+      tempWireLine.setAttribute('stroke-dasharray', '6,3');
+      tempWireLine.setAttribute('fill', 'none');
+      tempWireLine.setAttribute('opacity', '0.8');
+      document.getElementById('sim-canvas').appendChild(tempWireLine);
+    }
+  } else {
+    // End wire
+    if (wireFrom.compId === compId && wireFrom.pinId === pinId) {
+      // Clicked same pin — cancel
+      cancelWireDrawing();
+      return;
+    }
+
+    // Prevent wiring a component to itself
+    if (wireFrom.compId === compId) {
+      serialLog('Cannot connect a component to itself.', 'warn');
+      cancelWireDrawing();
+      return;
+    }
+
+    // Check duplicate connection
+    const exists = wires.find(w =>
+      (w.fromComp === wireFrom.compId && w.fromPin === wireFrom.pinId && w.toComp === compId && w.toPin === pinId) ||
+      (w.toComp === wireFrom.compId && w.toPin === wireFrom.pinId && w.fromComp === compId && w.fromPin === pinId)
+    );
+    if (exists) {
+      serialLog('These pins are already connected.', 'warn');
+      cancelWireDrawing();
+      return;
+    }
+
+    createWire(wireFrom.compId, wireFrom.pinId, compId, pinId);
+    cancelWireDrawing();
+  }
+}
+
+function cancelWireDrawing() {
+  wireDrawing = false;
+  if (wireFrom) {
+    const pinEl = document.getElementById(`pin-${wireFrom.compId}-${wireFrom.pinId}`);
+    if (pinEl) pinEl.classList.remove('active-wire');
+  }
+  wireFrom = null;
+  if (tempWireLine) {
+    tempWireLine.remove();
+    tempWireLine = null;
+  }
+}
+
+function createWire(fromComp, fromPin, toComp, toPin) {
+  const id = ++wireCount;
+  const color = WIRE_COLORS[id % WIRE_COLORS.length];
+  const wire = { id, fromComp, fromPin, toComp, toPin, color };
+  wires.push(wire);
+
+  drawWire(wire);
+  updatePinConnected(fromComp, fromPin, true);
+  updatePinConnected(toComp, toPin, true);
+  serialLog(`Connected: ${getCompLabel(fromComp)}.${fromPin} → ${getCompLabel(toComp)}.${toPin}`, 'info');
+}
+
+function drawWire(wire) {
+  const from = getPinPosition(wire.fromComp, wire.fromPin);
+  const to = getPinPosition(wire.toComp, wire.toPin);
+  if (!from || !to) return;
+
+  const svg = document.getElementById('sim-canvas');
+  let el = document.getElementById('wire-' + wire.id);
+  if (!el) {
+    el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    el.id = 'wire-' + wire.id;
+    svg.appendChild(el);
+  }
+  el.innerHTML = '';
+
+  const d = createWirePath(from, to);
+
+  // Shadow/glow layer
+  const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  glow.setAttribute('d', d);
+  glow.setAttribute('stroke', wire.color);
+  glow.setAttribute('stroke-width', '6');
+  glow.setAttribute('fill', 'none');
+  glow.setAttribute('opacity', '0.15');
+  glow.setAttribute('stroke-linecap', 'round');
+
+  // Main wire
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', wire.color);
+  path.setAttribute('stroke-width', '2.5');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('stroke-linejoin', 'round');
+
+  // Animated flow overlay when sim running
+  const flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  flow.setAttribute('d', d);
+  flow.setAttribute('stroke', '#ffffff');
+  flow.setAttribute('stroke-width', '1.5');
+  flow.setAttribute('fill', 'none');
+  flow.setAttribute('stroke-linecap', 'round');
+  flow.setAttribute('stroke-dasharray', '6 10');
+  flow.setAttribute('opacity', isSimRunning ? '0.5' : '0');
+  if (isSimRunning) {
+    flow.style.animation = 'wireFlow 0.6s linear infinite';
+  }
+  flow.id = 'wire-flow-' + wire.id;
+
+  // Hitbox for clicking to delete
+  const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  hitbox.setAttribute('d', d);
+  hitbox.setAttribute('stroke', 'transparent');
+  hitbox.setAttribute('stroke-width', '12');
+  hitbox.setAttribute('fill', 'none');
+  hitbox.style.cursor = 'pointer';
+  hitbox.addEventListener('click', () => {
+    if (currentTool === 'delete') deleteWire(wire.id);
+  });
+
+  el.appendChild(glow);
+  el.appendChild(path);
+  el.appendChild(flow);
+  el.appendChild(hitbox);
+}
+
+function createWirePath(from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const cx1 = from.x + dx * 0.5;
+  const cy1 = from.y;
+  const cx2 = from.x + dx * 0.5;
+  const cy2 = to.y;
+  return `M ${from.x} ${from.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${to.x} ${to.y}`;
+}
+
+function getPinPosition(compId, pinId) {
+  const comp = components.find(c => c.id === compId);
+  if (!comp) return null;
+  const def = COMPONENT_DEFS[comp.type];
+  if (!def || !def.pins) return null;
+  const pin = def.pins.find(p => p.id === pinId);
+  if (!pin) return null;
+  return { x: comp.x + pin.x, y: comp.y + pin.y };
+}
+
+function redrawWires() {
+  wires.forEach(w => drawWire(w));
+}
+
+function deleteWire(wireId) {
+  const wire = wires.find(w => w.id === wireId);
+  if (wire) {
+    wires = wires.filter(w => w.id !== wireId);
+    const el = document.getElementById('wire-' + wireId);
+    if (el) el.remove();
+    // Update pin visual state — check if pins still have other wires
+    const fromStillConnected = wires.some(w => (w.fromComp === wire.fromComp && w.fromPin === wire.fromPin) || (w.toComp === wire.fromComp && w.toPin === wire.fromPin));
+    const toStillConnected   = wires.some(w => (w.fromComp === wire.toComp   && w.fromPin === wire.toPin)   || (w.toComp === wire.toComp   && w.toPin === wire.toPin));
+    updatePinConnected(wire.fromComp, wire.fromPin, fromStillConnected);
+    updatePinConnected(wire.toComp,   wire.toPin,   toStillConnected);
+    serialLog(`Wire disconnected: ${getCompLabel(wire.fromComp)}.${wire.fromPin} ↔ ${getCompLabel(wire.toComp)}.${wire.toPin}`, 'warn');
+  }
+}
+
+function updatePinConnected(compId, pinId, connected) {
+  const pinEl = document.getElementById(`pin-${compId}-${pinId}`);
+  if (pinEl) {
+    if (connected) pinEl.classList.add('connected');
+    else pinEl.classList.remove('connected');
+  }
+}
+
+function getCompLabel(compId) {
+  const comp = components.find(c => c.id === compId);
+  return comp ? (comp.label || comp.type) : 'Unknown';
+}
+
+// Mouse move for temp wire
+document.getElementById('canvas-area').addEventListener('mousemove', (e) => {
+  if (!wireDrawing || !wireFrom || !tempWireLine) return;
+  const from = getPinPosition(wireFrom.compId, wireFrom.pinId);
+  if (!from) return;
+  const rect = document.getElementById('canvas-area').getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const d = createWirePath(from, { x: mx, y: my });
+  tempWireLine.setAttribute('d', d);
+});
+
+document.getElementById('canvas-area').addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cancelWireDrawing();
+});
+
+// ============================================================
+// CONTEXT MENU
+// ============================================================
+function showContextMenu(e, compId) {
+  contextTarget = compId;
+  const menu = document.getElementById('context-menu');
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  selectComponent(compId);
+}
+function hideContextMenu() {
+  document.getElementById('context-menu').style.display = 'none';
+  contextTarget = null;
+}
+function ctxRotate() {
+  // Simple rotation not fully implemented in SVG mode, just log
+  serialLog('Rotation not supported in this version', 'warn');
+  hideContextMenu();
+}
+function ctxDelete() {
+  if (contextTarget) deleteComponent(contextTarget);
+  hideContextMenu();
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#context-menu')) hideContextMenu();
+});
+
+function canvasClick(e) {
+  if (!e.target.closest('.canvas-component')) {
+    selectComponent(null);
+  }
+}
+
+// ============================================================
+// SIMULATION ENGINE
+// ============================================================
+const EXAMPLES = {
+  blink: `void setup() {
+  Serial.begin(115200);
+  pinMode(5, OUTPUT);
+  Serial.println("Blink LED started on GPIO 5");
+}
+
+void loop() {
+  digitalWrite(5, HIGH);
+  Serial.println("LED ON");
+  delay(500);
+  digitalWrite(5, LOW);
+  Serial.println("LED OFF");
+  delay(500);
+}`,
+  button_led: `void setup() {
+  Serial.begin(115200);
+  pinMode(4, INPUT);
+  pinMode(5, OUTPUT);
+  Serial.println("Button-LED ready. Press button on GPIO 4.");
+}
+
+void loop() {
+  int btn = digitalRead(4);
+  if (btn == HIGH) {
+    digitalWrite(5, HIGH);
+    Serial.println("Button pressed - LED ON");
+  } else {
+    digitalWrite(5, LOW);
+  }
+  delay(50);
+}`,
+  buzzer: `void setup() {
+  Serial.begin(115200);
+  pinMode(18, OUTPUT);
+  Serial.println("Buzzer demo on GPIO 18");
+}
+
+void loop() {
+  digitalWrite(18, HIGH);
+  Serial.println("Beep!");
+  delay(200);
+  digitalWrite(18, LOW);
+  delay(800);
+}`,
+  servo_sweep: `void setup() {
+  Serial.begin(115200);
+  Serial.println("Servo sweep on GPIO 13");
+}
+
+void loop() {
+  for (int angle = 0; angle <= 180; angle += 10) {
+    servoWrite(13, angle);
+    Serial.print("Servo angle: ");
+    Serial.println(angle);
+    delay(100);
+  }
+  for (int angle = 180; angle >= 0; angle -= 10) {
+    servoWrite(13, angle);
+    delay(100);
+  }
+}`,
+  potentiometer: `void setup() {
+  Serial.begin(115200);
+  Serial.println("Potentiometer read on GPIO 34");
+}
+
+void loop() {
+  int val = analogRead(34);
+  Serial.print("Analog value: ");
+  Serial.println(val);
+  delay(200);
+}`,
+  ultrasonic: `void setup() {
+  Serial.begin(115200);
+  Serial.println("Ultrasonic on TRIG:5 ECHO:18");
+}
+
+void loop() {
+  int dist = getDistance(5, 18);
+  Serial.print("Distance: ");
+  Serial.print(dist);
+  Serial.println(" cm");
+  delay(500);
+}`,
+  dht: `void setup() {
+  Serial.begin(115200);
+  Serial.println("DHT11 on GPIO 4");
+}
+
+void loop() {
+  float temp = dhtReadTemp(4);
+  float hum = dhtReadHumidity(4);
+  Serial.print("Temp: ");
+  Serial.print(temp);
+  Serial.print("C  Humidity: ");
+  Serial.print(hum);
+  Serial.println("%");
+  delay(1000);
+}`,
+  ldr_led: `void setup() {
+  Serial.begin(115200);
+  pinMode(5, OUTPUT);
+  Serial.println("LDR on GPIO 34, LED on GPIO 5");
+}
+
+void loop() {
+  int light = analogRead(34);
+  Serial.print("Light: ");
+  Serial.println(light);
+  if (light < 1000) {
+    digitalWrite(5, HIGH);
+    Serial.println("Dark! LED ON");
+  } else {
+    digitalWrite(5, LOW);
+  }
+  delay(300);
+}`,
+  motor_ctrl: `void setup() {
+  Serial.begin(115200);
+  pinMode(5, OUTPUT);
+  Serial.println("DC Motor on GPIO 5");
+}
+
+void loop() {
+  digitalWrite(5, HIGH);
+  Serial.println("Motor SPINNING...");
+  delay(2000);
+  digitalWrite(5, LOW);
+  Serial.println("Motor STOPPED");
+  delay(1000);
+}`,
+  multi_blink: `void setup() {
+  Serial.begin(115200);
+  pinMode(5, OUTPUT);
+  pinMode(18, OUTPUT);
+  pinMode(19, OUTPUT);
+  Serial.println("Multi LED blink");
+}
+
+void loop() {
+  digitalWrite(5, HIGH);
+  delay(200);
+  digitalWrite(5, LOW);
+  digitalWrite(18, HIGH);
+  delay(200);
+  digitalWrite(18, LOW);
+  digitalWrite(19, HIGH);
+  delay(200);
+  digitalWrite(19, LOW);
+}`
+};
+
+function loadExample(name) {
+  const code = EXAMPLES[name];
+  if (code) {
+    document.getElementById('code-editor').value = code;
+    switchTab('code');
+    serialLog(`Loaded example: ${name}`, 'info');
+  }
+}
+
+// ============================================================
+// WIRING VERIFICATION ENGINE
+// ============================================================
+// ============================================================
+// WIRING VERIFICATION ENGINE  (strict — blocks run on any issue)
+// ============================================================
+
+/**
+ * Returns { passed: bool, errors: string[], warnings: string[] }
+ * passed = true  → all wires are correct, simulation may start
+ * passed = false → something is wrong, simulation is BLOCKED
+ * errors   = hard wiring mistakes (must fix)
+ * warnings = advisory issues (still block run — user must review)
+ */
+function verifyWiring(code) {
+  const errors   = [];
+  const warnings = [];
+  const esp = components.find(c => c.type === 'esp32');
+
+  // ── 1. No components at all ──────────────────────────────────
+  if (components.length === 0) {
+    errors.push('Canvas is empty. Drag an ESP32 and components onto the canvas first.');
+    return { passed: false, errors, warnings };
+  }
+
+  // ── 2. No ESP32 on canvas ────────────────────────────────────
+  if (!esp) {
+    errors.push('No ESP32 board found on canvas. Every circuit needs an ESP32.');
+    return { passed: false, errors, warnings };
+  }
+
+  // ── 3. Extract pins referenced in code ──────────────────────
+  const usedOutputPins = new Set();
+  const usedInputPins  = new Set();
+  const usedAnalogPins = new Set();
+  const usedServoPins  = new Set();
+  const usedTonePins   = new Set();
+
+  [...code.matchAll(/\bdigitalWrite\s*\(\s*(\d+)/g)].forEach(m => usedOutputPins.add(+m[1]));
+  [...code.matchAll(/\bpinMode\s*\(\s*(\d+)\s*,\s*"OUTPUT"/g)].forEach(m => usedOutputPins.add(+m[1]));
+  [...code.matchAll(/\bdigitalRead\s*\(\s*(\d+)/g)].forEach(m => usedInputPins.add(+m[1]));
+  [...code.matchAll(/\banalogRead\s*\(\s*(\d+)/g)].forEach(m => usedAnalogPins.add(+m[1]));
+  [...code.matchAll(/\bservoWrite\s*\(\s*(\d+)/g)].forEach(m => usedServoPins.add(+m[1]));
+  [...code.matchAll(/\btone\s*\(\s*(\d+)/g)].forEach(m => usedTonePins.add(+m[1]));
+  [...code.matchAll(/\bgetDistance\s*\(\s*(\d+)\s*,\s*(\d+)/g)].forEach(m => {
+    usedOutputPins.add(+m[1]); usedInputPins.add(+m[2]);
+  });
+  [...code.matchAll(/\bdhtRead(?:Temp|Humidity)\s*\(\s*(\d+)/g)].forEach(m => usedInputPins.add(+m[1]));
+
+  // ── 4. Build ESP32-connected-pin map ─────────────────────────
+  // espPinMap: espPinId(string) → [{comp, compPin}]
+  const espPinMap = new Map();
+  wires.forEach(w => {
+    let espPinId = null, otherCompId = null, otherPinId = null;
+    if (w.fromComp === esp.id) {
+      espPinId = w.fromPin; otherCompId = w.toComp; otherPinId = w.toPin;
+    } else if (w.toComp === esp.id) {
+      espPinId = w.toPin; otherCompId = w.fromComp; otherPinId = w.fromPin;
+    }
+    if (!espPinId) return;
+    const other = components.find(c => c.id === otherCompId);
+    if (!other) return;
+    if (!espPinMap.has(espPinId)) espPinMap.set(espPinId, []);
+    espPinMap.get(espPinId).push({ comp: other, compPin: otherPinId });
+  });
+
+  // Also build through-resistor connections
+  // resistorMap: resistorId → [{comp, compPin}] of what's on the other end
+  const resistorOtherEnd = new Map();
+  wires.forEach(w => {
+    const fromComp = components.find(c => c.id === w.fromComp);
+    const toComp   = components.find(c => c.id === w.toComp);
+    if (fromComp && fromComp.type === 'resistor') {
+      if (!resistorOtherEnd.has(fromComp.id)) resistorOtherEnd.set(fromComp.id, []);
+      if (toComp) resistorOtherEnd.get(fromComp.id).push({ comp: toComp, compPin: w.toPin });
+    }
+    if (toComp && toComp.type === 'resistor') {
+      if (!resistorOtherEnd.has(toComp.id)) resistorOtherEnd.set(toComp.id, []);
+      if (fromComp) resistorOtherEnd.get(toComp.id).push({ comp: fromComp, compPin: w.fromPin });
+    }
+  });
+
+  // Expand espPinMap through resistors
+  const expandedEspPinMap = new Map(espPinMap);
+  espPinMap.forEach((conns, pinId) => {
+    conns.forEach(({ comp, compPin }) => {
+      if (comp.type === 'resistor') {
+        const others = resistorOtherEnd.get(comp.id) || [];
+        others.forEach(({ comp: c2, compPin: cp2 }) => {
+          if (c2.type !== 'esp32') {
+            if (!expandedEspPinMap.has(pinId)) expandedEspPinMap.set(pinId, []);
+            expandedEspPinMap.get(pinId).push({ comp: c2, compPin: cp2 });
+          }
+        });
+      }
+    });
+  });
+
+  const isPinWired = (pin) => expandedEspPinMap.has(String(pin)) && expandedEspPinMap.get(String(pin)).length > 0;
+  const getConns   = (pin) => expandedEspPinMap.get(String(pin)) || [];
+
+  // ── 5. Code ↔ Canvas cross-check ────────────────────────────
+
+  // digitalWrite pins
+  usedOutputPins.forEach(pin => {
+    if (!isPinWired(pin)) {
+      errors.push(`GPIO ${pin} used in digitalWrite() but nothing is connected to it on canvas.`);
+    }
+  });
+
+  // digitalRead pins
+  usedInputPins.forEach(pin => {
+    if (!isPinWired(pin)) {
+      warnings.push(`GPIO ${pin} used in digitalRead() but nothing is connected to it. Result will always be 0.`);
+    }
+  });
+
+  // analogRead pins
+  const ANALOG_OK = new Set([32,33,34,35,36,39,25,26,27]);
+  usedAnalogPins.forEach(pin => {
+    if (!ANALOG_OK.has(pin)) {
+      errors.push(`GPIO ${pin} is NOT an ADC pin. Use GPIO 34,35,36,39,32,33,25,26,27 for analogRead.`);
+    } else if (!isPinWired(pin)) {
+      warnings.push(`GPIO ${pin} used in analogRead() but no sensor is connected to it.`);
+    } else {
+      const hasSensor = getConns(pin).some(({ comp }) => ['potentiometer','ldr'].includes(comp.type));
+      if (!hasSensor) {
+        warnings.push(`GPIO ${pin} used in analogRead() but the connected component is not an analog sensor (Potentiometer or LDR).`);
+      }
+    }
+  });
+
+  // servoWrite pins
+  usedServoPins.forEach(pin => {
+    if (!isPinWired(pin)) {
+      errors.push(`GPIO ${pin} used in servoWrite() but no Servo is connected to it.`);
+    } else {
+      const hasServo = getConns(pin).some(({ comp }) => comp.type === 'servo');
+      if (!hasServo) errors.push(`GPIO ${pin} used in servoWrite() but the connected component is not a Servo.`);
+    }
+  });
+
+  // tone() pins
+  usedTonePins.forEach(pin => {
+    if (!isPinWired(pin)) {
+      errors.push(`GPIO ${pin} used in tone() but no Buzzer is connected to it.`);
+    } else {
+      const hasBuzzer = getConns(pin).some(({ comp }) => comp.type === 'buzzer');
+      if (!hasBuzzer) errors.push(`GPIO ${pin} used in tone() but the connected component is not a Buzzer.`);
+    }
+  });
+
+  // ── 6. Per-component wiring rules ────────────────────────────
+
+  // LEDs
+  components.filter(c => ['led_red','led_green','led_blue'].includes(c.type)).forEach(led => {
+    const ledWires = wires.filter(w => w.fromComp === led.id || w.toComp === led.id);
+    let anodeWired = false, cathodeWired = false, resistorOnAnode = false;
+
+    ledWires.forEach(w => {
+      const isFrom = w.fromComp === led.id;
+      const myPin  = isFrom ? w.fromPin : w.toPin;
+      const otherId = isFrom ? w.toComp : w.fromComp;
+      const other  = components.find(c => c.id === otherId);
+
+      if (myPin === 'anode') {
+        anodeWired = true;
+        if (other && other.type === 'resistor') resistorOnAnode = true;
+        // Also check if anode goes through resistor to ESP32
+        if (other && other.type === 'resistor') {
+          const resWires = wires.filter(w2 => (w2.fromComp === other.id || w2.toComp === other.id) && w2.id !== w.id);
+          resWires.forEach(rw => {
+            const resOtherId = rw.fromComp === other.id ? rw.toComp : rw.fromComp;
+            const resOther   = components.find(c => c.id === resOtherId);
+            if (resOther && resOther.type === 'esp32') resistorOnAnode = true;
+          });
+        }
+      }
+      if (myPin === 'cathode') {
+        cathodeWired = true;
+        // Cathode must connect to GND
+        if (other && other.type === 'esp32') {
+          const espPinId = isFrom ? w.toPin : w.fromPin;
+          if (espPinId !== 'GND1' && espPinId !== 'GND2') {
+            errors.push(`LED ${led.id} cathode (K−) connects to ESP32 GPIO ${espPinId} but must connect to GND.`);
+          }
+        }
+      }
+    });
+
+    if (!anodeWired)   errors.push(`LED ${led.id} anode (A+) is not connected.`);
+    if (!cathodeWired) errors.push(`LED ${led.id} cathode (K−) is not connected to GND.`);
+    if (anodeWired && !resistorOnAnode) {
+      warnings.push(`LED ${led.id} has no current-limiting resistor in series. In a real circuit this would burn the LED.`);
+    }
+  });
+
+  // Buzzer
+  components.filter(c => c.type === 'buzzer').forEach(bz => {
+    const hasPos = wires.some(w => (w.fromComp===bz.id && w.fromPin==='pos')||(w.toComp===bz.id && w.toPin==='pos'));
+    const hasNeg = wires.some(w => (w.fromComp===bz.id && w.fromPin==='neg')||(w.toComp===bz.id && w.toPin==='neg'));
+    if (!hasPos) errors.push(`Buzzer ${bz.id} (+) not connected to an ESP32 GPIO.`);
+    if (!hasNeg) errors.push(`Buzzer ${bz.id} (−) not connected to GND.`);
+  });
+
+  // Servo
+  components.filter(c => c.type === 'servo').forEach(sv => {
+    const hasSig = wires.some(w => (w.fromComp===sv.id && w.fromPin==='sig')||(w.toComp===sv.id && w.toPin==='sig'));
+    const hasVcc = wires.some(w => (w.fromComp===sv.id && w.fromPin==='vcc')||(w.toComp===sv.id && w.toPin==='vcc'));
+    const hasGnd = wires.some(w => (w.fromComp===sv.id && w.fromPin==='gnd')||(w.toComp===sv.id && w.toPin==='gnd'));
+    if (!hasSig) errors.push(`Servo ${sv.id} SIG pin not connected to an ESP32 GPIO.`);
+    if (!hasVcc) errors.push(`Servo ${sv.id} VCC pin not connected to 3V3 power.`);
+    if (!hasGnd) errors.push(`Servo ${sv.id} GND pin not connected to GND.`);
+  });
+
+  // Ultrasonic HC-SR04
+  components.filter(c => c.type === 'ultrasonic').forEach(us => {
+    const has = (pin) => wires.some(w => (w.fromComp===us.id && w.fromPin===pin)||(w.toComp===us.id && w.toPin===pin));
+    if (!has('vcc'))  errors.push(`HC-SR04 ${us.id} VCC not connected to 3V3 or 5V.`);
+    if (!has('trig')) errors.push(`HC-SR04 ${us.id} TRIG not connected to an ESP32 GPIO.`);
+    if (!has('echo')) errors.push(`HC-SR04 ${us.id} ECHO not connected to an ESP32 GPIO.`);
+    if (!has('gnd'))  errors.push(`HC-SR04 ${us.id} GND not connected to GND.`);
+  });
+
+  // DHT11
+  components.filter(c => c.type === 'dht11').forEach(dh => {
+    const has = (pin) => wires.some(w => (w.fromComp===dh.id && w.fromPin===pin)||(w.toComp===dh.id && w.toPin===pin));
+    if (!has('vcc'))  errors.push(`DHT11 ${dh.id} VCC not connected to 3V3 power.`);
+    if (!has('data')) errors.push(`DHT11 ${dh.id} DATA not connected to an ESP32 GPIO.`);
+    if (!has('gnd'))  errors.push(`DHT11 ${dh.id} GND not connected to GND.`);
+  });
+
+  // DC Motor
+  components.filter(c => c.type === 'motor').forEach(mt => {
+    const hasPos = wires.some(w => (w.fromComp===mt.id && w.fromPin==='pos')||(w.toComp===mt.id && w.toPin==='pos'));
+    const hasNeg = wires.some(w => (w.fromComp===mt.id && w.fromPin==='neg')||(w.toComp===mt.id && w.toPin==='neg'));
+    if (!hasPos) errors.push(`DC Motor ${mt.id} (+) not connected.`);
+    if (!hasNeg) errors.push(`DC Motor ${mt.id} (−) not connected to GND.`);
+  });
+
+  // Potentiometer
+  components.filter(c => c.type === 'potentiometer').forEach(pt => {
+    const hasVcc = wires.some(w => (w.fromComp===pt.id && w.fromPin==='vcc')||(w.toComp===pt.id && w.toPin==='vcc'));
+    const hasOut = wires.some(w => (w.fromComp===pt.id && w.fromPin==='out')||(w.toComp===pt.id && w.toPin==='out'));
+    const hasGnd = wires.some(w => (w.fromComp===pt.id && w.fromPin==='gnd')||(w.toComp===pt.id && w.toPin==='gnd'));
+    if (!hasVcc) warnings.push(`Potentiometer ${pt.id} VCC not connected.`);
+    if (!hasOut) errors.push(`Potentiometer ${pt.id} OUT (wiper) not connected to an ESP32 analog GPIO.`);
+    if (!hasGnd) warnings.push(`Potentiometer ${pt.id} GND not connected.`);
+  });
+
+  // LDR
+  components.filter(c => c.type === 'ldr').forEach(ld => {
+    const hasP1 = wires.some(w => (w.fromComp===ld.id && w.fromPin==='p1')||(w.toComp===ld.id && w.toPin==='p1'));
+    const hasP2 = wires.some(w => (w.fromComp===ld.id && w.fromPin==='p2')||(w.toComp===ld.id && w.toPin==='p2'));
+    if (!hasP1 || !hasP2) errors.push(`LDR ${ld.id} must have both pins connected (one to GPIO, one through resistor to GND or 3V3).`);
+  });
+
+  // Button
+  components.filter(c => c.type === 'button').forEach(bt => {
+    const hasP1 = wires.some(w => (w.fromComp===bt.id && w.fromPin==='p1')||(w.toComp===bt.id && w.toPin==='p1'));
+    const hasP2 = wires.some(w => (w.fromComp===bt.id && w.fromPin==='p2')||(w.toComp===bt.id && w.toPin==='p2'));
+    if (!hasP1 || !hasP2) errors.push(`Button ${bt.id} must have both pins connected (P1 to GPIO, P2 to GND or 3V3).`);
+  });
+
+  // ── 7. Isolated components (non-ESP32, non-resistor) ─────────
+  const wiresCompIds = new Set();
+  wires.forEach(w => { wiresCompIds.add(w.fromComp); wiresCompIds.add(w.toComp); });
+  components.forEach(c => {
+    if (c.type === 'esp32' || c.type === 'resistor') return;
+    if (!wiresCompIds.has(c.id)) {
+      warnings.push(`${c.label || c.type} (id:${c.id}) has no wires — it is completely isolated.`);
+    }
+  });
+
+  // ── 8. Result ─────────────────────────────────────────────────
+  const passed = errors.length === 0 && warnings.length === 0;
+  return { passed, errors, warnings };
+}
+
+// ── Wiring check button (manual) ─────────────────────────────
+function checkWiringManually() {
+  const code = document.getElementById('code-editor').value.trim() || '';
+  const r = verifyWiring(code);
+  serialLog('════════════════════════════════', 'info');
+  serialLog('🔌  WIRING CHECK REPORT', 'info');
+  serialLog('════════════════════════════════', 'info');
+  if (r.passed) {
+    serialLog('✅  All connections verified — wiring is correct!', 'info');
+  } else {
+    r.errors.forEach(e   => serialLog('❌  ERROR:   ' + e, 'err'));
+    r.warnings.forEach(w => serialLog('⚠️  WARNING: ' + w, 'warn'));
+    serialLog('────────────────────────────────', 'info');
+    serialLog(`Found ${r.errors.length} error(s) and ${r.warnings.length} warning(s). Fix them before running.`, 'warn');
+  }
+  serialLog('════════════════════════════════', 'info');
+  // Flash serial panel
+  const panel = document.getElementById('serial-panel');
+  if (panel) {
+    panel.style.outline = r.passed ? '2px solid var(--green)' : '2px solid var(--red)';
+    setTimeout(() => { panel.style.outline = ''; }, 1500);
+  }
+  return r;
+}
+
+// ── Show wiring result modal overlay ─────────────────────────
+function showWiringModal(result, onConfirmRun) {
+  // Remove old modal if any
+  const old = document.getElementById('wiring-modal');
+  if (old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'wiring-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:99999;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);
+  `;
+
+  const box = document.createElement('div');
+  box.style.cssText = `
+    background:#1e2235;border:1.5px solid var(--border);
+    border-radius:14px;padding:24px 28px;max-width:520px;width:92%;
+    box-shadow:0 24px 60px rgba(0,0,0,0.5);
+    font-family:'Outfit',sans-serif;
+  `;
+
+  const passed = result.passed;
+  const hasErrors = result.errors.length > 0;
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <span style="font-size:24px">${passed ? '✅' : hasErrors ? '❌' : '⚠️'}</span>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:${passed ? 'var(--green)' : hasErrors ? 'var(--red)' : 'var(--yellow)'}">
+          ${passed ? 'Wiring Verified — Ready to Run' : hasErrors ? 'Wiring Errors Found' : 'Wiring Warnings'}
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">
+          ${result.errors.length} error(s) · ${result.warnings.length} warning(s)
+        </div>
+      </div>
+    </div>`;
+
+  if (result.errors.length > 0) {
+    html += `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Errors (must fix)</div>
+      ${result.errors.map(e => `<div style="display:flex;gap:8px;font-size:12px;color:#fca5a5;margin-bottom:5px;line-height:1.4">
+        <span style="flex-shrink:0">❌</span><span>${e}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  if (result.warnings.length > 0) {
+    html += `<div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Warnings (review)</div>
+      ${result.warnings.map(w => `<div style="display:flex;gap:8px;font-size:12px;color:#fde68a;margin-bottom:5px;line-height:1.4">
+        <span style="flex-shrink:0">⚠️</span><span>${w}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // Buttons
+  html += `<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">`;
+
+  if (passed) {
+    html += `<button id="wm-cancel" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px">Cancel</button>
+             <button id="wm-run" style="padding:8px 22px;border-radius:8px;border:none;background:var(--green);color:#000;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">▶ Run Simulation</button>`;
+  } else if (!hasErrors) {
+    // Only warnings — let user choose
+    html += `<button id="wm-cancel" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px">Fix First</button>
+             <button id="wm-run" style="padding:8px 22px;border-radius:8px;border:none;background:var(--yellow);color:#000;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">▶ Run Anyway</button>`;
+  } else {
+    // Hard errors — only cancel
+    html += `<button id="wm-cancel" style="padding:8px 22px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">Fix Wiring</button>`;
+  }
+
+  html += `</div>`;
+  box.innerHTML = html;
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  // Buttons
+  const cancelBtn = modal.querySelector('#wm-cancel');
+  const runBtn    = modal.querySelector('#wm-run');
+  if (cancelBtn) cancelBtn.addEventListener('click', () => modal.remove());
+  if (runBtn) runBtn.addEventListener('click', () => {
+    modal.remove();
+    onConfirmRun();
+  });
+}
+
+function runSimulation() {
+  if (isSimRunning) stopSimulation();
+
+  const code = document.getElementById('code-editor').value.trim();
+  if (!code) {
+    serialLog('No code to run! Write some Arduino code first.', 'warn');
+    return;
+  }
+
+  // ── MANDATORY wiring check — always runs before any simulation ──
+  const result = verifyWiring(code);
+
+  // Log summary to serial monitor
+  if (result.passed) {
+    serialLog('✅ Wiring verified — starting simulation.', 'info');
+    _startSimulation(code);
+  } else {
+    // Show modal — run only happens if user clicks "Run Anyway" (warnings-only case)
+    // Hard errors completely block run — modal has no run button in that case
+    showWiringModal(result, () => _startSimulation(code));
+    // Also log to serial
+    serialLog('═══ WIRING ISSUES DETECTED — Simulation blocked ═══', 'err');
+    result.errors.forEach(e   => serialLog('❌ ' + e, 'err'));
+    result.warnings.forEach(w => serialLog('⚠️ ' + w, 'warn'));
+    serialLog('Fix the issues shown in the modal, then press Run again.', 'warn');
+  }
+}
+
+/** Internal: actually starts the simulation (called only after wiring passes) */
+function _startSimulation(code) {
+  serialLog('=== Simulation Started ===', 'info');
+  isSimRunning = true;
+  setupDone = false;
+  simulationTick = 0;
+
+  document.getElementById('sim-status').classList.add('running');
+  document.getElementById('sim-status-text').textContent = 'Running';
+  document.getElementById('btn-run').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'flex';
+
+  // Reset all ESP32 pin states
+  for (let i = 0; i <= 39; i++) {
+    esp32Pins[i] = { mode: 'INPUT', value: 0, analog: 0 };
+  }
+
+  try {
+    parseAndRun(code);
+    redrawWires(); // activate wire-flow animations
+  } catch(e) {
+    serialLog('Parse error: ' + e.message, 'err');
+    stopSimulation();
+  }
+}
+
+function stopSimulation() {
+  isSimRunning = false;
+  if (simInterval) { clearInterval(simInterval); simInterval = null; }
+  loopFn = null;
+  setupDone = false;
+  _loopErrorCount = 0;
+
+  // BUG FIX: reset all output component states when stopped so LEDs don't stay lit
+  components.forEach(comp => {
+    if (['led_red','led_green','led_blue'].includes(comp.type)) {
+      comp.state.on = false;
+      updateComponentVisual(comp.id);
+    }
+    if (comp.type === 'buzzer') {
+      comp.state.on = false;
+      updateComponentVisual(comp.id);
+    }
+    if (comp.type === 'motor') {
+      comp.state.on = false;
+      comp.state.speed = 0;
+      updateComponentVisual(comp.id);
+      const mtrEl = document.getElementById('mtr-' + comp.id);
+      if (mtrEl) mtrEl.classList.remove('motor-spinning');
+    }
+  });
+
+  document.getElementById('sim-status').classList.remove('running');
+  document.getElementById('sim-status-text').textContent = 'Stopped';
+  document.getElementById('btn-run').style.display = 'flex';
+  document.getElementById('btn-stop').style.display = 'none';
+
+  serialLog('=== Simulation Stopped ===', 'warn');
+  redrawWires(); // deactivate wire flow animation
+}
+
+function resetSimulation() {
+  stopSimulation();
+  cancelWireDrawing();
+  // Reset all component states to defaults
+  components.forEach(comp => {
+    comp.state = getDefaultState(comp.type);
+    updateComponentVisual(comp.id);
+  });
+  // Reset ESP32 pin states
+  for (let i = 0; i <= 39; i++) {
+    esp32Pins[i] = { mode: 'INPUT', value: 0, analog: 0 };
+  }
+  serialLog('=== Board Reset ===', 'info');
+}
+
+// ============================================================
+// CODE PARSER & RUNNER
+// ============================================================
+function parseAndRun(code) {
+  const simAPI = buildSimAPI();
+  let jsCode;
+  try {
+    jsCode = preprocessArduino(code);
+  } catch(e) {
+    serialLog('Preprocessor error: ' + e.message, 'err');
+    stopSimulation();
+    return;
+  }
+
+  try {
+    // Wrap in non-strict IIFE so Arduino-style code doesn't hit strict mode issues
+    const fnBody = jsCode + '\n if(typeof setup!=="function") throw new Error("setup() function not found");\n if(typeof loop!=="function") throw new Error("loop() function not found");\n return { setup, loop };';
+    const fn = new Function(...Object.keys(simAPI), fnBody);
+    const result = fn(...Object.values(simAPI));
+
+    serialLog('Code compiled successfully.', 'info');
+
+    if (typeof result.setup === 'function') {
+      result.setup();
+      setupDone = true;
+      serialLog('setup() executed', 'info');
+    }
+
+    if (typeof result.loop === 'function') {
+      loopFn = result.loop;
+      runLoop();
+    }
+  } catch(e) {
+    serialLog('Execution error: ' + e.message, 'err');
+    // Friendlier hints
+    if (e.message.includes('setup()')) {
+      serialLog('Tip: Your code must have a void setup() function.', 'warn');
+    } else if (e.message.includes('loop()')) {
+      serialLog('Tip: Your code must have a void loop() function.', 'warn');
+    } else if (e.message.includes('is not defined')) {
+      serialLog('Tip: Check variable names and function calls.', 'warn');
+    }
+    stopSimulation();
+  }
+}
+
+function preprocessArduino(code) {
+  let js = code;
+
+  // Remove C++ preprocessor directives
+  js = js.replace(/#include\s*[<"][^>"]+[>"]/g, '');
+  js = js.replace(/#define\s+\S+(?:\s+[^\n]*)?\n/g, '\n');
+  js = js.replace(/#pragma\s+[^\n]*/g, '');
+
+  // Must come BEFORE INPUT replacement to preserve INPUT_PULLUP
+  js = js.replace(/\bINPUT_PULLUP\b/g, '"INPUT_PULLUP"');
+  js = js.replace(/\bINPUT_PULLDOWN\b/g, '"INPUT_PULLDOWN"');
+
+  // Constants
+  js = js.replace(/\bHIGH\b/g, '1');
+  js = js.replace(/\bLOW\b/g,  '0');
+  js = js.replace(/\bINPUT\b/g,  '"INPUT"');
+  js = js.replace(/\bOUTPUT\b/g, '"OUTPUT"');
+  js = js.replace(/\bLEDC_CHANNEL_0\b/g, '0');
+  js = js.replace(/\bPI\b/g, 'Math.PI');
+  js = js.replace(/\bTWO_PI\b/g, '(2*Math.PI)');
+  js = js.replace(/\bHALF_PI\b/g, '(Math.PI/2)');
+
+  // Boolean literals — already valid in JS, skip
+
+  // C++ type declarations → let/var
+  // Order matters: unsigned types first, then simple types
+  js = js.replace(/\b(unsigned\s+long\s+long|unsigned\s+long|unsigned\s+int|unsigned\s+char|unsigned\s+short)\s+([a-zA-Z_]\w*)\s*=/g, 'let $2 =');
+  js = js.replace(/\b(unsigned\s+long\s+long|unsigned\s+long|unsigned\s+int|unsigned\s+char|unsigned\s+short)\s+([a-zA-Z_]\w*)\s*;/g, 'let $2;');
+  js = js.replace(/\b(int|float|long|byte|bool|double|char|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t)\s+([a-zA-Z_]\w*)\s*=/g, 'let $2 =');
+  js = js.replace(/\b(int|float|long|byte|bool|double|char|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t)\s+([a-zA-Z_]\w*)\s*;/g, 'let $2;');
+  js = js.replace(/\bString\s+([a-zA-Z_]\w*)/g, 'let $1');
+
+  // Arrays: int arr[N] -> let arr = new Array(N).fill(0)
+  js = js.replace(/\b(?:int|float|long|byte|bool|double|char)\s+([a-zA-Z_]\w*)\s*\[(\d+)\]\s*;/g, 'let $1 = new Array($2).fill(0);');
+  js = js.replace(/\b(?:int|float|long|byte|bool|double|char)\s+([a-zA-Z_]\w*)\s*\[(\d+)\]\s*=/g, 'let $1 =');
+
+  // for-loop type declarations
+  js = js.replace(/\bfor\s*\(\s*(unsigned\s+\w+|int|float|long|byte|bool|double|char|uint8_t|uint16_t|uint32_t)\s+/g, 'for (let ');
+
+  // void / typed function declarations
+  js = js.replace(/\bvoid\s+(\w+)\s*\(/g,  'function $1(');
+  js = js.replace(/\bint\s+setup\s*\(/g,   'function setup(');
+  js = js.replace(/\bint\s+loop\s*\(/g,    'function loop(');
+  js = js.replace(/\bfloat\s+(\w+)\s*\(/g, 'function $1(');
+  js = js.replace(/\bint\s+(\w+)\s*\(/g,   'function $1(');
+  js = js.replace(/\bbool\s+(\w+)\s*\(/g,  'function $1(');
+
+  // Cast operators: (int)x → Math.trunc(x), (float)x → Number(x)
+  js = js.replace(/\(int\)\s*([a-zA-Z0-9_.]+)/g,   'Math.trunc($1)');
+  js = js.replace(/\(float\)\s*([a-zA-Z0-9_.]+)/g, 'Number($1)');
+  js = js.replace(/\(long\)\s*([a-zA-Z0-9_.]+)/g,  'Math.trunc($1)');
+
+  // Serial.print with F() macro
+  js = js.replace(/Serial\.print\(F\((['"`][^'"`]*['"`])\)\)/g, 'Serial.print($1)');
+  js = js.replace(/Serial\.println\(F\((['"`][^'"`]*['"`])\)\)/g, 'Serial.println($1)');
+
+  // String concatenation with + operator is valid in JS, no change needed
+
+  return js;
+}
+
+let pendingDelayMs = 0;
+let loopRunning = false;
+const MAX_LOOP_TIME = 50; // ms per tick
+let _loopErrorCount = 0;
+const MAX_LOOP_ERRORS = 10;
+
+function runLoop() {
+  if (!isSimRunning || !loopFn) return;
+  _loopErrorCount = 0;
+
+  simInterval = setInterval(() => {
+    if (!isSimRunning || !loopFn) {
+      clearInterval(simInterval);
+      simInterval = null;
+      return;
+    }
+    simulationTick++;
+    try {
+      loopFn();
+      _loopErrorCount = 0; // reset on success
+    } catch(e) {
+      _loopErrorCount++;
+      if (_loopErrorCount <= 3) {
+        serialLog('Loop error: ' + e.message, 'err');
+      }
+      if (_loopErrorCount >= MAX_LOOP_ERRORS) {
+        serialLog(`Too many loop errors (${MAX_LOOP_ERRORS}). Simulation stopped.`, 'err');
+        stopSimulation();
+      }
+    }
+  }, 100); // ~10 iterations/second simulation speed
+}
+
+function buildSimAPI() {
+  return {
+    Serial: {
+      begin: (baud) => {
+        serialLog(`Serial.begin(${baud})`, 'info');
+        document.getElementById('serial-baud').textContent = baud + ' baud';
+      },
+      print:   (val) => serialLog(String(val === undefined ? '' : val), 'out'),
+      println: (val) => serialLog(String(val === undefined ? '' : val), 'out'),
+      printf:  (fmt, ...args) => serialLog(sprintfSim(fmt, args), 'out'),
+      available: () => 0,
+      read:      () => -1,
+      readString: () => '',
+      readStringUntil: () => '',
+      flush: () => {},
+      write:   (val) => serialLog(String(val), 'out'),
+    },
+    pinMode: (pin, mode) => {
+      if (esp32Pins[pin] !== undefined) {
+        esp32Pins[pin].mode = mode;
+      }
+    },
+    digitalWrite: (pin, val) => {
+      if (esp32Pins[pin] !== undefined) {
+        esp32Pins[pin].value = val ? 1 : 0;
+        applyPinOutput(pin, val ? 1 : 0);
+      }
+    },
+    digitalRead: (pin) => readDigitalPin(pin),
+    analogRead:  (pin) => readAnalogPin(pin),
+    analogWrite: (pin, val) => {
+      // ESP32 analogWrite maps to ledcWrite; simulate as fraction
+      const frac = Math.max(0, Math.min(255, val)) / 255;
+      if (esp32Pins[pin] !== undefined) {
+        esp32Pins[pin].value = frac;
+        applyPinOutput(pin, frac, true);
+      }
+    },
+    // ESP32 LEDC (PWM)
+    ledcSetup:   (ch, freq, res) => {},
+    ledcAttachPin: (pin, ch) => {},
+    ledcWrite: (ch, duty) => {
+      // Find which pin is attached to this channel — simplified: apply to all output pins
+      serialLog(`ledcWrite(ch=${ch}, duty=${duty})`, 'info');
+    },
+    dacWrite: (pin, val) => {
+      const frac = Math.max(0, Math.min(255, val)) / 255;
+      if (esp32Pins[pin] !== undefined) {
+        esp32Pins[pin].value = frac;
+        applyPinOutput(pin, frac, true);
+      }
+    },
+    delay: (ms) => {
+      // In simulation mode delay is a no-op (loop runs at fixed tick rate)
+      // For user visibility, we still track it
+    },
+    delayMicroseconds: (us) => {},
+    millis:  () => simulationTick * 100,
+    micros:  () => simulationTick * 100000,
+    map: (val, inMin, inMax, outMin, outMax) => {
+      if (inMax === inMin) return outMin;
+      return (val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+    },
+    constrain: (val, lo, hi) => Math.min(hi, Math.max(lo, val)),
+    abs:  Math.abs,
+    min:  (...args) => Math.min(...args),
+    max:  (...args) => Math.max(...args),
+    sqrt: Math.sqrt,
+    pow:  Math.pow,
+    sin:  Math.sin,
+    cos:  Math.cos,
+    tan:  Math.tan,
+    log:  Math.log,
+    exp:  Math.exp,
+    ceil:  Math.ceil,
+    floor: Math.floor,
+    round: Math.round,
+    random: (minOrMax, max) => {
+      if (max !== undefined) return Math.floor(Math.random() * (max - minOrMax) + minOrMax);
+      return Math.floor(Math.random() * minOrMax);
+    },
+    randomSeed: () => {},
+    bitRead:  (val, bit) => (val >> bit) & 1,
+    bitSet:   (val, bit) => val | (1 << bit),
+    bitClear: (val, bit) => val & ~(1 << bit),
+    bitWrite: (val, bit, bval) => bval ? (val | (1 << bit)) : (val & ~(1 << bit)),
+    bit:      (b) => 1 << b,
+    highByte: (val) => (val >> 8) & 0xFF,
+    lowByte:  (val) => val & 0xFF,
+    tone: (pin, freq, dur) => {
+      applyPinOutput(pin, 1);
+      serialLog(`tone(${pin}, ${freq}Hz${dur ? ', ' + dur + 'ms' : ''})`, 'info');
+      if (dur) { setTimeout(() => applyPinOutput(pin, 0), dur); }
+    },
+    noTone: (pin) => { applyPinOutput(pin, 0); },
+    servoWrite: (pin, angle) => {
+      angle = Math.max(0, Math.min(180, angle));
+      const comp = findConnectedComponent(pin, 'servo');
+      if (comp) {
+        comp.state.angle = angle;
+        updateComponentVisual(comp.id);
+      }
+    },
+    getDistance: (trigPin, echoPin) => {
+      const comp = findConnectedComponentByPins([trigPin, echoPin], 'ultrasonic');
+      if (comp) return comp.state.distance;
+      return Math.floor(Math.random() * 100 + 10);
+    },
+    dhtReadTemp: (pin) => {
+      const comp = findConnectedComponent(pin, 'dht11');
+      return comp ? comp.state.temp : 25;
+    },
+    dhtReadHumidity: (pin) => {
+      const comp = findConnectedComponent(pin, 'dht11');
+      return comp ? comp.state.humidity : 60;
+    },
+    // Wire/I2C stubs
+    Wire: { begin: ()=>{}, beginTransmission: ()=>{}, endTransmission: ()=>0, write: ()=>{}, read: ()=>0, requestFrom: ()=>0, available: ()=>0 },
+    // SPI stub
+    SPI: { begin: ()=>{}, transfer: (v)=>v, end: ()=>{} },
+    // Useful JS globals
+    Math,
+    parseInt,
+    parseFloat,
+    Number,
+    String,
+    isNaN,
+    isFinite,
+    console: { log: (v) => serialLog(String(v), 'info') },
+    // Arduino String methods (used as global functions sometimes)
+    strlen: (s) => String(s).length,
+    sprintf: sprintfSim,
+  };
+}
+
+// Minimal sprintf for Serial.printf support
+function sprintfSim(fmt, ...args) {
+  if (Array.isArray(args[0])) args = args[0];
+  let i = 0;
+  return String(fmt).replace(/%([diouxXeEfgGs%])/g, (m, spec) => {
+    if (spec === '%') return '%';
+    const v = args[i++];
+    if (v === undefined) return m;
+    switch(spec) {
+      case 'd': case 'i': return Math.trunc(Number(v)).toString();
+      case 'f': case 'e': case 'g': return Number(v).toFixed(2);
+      case 's': case 'S': return String(v);
+      case 'x': return Math.trunc(Number(v)).toString(16);
+      case 'X': return Math.trunc(Number(v)).toString(16).toUpperCase();
+      default: return String(v);
+    }
+  });
+}
+
+function applyPinOutput(pin, val, analog = false) {
+  // ── Direct wire connections from/to this ESP32 pin ──────────
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return;
+
+  // Collect all directly connected component+pin pairs (including through resistors)
+  const allConnected = findAllConnectedToPin(pin);
+
+  allConnected.forEach(({ comp, pin: cp }) => {
+    switch(comp.type) {
+      case 'led_red':
+      case 'led_green':
+      case 'led_blue': {
+        // Anode must be connected for LED to light
+        if (cp === 'anode' || cp === null) {
+          // Also check cathode has GND path (simplified: just check cathode is connected)
+          const cathodeConnected = wires.some(w =>
+            (w.fromComp === comp.id && w.fromPin === 'cathode') ||
+            (w.toComp   === comp.id && w.toPin   === 'cathode')
+          );
+          const newState = val > 0 && cathodeConnected;
+          if (comp.state.on !== newState) {
+            comp.state.on = newState;
+            updateComponentVisual(comp.id);
+          }
+        }
+        break;
+      }
+      case 'buzzer': {
+        if (cp === 'pos' || cp === null) {
+          const negConnected = wires.some(w =>
+            (w.fromComp === comp.id && w.fromPin === 'neg') ||
+            (w.toComp   === comp.id && w.toPin   === 'neg')
+          );
+          const newState = val > 0 && negConnected;
+          if (comp.state.on !== newState) {
+            comp.state.on = newState;
+            updateComponentVisual(comp.id);
+            if (newState) playBuzzerSound();
+          }
+        }
+        break;
+      }
+      case 'motor': {
+        if (cp === 'pos' || cp === null) {
+          const negConnected = wires.some(w =>
+            (w.fromComp === comp.id && w.fromPin === 'neg') ||
+            (w.toComp   === comp.id && w.toPin   === 'neg')
+          );
+          const newState = val > 0 && negConnected;
+          if (comp.state.on !== newState) {
+            comp.state.on = newState;
+            comp.state.speed = val;
+            updateComponentVisual(comp.id);
+            const mtrEl = document.getElementById('mtr-' + comp.id);
+            if (mtrEl) {
+              if (newState) mtrEl.classList.add('motor-spinning');
+              else mtrEl.classList.remove('motor-spinning');
+            }
+          }
+        }
+        break;
+      }
+      case 'servo': {
+        if (cp === 'sig' || cp === null) {
+          const angle = analog
+            ? Math.round(val * 180)
+            : Math.round(val * 180);
+          comp.state.angle = Math.max(0, Math.min(180, angle));
+          updateComponentVisual(comp.id);
+        }
+        break;
+      }
+    }
+  });
+}
+
+function readDigitalPin(pin) {
+  // Check buttons connected to this pin
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return 0;
+
+  let result = 0;
+  wires.forEach(wire => {
+    let btn = null;
+    if (wire.fromComp === esp.id && wire.fromPin === String(pin)) {
+      btn = components.find(c => c.id === wire.toComp && c.type === 'button');
+    } else if (wire.toComp === esp.id && wire.toPin === String(pin)) {
+      btn = components.find(c => c.id === wire.fromComp && c.type === 'button');
+    }
+    if (btn && btn.state.pressed) result = 1;
+  });
+  return result;
+}
+
+function readAnalogPin(pin) {
+  const connected = findAllConnectedToPin(pin);
+  for (const { comp } of connected) {
+    if (comp.type === 'potentiometer') return comp.state.value;
+    if (comp.type === 'ldr') return comp.state.value;
+  }
+  // Check via wires too
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return 0;
+  let val = 0;
+  wires.forEach(wire => {
+    let sensor = null;
+    if (wire.fromComp === esp.id && wire.fromPin === String(pin)) {
+      sensor = components.find(c => c.id === wire.toComp);
+    } else if (wire.toComp === esp.id && wire.toPin === String(pin)) {
+      sensor = components.find(c => c.id === wire.fromComp);
+    }
+    if (sensor) {
+      if (sensor.type === 'potentiometer') val = sensor.state.value;
+      if (sensor.type === 'ldr') val = sensor.state.value;
+    }
+  });
+  return val;
+}
+
+function findConnectedComponent(pin, type) {
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return null;
+  for (const wire of wires) {
+    let comp = null;
+    if (wire.fromComp === esp.id && wire.fromPin === String(pin)) {
+      comp = components.find(c => c.id === wire.toComp);
+    } else if (wire.toComp === esp.id && wire.toPin === String(pin)) {
+      comp = components.find(c => c.id === wire.fromComp);
+    }
+    if (comp && comp.type === type) return comp;
+  }
+  return null;
+}
+
+function findConnectedComponentByPins(pins, type) {
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return null;
+  for (const pin of pins) {
+    const comp = findConnectedComponent(pin, type);
+    if (comp) return comp;
+  }
+  return null;
+}
+
+function findAllConnectedToPin(pin) {
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return [];
+  const result = [];
+  wires.forEach(wire => {
+    if (wire.fromComp === esp.id && wire.fromPin === String(pin)) {
+      const comp = components.find(c => c.id === wire.toComp);
+      if (comp) result.push({ comp, pin: wire.toPin });
+    } else if (wire.toComp === esp.id && wire.toPin === String(pin)) {
+      const comp = components.find(c => c.id === wire.fromComp);
+      if (comp) result.push({ comp, pin: wire.fromPin });
+    }
+  });
+  // Also traverse through resistors
+  wires.forEach(wire => {
+    const isResFromEsp = wire.fromComp === esp.id && wire.fromPin === String(pin);
+    const isResToEsp = wire.toComp === esp.id && wire.toPin === String(pin);
+    let resistorId = null;
+    if (isResFromEsp) {
+      const comp = components.find(c => c.id === wire.toComp);
+      if (comp && comp.type === 'resistor') resistorId = comp.id;
+    } else if (isResToEsp) {
+      const comp = components.find(c => c.id === wire.fromComp);
+      if (comp && comp.type === 'resistor') resistorId = comp.id;
+    }
+    if (resistorId) {
+      // Find what's connected to the other end of resistor
+      wires.forEach(w2 => {
+        if (w2.id === wire.id) return;
+        let comp = null;
+        if (w2.fromComp === resistorId) comp = components.find(c => c.id === w2.toComp);
+        else if (w2.toComp === resistorId) comp = components.find(c => c.id === w2.fromComp);
+        if (comp && comp.type !== 'esp32') result.push({ comp, pin: null });
+      });
+    }
+  });
+  return result;
+}
+
+// ============================================================
+// AUDIO (Buzzer)
+// ============================================================
+let audioCtx = null;
+function playBuzzerSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 440;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.2);
+  } catch(e) {}
+}
+
+// ============================================================
+// SERIAL MONITOR
+// ============================================================
+let serialLineCount = 0;
+
+function serialLog(msg, type = 'out') {
+  consoleLogs.push({ msg, type, time: simulationTick });
+  const output = document.getElementById('serial-output');
+  const line = document.createElement('div');
+  line.className = 'serial-line';
+
+  const ts = document.createElement('span');
+  ts.className = 'serial-ts';
+  ts.textContent = `[${(simulationTick*0.1).toFixed(1)}s]`;
+
+  const text = document.createElement('span');
+  text.className = type === 'warn' ? 'serial-warn' : type === 'err' ? 'serial-err' : type === 'info' ? 'serial-info' : '';
+  text.textContent = msg;
+
+  line.appendChild(ts);
+  line.appendChild(text);
+  output.appendChild(line);
+
+  // Auto scroll
+  output.scrollTop = output.scrollHeight;
+
+  // Limit output
+  if (++serialLineCount > 500) {
+    output.removeChild(output.firstChild);
+  }
+}
+
+function clearSerial() {
+  document.getElementById('serial-output').innerHTML = '';
+  consoleLogs.length = 0;
+  serialLineCount = 0;
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name) {
+  const TABS = ['code','examples','info'];
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', TABS[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('tab-' + name);
+  if (target) target.classList.add('active');
+}
+
+// ============================================================
+// PIN INFO TABLE
+// ============================================================
+function updatePinInfoTable() {
+  const table = document.getElementById('pin-info-table');
+  const esp32 = components.find(c => c.type === 'esp32');
+  if (!esp32) {
+    table.innerHTML = '<div style="color:var(--text3);font-size:11px">Place ESP32 to see pin info</div>';
+    return;
+  }
+
+  const connectedPins = new Set();
+  wires.forEach(w => {
+    if (w.fromComp === esp32.id) connectedPins.add(w.fromPin);
+    if (w.toComp === esp32.id) connectedPins.add(w.toPin);
+  });
+
+  let html = '';
+  COMPONENT_DEFS.esp32.pins.forEach(pin => {
+    const isConn = connectedPins.has(pin.id);
+    const color = pin.type === 'gnd' ? '#888' : pin.type === 'power' ? '#ef4444' : pin.type === 'analog' ? '#22c55e' : '#ffd700';
+    const connSpan = isConn
+      ? '<span style="color:var(--green);font-size:9px">&#9679; connected</span>'
+      : '<span style="color:var(--text3);font-size:9px">&#9675; free</span>';
+    const typeColor = pin.type === 'gnd' ? '#666' : pin.type === 'power' ? '#dc2626' : '#4a5568';
+    html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:3px">'
+      + '<span style="color:' + color + ';width:28px">' + pin.label + '</span>'
+      + '<span style="color:' + typeColor + ';font-size:9px;width:40px">' + pin.type + '</span>'
+      + connSpan
+      + '</div>';
+  });
+  table.innerHTML = html;
+}
+
+// ============================================================
+// PROJECT SAVE/LOAD
+// ============================================================
+function saveProject() {
+  const data = {
+    version: 1,
+    components: components.map(c => ({ ...c })),
+    wires: wires.map(w => ({ ...w })),
+    code: document.getElementById('code-editor').value
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'esp32-project.json';
+  a.click();
+  serialLog('Project saved!', 'info');
+}
+
+function loadProjectFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        loadProject(data);
+      } catch(err) {
+        serialLog('Failed to load project: ' + err.message, 'err');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function loadProject(data) {
+  stopSimulation();
+  // Clear current
+  components.forEach(c => {
+    const el = document.getElementById('comp-' + c.id);
+    if (el) el.remove();
+  });
+  document.getElementById('sim-canvas').innerHTML = '';
+  components = [];
+  wires = [];
+  nextId = 1;
+  wireCount = 0;  // BUG FIX: reset wireCount so loaded wires don't collide with new wires
+
+  // Load code
+  if (data.code) document.getElementById('code-editor').value = data.code;
+
+  // Restore components
+  (data.components || []).forEach(c => {
+    if (c.id >= nextId) nextId = c.id + 1;
+    if (!COMPONENT_DEFS[c.type]) { serialLog('Skipped unknown component type: ' + c.type, 'warn'); return; }
+    // Ensure state is valid
+    if (!c.state) c.state = getDefaultState(c.type);
+    components.push(c);
+    const el = createComponentElement(c);
+    document.getElementById('components-layer').appendChild(el);
+    attachComponentBehavior(c, el);
+    updateComponentVisual(c.id);
+  });
+
+  // Restore wires
+  (data.wires || []).forEach(w => {
+    if (w.id >= wireCount) wireCount = w.id;  // BUG FIX: track max wire ID
+    // Verify both endpoints exist before restoring
+    const fromOk = components.find(c => c.id === w.fromComp);
+    const toOk   = components.find(c => c.id === w.toComp);
+    if (!fromOk || !toOk) { serialLog(`Skipped orphan wire ${w.id}`, 'warn'); return; }
+    wires.push(w);
+    drawWire(w);
+    updatePinConnected(w.fromComp, w.fromPin, true);
+    updatePinConnected(w.toComp,   w.toPin,   true);
+  });
+
+  if (components.length > 0) document.getElementById('canvas-hint').style.display = 'none';
+  updatePinInfoTable();
+  serialLog(`Project loaded — ${components.length} components, ${wires.length} wires.`, 'info');
+}
+
+function clearCode() {
+  document.getElementById('code-editor').value = '';
+}
+
+
+// ╔═══════════════════════════════════════════════════════════════╗
+// ║  AGENTIC AI MODE — Prompt-based full project builder          ║
+// ║  Calls /api/sim_ai  →  places components  →  wires  →  code  ║
+// ║  Auto-fixes missing GND/VCC, verifies, shows result panel    ║
+// ╚═══════════════════════════════════════════════════════════════╝
+
+const API_BASE = window.API_BASE || window.location.origin;
+
+function escapeHtml(t) {
+  return String(t ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ── 8 rotating project suggestions ──────────────────────────────────
+const AGENTIC_SUGGESTIONS = [
+  'Blink a red LED every 500ms on GPIO 5',
+  'Traffic light — Red, Yellow, Green LEDs with 3s / 1s / 3s timing',
+  'Button press turns LED on, release turns it off (INPUT_PULLUP)',
+  'Buzzer alarm that beeps 5 times when button is pressed',
+  'Servo motor sweeps from 0 to 180 degrees repeatedly',
+  'DHT11 temperature and humidity monitor — print to Serial every 2s',
+  'Ultrasonic distance sensor — print cm to Serial, buzz when under 10cm',
+  'Potentiometer controls LED blink speed via analogRead on GPIO 34',
+];
+
+function suggestAgenticIdea() {
+  const input = document.getElementById('agentic-prompt');
+  if (!input) return;
+  const pick = AGENTIC_SUGGESTIONS[Math.floor(Math.random() * AGENTIC_SUGGESTIONS.length)];
+  input.value = pick;
+  input.focus();
+  serialLog('💡 Suggestion: "' + pick + '"', 'info');
+}
+
+// ── Loading spinner ──────────────────────────────────────────────────
+function _agenticBusy(on, btn, orig) {
+  if (!btn) return;
+  btn.disabled = on;
+  btn.style.opacity = on ? '0.7' : '1';
+  btn.innerHTML = on
+    ? '<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spinnerRot .65s linear infinite;vertical-align:middle;margin-right:4px"></span>Building…'
+    : orig;
+}
+
+function hideAgenticGuide() {
+  const b = document.getElementById('ai-guide-box');
+  if (b) { b.style.display = 'none'; b.innerHTML = ''; }
+}
+
+// ── MAIN ENTRY ───────────────────────────────────────────────────────
+async function autoBuildFromPrompt() {
+  const inputEl = document.getElementById('agentic-prompt');
+  const prompt  = (inputEl?.value || '').trim();
+  if (!prompt) {
+    serialLog('✏️  Type a project idea, then click Auto Build.', 'warn');
+    inputEl?.focus();
+    return;
+  }
+
+  const btn  = document.getElementById('btn-auto-build');
+  const orig = btn?.textContent || '⚡ Auto Build';
+  _agenticBusy(true, btn, orig);
+  hideAgenticGuide();
+
+  serialLog('════════════════════════════════════════', 'info');
+  serialLog('🤖  Agentic AI — designing project…', 'info');
+  serialLog('📝  "' + prompt + '"', 'info');
+  serialLog('════════════════════════════════════════', 'info');
+
+  try {
+    // 1. Fetch structured project JSON from Flask backend
+    const project = await _agentFetch(prompt);
+
+    // 2. Place everything on canvas
+    _agentApply(project);
+
+    // 3. DOM settle then verify wiring
+    await new Promise(r => setTimeout(r, 300));
+    const code    = document.getElementById('code-editor').value || '';
+    const verify1 = verifyWiring(code);
+
+    // 4. Auto-fix if needed
+    if (!verify1.passed && verify1.errors.length > 0) {
+      serialLog('⚠️  Errors found — attempting auto-fix…', 'warn');
+      _agentAutoFix();
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    // 5. Second verification pass
+    const verify2 = verifyWiring(code);
+    serialLog('────────────────────────────────────────', 'info');
+    if (verify2.passed) {
+      serialLog('✅  Wiring verified — all connections correct!', 'info');
+      serialLog('Press ▶ Run to start the simulation.', 'info');
+    } else {
+      verify2.errors.forEach(e   => serialLog('❌  ' + e, 'err'));
+      verify2.warnings.forEach(w => serialLog('⚠️  ' + w, 'warn'));
+      serialLog('ℹ️  Press 🔌 Check Wiring or fix connections manually.', 'info');
+    }
+    serialLog('════════════════════════════════════════', 'info');
+
+    switchTab('code');
+    _agentGuide(project, verify2.passed);
+
+  } catch (err) {
+    serialLog('❌  AI build failed: ' + err.message, 'err');
+    console.error('[AgenticAI]', err);
+  } finally {
+    _agenticBusy(false, btn, orig);
+  }
+}
+
+// ── Fetch from /api/sim_ai ───────────────────────────────────────────
+async function _agentFetch(prompt) {
+  let res;
+  try {
+    res = await fetch(API_BASE + '/api/sim_ai', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ mode: 'agent_build', prompt }),
+      signal:  AbortSignal.timeout(50000)
+    });
+  } catch (netErr) {
+    throw new Error('Cannot reach server. Is Flask running? ' + netErr.message);
+  }
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.project) {
+    throw new Error((data?.reply) || ('Server error ' + res.status + '. Try a simpler prompt.'));
+  }
+
+  serialLog('✅  AI planned: "' + (data.project.title || prompt) + '"', 'info');
+  serialLog('   ' + (data.project.components||[]).length + ' components · ' + (data.project.connections||[]).length + ' connections', 'info');
+  return data.project;
+}
+
+// ── Apply project to canvas ──────────────────────────────────────────
+function _agentApply(project) {
+  // Clear canvas
+  stopSimulation();
+  wires.slice().forEach(w => { document.getElementById('wire-' + w.id)?.remove(); });
+  components.slice().forEach(c => { document.getElementById('comp-' + c.id)?.remove(); });
+  document.getElementById('sim-canvas').innerHTML = '';
+  components = []; wires = []; selectedComponent = null;
+  wireDrawing = false; wireFrom = null; wireCount = 0; nextId = 1;
+  document.getElementById('canvas-hint').style.display = 'none';
+  updatePinInfoTable();
+
+  // Insert code — handle both raw and JSON-escaped newlines
+  if (project.code) {
+    let code = String(project.code);
+    if (code.indexOf('\\n') !== -1 && code.indexOf('\n') === -1) {
+      code = code.replace(/\\n/g, '\n').replace(/\\t/g, '  ');
+    }
+    document.getElementById('code-editor').value = code;
+  }
+
+  // Spawn components
+  const typeCount = {};
+  (project.components || []).forEach(c => {
+    if (!COMPONENT_DEFS[c.type]) {
+      serialLog('⚠️  Unknown type "' + c.type + '" — skipped.', 'warn');
+      return;
+    }
+    const idx = typeCount[c.type] || 0;
+    typeCount[c.type] = idx + 1;
+    spawnComponent(c.type, Math.max(10, Number(c.x) || 100 + idx * 130), Math.max(10, Number(c.y) || 100 + idx * 70));
+  });
+
+  // Connect wires
+  let made = 0, skipped = 0;
+  (project.connections || []).forEach(conn => {
+    const ft = conn?.from?.type, fp = conn?.from?.pin, fi = Number(conn?.from?.index ?? 0);
+    const tt = conn?.to?.type,   tp = conn?.to?.pin,   ti = Number(conn?.to?.index ?? 0);
+    if (!ft || !fp || !tt || !tp) { skipped++; return; }
+
+    const fc = findComponentByTypeAndIndex(ft, fi);
+    const tc = findComponentByTypeAndIndex(tt, ti);
+    if (!fc || !tc) {
+      serialLog('⚠️  Wire skipped: ' + ft + '[' + fi + '].' + fp + ' → ' + tt + '[' + ti + '].' + tp, 'warn');
+      skipped++; return;
+    }
+
+    const fpOk = COMPONENT_DEFS[fc.type]?.pins?.some(p => p.id === fp);
+    const tpOk = COMPONENT_DEFS[tc.type]?.pins?.some(p => p.id === tp);
+    if (!fpOk || !tpOk) {
+      serialLog('⚠️  Invalid pin: ' + ft + '.' + fp + ' or ' + tt + '.' + tp, 'warn');
+      skipped++; return;
+    }
+
+    const dup = wires.some(w =>
+      (w.fromComp===fc.id && w.fromPin===fp && w.toComp===tc.id && w.toPin===tp) ||
+      (w.fromComp===tc.id && w.fromPin===tp && w.toComp===fc.id && w.toPin===fp)
+    );
+    if (dup) { skipped++; return; }
+
+    createWire(fc.id, fp, tc.id, tp);
+    made++;
+  });
+
+  updatePinInfoTable();
+  serialLog('🔌  ' + made + ' wire(s) placed' + (skipped ? ', ' + skipped + ' skipped.' : '.'), 'info');
+}
+
+// ── Auto-fix missing power/GND connections ──────────────────────────
+function _agentAutoFix() {
+  const esp = components.find(c => c.type === 'esp32');
+  if (!esp) return;
+  let fixed = 0;
+
+  const pinWired = (comp, pin) =>
+    wires.some(w => (w.fromComp===comp.id && w.fromPin===pin)||(w.toComp===comp.id && w.toPin===pin));
+
+  // [compType, compPin, espPin]
+  const RULES = [
+    ['led_red',       'cathode', 'GND1'],
+    ['led_green',     'cathode', 'GND1'],
+    ['led_blue',      'cathode', 'GND1'],
+    ['buzzer',        'neg',     'GND1'],
+    ['servo',         'vcc',     '3V3' ],
+    ['servo',         'gnd',     'GND1'],
+    ['dht11',         'vcc',     '3V3' ],
+    ['dht11',         'gnd',     'GND1'],
+    ['ultrasonic',    'vcc',     '3V3' ],
+    ['ultrasonic',    'gnd',     'GND1'],
+    ['potentiometer', 'vcc',     '3V3' ],
+    ['potentiometer', 'gnd',     'GND1'],
+    ['motor',         'neg',     'GND2'],
+    ['button',        'p2',      'GND1'],
+  ];
+
+  RULES.forEach(([ct, cp, ep]) => {
+    components.filter(c => c.type === ct).forEach(comp => {
+      if (!pinWired(comp, cp)) {
+        createWire(comp.id, cp, esp.id, ep);
+        serialLog('🔧  Fixed: ' + ct + '.' + cp + ' → esp32.' + ep, 'info');
+        fixed++;
+      }
+    });
+  });
+
+  // LED anode through resistor if unwired
+  components.filter(c => ['led_red','led_green','led_blue'].includes(c.type)).forEach(led => {
+    if (!pinWired(led, 'anode')) {
+      const freeRes = components.find(r => r.type === 'resistor' &&
+        !wires.some(w => (w.fromComp===r.id && w.toComp===led.id)||(w.toComp===r.id && w.fromComp===led.id)));
+      if (freeRes && !pinWired(freeRes, 'p2')) {
+        createWire(freeRes.id, 'p2', led.id, 'anode');
+        serialLog('🔧  Fixed: resistor.p2 → ' + led.type + '.anode', 'info');
+        fixed++;
+      }
+    }
+  });
+
+  if (fixed > 0) { redrawWires(); updatePinInfoTable(); serialLog('🔧  Auto-fixed ' + fixed + ' connection(s).', 'info'); }
+  else serialLog('ℹ️  No auto-fixable connections found.', 'info');
+}
+
+// ── Guide panel ──────────────────────────────────────────────────────
+function _agentGuide(project, wiringOk) {
+  const box = document.getElementById('ai-guide-box');
+  if (!box) return;
+
+  const title = escapeHtml(project.title || 'AI Project');
+  const diff  = project.difficulty || '';
+  const desc  = escapeHtml(project.description || '');
+  const hw    = escapeHtml(project.hardware_suggestion || '');
+  const steps = Array.isArray(project.steps) ? project.steps : [];
+  const dClr  = {Beginner:'#22c55e',Intermediate:'#f97316',Advanced:'#ef4444'}[diff] || 'var(--accent)';
+  const wClr  = wiringOk ? '#22c55e' : '#f97316';
+
+  let h = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">';
+  h += '<div><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px">🤖 ' + title + '</div>';
+  if (desc) h += '<div style="font-size:11px;color:var(--text2);line-height:1.4">' + desc + '</div></div>';
+  else h += '</div>';
+  h += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">';
+  if (diff) h += '<span style="font-size:9px;padding:2px 7px;border-radius:8px;background:' + dClr + '22;color:' + dClr + ';font-weight:700;border:1px solid ' + dClr + '44">' + escapeHtml(diff) + '</span>';
+  h += '<span style="font-size:9px;padding:2px 7px;border-radius:8px;background:' + wClr + '22;color:' + wClr + ';font-weight:700">' + (wiringOk ? '✅ Wiring OK' : '⚠️ Check Wiring') + '</span>';
+  h += '</div></div>';
+
+  if (steps.length) {
+    h += '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Steps</div>';
+    h += '<ol style="margin:0 0 7px;padding-left:15px;font-size:11px;color:var(--text2);line-height:1.55">';
+    steps.forEach(s => { h += '<li>' + escapeHtml(s) + '</li>'; });
+    h += '</ol>';
+  }
+  if (hw) h += '<div style="font-size:10px;color:var(--text3);margin-bottom:7px"><b style="color:var(--text2)">🔧 Real hardware:</b> ' + hw + '</div>';
+
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  h += '<button class="btn btn-success" onclick="runSimulation()" style="font-size:11px;padding:4px 12px">▶ Run</button>';
+  h += '<button class="btn btn-ghost" onclick="checkWiringManually()" style="font-size:11px;padding:4px 12px">🔌 Verify</button>';
+  h += '<button class="btn btn-ghost" onclick="switchTab(\'code\')" style="font-size:11px;padding:4px 12px">📝 Code</button>';
+  h += '<button class="btn btn-ghost" onclick="hideAgenticGuide()" style="font-size:11px;padding:4px 9px;opacity:.55">✕</button>';
+  h += '</div>';
+
+  box.innerHTML = h;
+  box.style.display = 'block';
+}
+
+// ── Legacy compat wrappers ───────────────────────────────────────────
+function showAIProjectGuide(p, txt) { _agentGuide(p, false); }
+function applyAIProject(p)          { _agentApply(p); }
+function clearWorkspaceForAI() {
+  stopSimulation();
+  wires.slice().forEach(w => { document.getElementById('wire-' + w.id)?.remove(); });
+  components.slice().forEach(c => { document.getElementById('comp-' + c.id)?.remove(); });
+  document.getElementById('sim-canvas').innerHTML = '';
+  components = []; wires = []; selectedComponent = null;
+  wireDrawing = false; wireFrom = null; wireCount = 0; nextId = 1;
+  const hint = document.getElementById('canvas-hint');
+  if (hint) hint.style.display = 'flex';
+  updatePinInfoTable();
+}
+function getComponentsByType(t) { return components.filter(c => c.type === t); }
+function findComponentByTypeAndIndex(t, i=0) { return getComponentsByType(t)[i] || null; }
+function connectAIWire(fc,fp,tc,tp) {
+  if (!fc||!tc||!fp||!tp) return false;
+  if (wires.some(w=>(w.fromComp===fc&&w.fromPin===fp&&w.toComp===tc&&w.toPin===tp)||(w.fromComp===tc&&w.fromPin===tp&&w.toComp===fc&&w.toPin===fp))) return false;
+  createWire(fc,fp,tc,tp); return true;
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  const activeTag = document.activeElement?.tagName;
+  const inInput = ['INPUT','TEXTAREA'].includes(activeTag);
+
+  if (e.key === 'Delete' && selectedComponent && !inInput) {
+    deleteComponent(selectedComponent);
+    selectedComponent = null;
+    return;
+  }
+
+  if (!inInput) {
+    if (e.key === 'w' || e.key === 'W') { selectTool('wire'); return; }
+    if (e.key === 'd' || e.key === 'D') { selectTool('delete'); return; }
+    if (e.key === 's' || e.key === 'S') { selectTool('select'); return; }
+  }
+
+  if (e.key === 'Escape') {
+    selectTool('select');
+    cancelWireDrawing();
+    return;
+  }
+
+  if (e.key === 'F5') {
+    e.preventDefault();
+    isSimRunning ? stopSimulation() : runSimulation();
+    return;
+  }
+
+  // Ctrl+Enter also runs
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runSimulation();
+    return;
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  renderSidebarIcons();
+
+  // Load default example code
+  document.getElementById('code-editor').value = EXAMPLES.blink;
+
+  // Attach drag listeners to sidebar items (after icons rendered)
+  document.querySelectorAll('.comp-item[data-type]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('type', el.dataset.type);
+    });
+  });
+
+  // localStorage auto-restore
+  try {
+    const saved = localStorage.getItem('esp32lab-project');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.components && data.components.length > 0) {
+        if (confirm('Load previously saved project?')) {
+          loadProject(data);
+        }
+      }
+    }
+  } catch(e) { /* ignore corrupt saved state */ }
+
+  // Auto-save every 30s
+  setInterval(() => {
+    try {
+      const data = {
+        version: 2,
+        components: components.map(c => ({ ...c })),
+        wires:      wires.map(w => ({ ...w })),
+        code:       document.getElementById('code-editor').value
+      };
+      localStorage.setItem('esp32lab-project', JSON.stringify(data));
+    } catch(e) {}
+  }, 30000);
+
+  // Agentic mode buttons
+  const autoBtn    = document.getElementById('btn-auto-build');
+  const suggestBtn = document.getElementById('btn-ai-suggest');
+  const agentInput = document.getElementById('agentic-prompt');
+  if (autoBtn)    autoBtn.addEventListener('click', autoBuildFromPrompt);
+  if (suggestBtn) suggestBtn.addEventListener('click', suggestAgenticIdea);
+  if (agentInput) {
+    agentInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); autoBuildFromPrompt(); }
+    });
+  }
+
+  // Global canvas click to deselect
+  document.getElementById('canvas-area').addEventListener('click', canvasClick);
+
+  serialLog('ESP32 Virtual Lab ready! Drag components to canvas.', 'info');
+  serialLog('Use W key for Wire Tool, Esc to cancel, F5 to run.', 'info');
+  serialLog('Press 🔌 Check Wiring before running to verify connections.', 'info');
+  serialLog('Right-click components for rotate/delete options.', 'info');
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

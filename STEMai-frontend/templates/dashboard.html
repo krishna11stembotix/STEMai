@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STEMbotix – AI & Robotics Kit Dashboard</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='stembot.png') }}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange:#FF6B35; --orange2:#FF8F5E; --navy:#2E3B6D; --navy2:#3D4F8A;
+      --bg:#F0F4FB; --card:#FFFFFF; --text:#1E2A4A; --muted:#6B7A99; --line:rgba(46,59,109,.12);
+      --green:#22C55E; --red:#EF4444; --blue:#3B82F6; --yellow:#F59E0B; --purple:#8B5CF6; --teal:#14B8A6;
+      --radius:22px; --shadow:0 10px 35px rgba(46,59,109,.12); --shadow-lg:0 20px 50px rgba(46,59,109,.15);
+      --ex:#16A34A; --go:#2563EB; --av:#D97706; --pr:#DC2626;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Nunito,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.5}
+    .bg{position:fixed;inset:0;background:radial-gradient(circle at 10% 10%,rgba(255,107,53,.05),transparent 35%),radial-gradient(circle at 90% 90%,rgba(46,59,109,.05),transparent 35%);pointer-events:none;z-index:-1}
+    .wrap{max-width:1400px;margin:0 auto;padding:24px}
+
+    /* ── HERO ── */
+    .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:32px;border-radius:28px;box-shadow:var(--shadow-lg);display:flex;gap:32px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-50%;right:-50%;width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,53,.1) 0%,transparent 70%);border-radius:50%;z-index:0}
+    .hero-left{position:relative;z-index:1;flex:1;min-width:240px}
+    .hero-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 10px 30px rgba(0,0,0,.2));position:relative;z-index:1}
+    .pill{display:inline-flex;align-items:center;gap:10px;padding:11px 18px;border-radius:999px;background:rgba(255,255,255,.15);font-weight:800;font-size:.9rem;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);margin-bottom:12px}
+    .hero h1{margin:0;font-family:Fredoka,sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;letter-spacing:-.5px}
+    .hero p{margin:12px 0 0;color:rgba(255,255,255,.9);font-size:1rem;line-height:1.6}
+    .hero-status{display:inline-flex;align-items:center;gap:12px;font-weight:900;font-size:1rem;background:rgba(255,255,255,.1);padding:11px 16px;border-radius:999px;backdrop-filter:blur(10px);margin-top:12px}
+    .info-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .info-chip{padding:9px 13px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);font-size:.84rem;font-weight:800;color:#fff}
+
+    /* ── STATUS DOT ── */
+    .dot{width:13px;height:13px;border-radius:50%;background:var(--red);flex-shrink:0}
+    .dot.ok{background:var(--green)}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+    .dot.ok{animation:pulse 1.8s infinite}
+
+    /* ── LAYOUT ── */
+    .row{display:grid;grid-template-columns:1.3fr .9fr;gap:20px;margin-top:24px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .section{margin-top:24px}
+
+    /* ── CARD ── */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;transition:all .3s}
+    .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+    .card h2{margin:0 0 16px;font-family:Fredoka,sans-serif;font-size:1.25rem;font-weight:700;color:var(--text)}
+
+    /* ── FORMS ── */
+    .topbar{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .field{display:flex;flex-direction:column;gap:7px;flex:1;min-width:180px}
+    .field label{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    input,select{height:46px;border:2px solid var(--line);border-radius:12px;padding:0 14px;font:700 .95rem Nunito,sans-serif;outline:none;transition:all .2s;background:#fff;color:var(--text)}
+    input:focus,select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.1)}
+    input[readonly]{background:#f8fafc;color:var(--muted)}
+
+    /* ── BUTTONS ── */
+    button{border:0;border-radius:12px;padding:12px 18px;font:800 .92rem Nunito,sans-serif;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+    button:active:not(:disabled){transform:translateY(0);box-shadow:none}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .btn{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff}
+    .btn.green{background:linear-gradient(135deg,#22C55E,var(--teal));color:#fff}
+    .btn.red{background:linear-gradient(135deg,#EF4444,#EC4899);color:#fff}
+    .btn.blue{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}
+    .btn.purple{background:linear-gradient(135deg,var(--purple),#6366F1);color:#fff}
+    .btn.ghost{background:rgba(46,59,109,.08);color:var(--text)}
+    .btn.ghost:hover:not(:disabled){background:rgba(46,59,109,.13)}
+    .btn.sm{padding:9px 13px;font-size:.84rem}
+
+    /* ── UUID collapse ── */
+    .adv-btn{background:none;border:none;box-shadow:none;padding:6px 0;font-size:.8rem;font-weight:800;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-top:10px}
+    .adv-btn:hover{color:var(--orange);transform:none;box-shadow:none}
+    .uuid-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;display:none}
+    .uuid-grid.open{display:grid}
+
+    /* ── METRICS ── */
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .metric{padding:20px;border-radius:18px;background:linear-gradient(135deg,#fff,#f8fbff);border:1px solid var(--line)}
+    .metric small{display:block;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.5px;font-size:.74rem}
+    .metric strong{display:block;margin-top:8px;font-family:Fredoka,sans-serif;font-size:1.7rem;font-weight:800}
+
+    /* ── PIN / MOTOR / SERVO CARDS ── */
+    .subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .pin-card,.motor-card,.servo-card{padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff;transition:all .2s}
+    .pin-card:hover,.motor-card:hover,.servo-card:hover{border-color:var(--orange);box-shadow:0 4px 15px rgba(255,107,53,.1)}
+    .pin-head,.motor-head,.servo-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .badge{font-size:.74rem;font-weight:900;border-radius:999px;padding:5px 10px;background:rgba(46,59,109,.08);color:var(--muted)}
+    .badge.shared{background:rgba(255,107,53,.12);color:#b91c1c}
+    .badge.analog{background:rgba(139,92,246,.12);color:#6d28d9}
+    .pin-val{font-weight:900;font-size:1.1rem;color:var(--orange);margin:6px 0}
+    .dig-btns,.motor-btns{display:flex;gap:8px;margin-top:8px}
+    .dig-btns button,.motor-btns button{flex:1;padding:9px 10px;font-size:.83rem}
+    .slider{width:100%;cursor:pointer;margin-top:8px;accent-color:var(--orange)}
+    .hint{font-size:.85rem;color:var(--muted);line-height:1.6;margin-top:10px}
+
+    /* ── FIRMWARE ── */
+    .fw-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .fw-tab{padding:11px 14px;border:2px solid var(--line);border-radius:12px;text-align:center;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800;font-size:.88rem;transition:all .2s;background:#fff;color:var(--muted)}
+    .fw-tab.on{border-color:var(--orange);background:rgba(255,107,53,.07);color:var(--orange)}
+    .fw-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .fw-box{background:#0f1419;color:#e2e8f0;border-radius:16px;padding:16px;height:300px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:.8rem;border:1px solid rgba(46,59,109,.15);line-height:1.75}
+    .fw-box::-webkit-scrollbar{width:5px}.fw-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+    .kw{color:#FF7B72}.ty{color:#79C0FF}.cm{color:#8B949E;font-style:italic}.st{color:#A5D6FF}.pr{color:#FF7B72}
+    .cpyok{font-size:.83rem;font-weight:800;color:#22C55E;opacity:0;transition:opacity .3s}
+    .cpyok.show{opacity:1}
+    .fw-note{margin-top:14px;padding:14px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.14);font-weight:700;font-size:.88rem;color:#1e40af}
+
+    /* ── ACTIVITY TRACKER ── */
+    .trk-setup{display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:flex-end;margin-bottom:16px}
+    .sess-banner{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:18px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:14px;position:relative;overflow:hidden}
+    .sess-banner::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,107,53,.18),transparent 70%);border-radius:50%}
+    .sb-left{position:relative;z-index:1}
+    .sb-time{font-family:Fredoka,sans-serif;font-size:2.6rem;font-weight:700;letter-spacing:2px;font-variant-numeric:tabular-nums;line-height:1}
+    .sb-lbl{font-size:.74rem;font-weight:800;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+    .sb-name{font-size:.95rem;font-weight:800;margin-top:8px;opacity:.9}
+    .sb-right{position:relative;z-index:1;text-align:right}
+    .sb-count{font-family:Fredoka,sans-serif;font-size:2rem;font-weight:700;line-height:1}
+    .sb-count-lbl{font-size:.74rem;font-weight:800;opacity:.6;text-transform:uppercase;letter-spacing:.8px}
+
+    /* latest task card */
+    .latest-task{border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:2px solid var(--line);background:#f8fafc;transition:all .3s;min-height:60px}
+    .latest-task.ex{background:rgba(22,163,74,.07);border-color:rgba(22,163,74,.22)}
+    .latest-task.go{background:rgba(37,99,235,.06);border-color:rgba(37,99,235,.18)}
+    .latest-task.av{background:rgba(217,119,6,.07);border-color:rgba(217,119,6,.2)}
+    .latest-task.pr{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.14)}
+    .lt-left{display:flex;align-items:center;gap:12px}
+    .lt-ico{font-size:1.45rem;line-height:1}
+    .lt-name{font-weight:800;font-size:.95rem}
+    .lt-sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+    .lt-badge{font-weight:900;font-size:.83rem;padding:6px 14px;border-radius:999px;white-space:nowrap}
+    .lt-badge.ex{background:rgba(22,163,74,.14);color:var(--ex)}
+    .lt-badge.go{background:rgba(37,99,235,.12);color:var(--go)}
+    .lt-badge.av{background:rgba(217,119,6,.12);color:var(--av)}
+    .lt-badge.pr{background:rgba(220,38,38,.1);color:var(--pr)}
+
+    /* stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .stat-chip{padding:16px;border-radius:16px;background:linear-gradient(135deg,#fff,#f8fbff);border:1px solid var(--line);text-align:center}
+    .stat-chip .sv{font-family:Fredoka,sans-serif;font-size:1.6rem;font-weight:700}
+    .stat-chip .sl{font-size:.74rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+
+    /* activity table */
+    .act-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line)}
+    .act-tbl{width:100%;border-collapse:collapse;font-size:.85rem}
+    .act-tbl th{padding:10px 14px;text-align:left;font-size:.74rem;font-weight:900;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:#f8fafc;border-bottom:1px solid var(--line)}
+    .act-tbl td{padding:10px 14px;border-bottom:1px solid rgba(46,59,109,.06);vertical-align:middle}
+    .act-tbl tr:last-child td{border-bottom:none}
+    .act-tbl tr:hover td{background:#fafbff}
+    .spill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;font-weight:900;font-size:.75rem}
+    .spill.ex{background:rgba(22,163,74,.1);color:var(--ex)}
+    .spill.go{background:rgba(37,99,235,.08);color:var(--go)}
+    .spill.av{background:rgba(217,119,6,.08);color:var(--av)}
+    .spill.pr{background:rgba(220,38,38,.07);color:var(--pr)}
+    .bench-leg{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;background:#f8fafc;border-radius:14px;border:1px solid var(--line);align-items:center}
+
+    /* ── BOARD MAP + LOG ── */
+    .log-box{background:#0f1419;color:#e2e8f0;border-radius:16px;padding:16px;height:240px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.82rem;border:1px solid rgba(46,59,109,.15)}
+    .log-box div{padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.05)}
+    .log-box div:last-child{border:none}
+    .log-box div.ok{color:#86efac}
+    .log-box div.warn{color:#fde68a}
+    .log-box div.err{color:#fca5a5}
+    .warn-strip{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.15);color:#92400e;font-weight:700;font-size:.88rem}
+    .map-content{font-size:.85rem;color:var(--muted);line-height:1.8}
+
+    @media(max-width:1024px){.row{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}.stats-row{grid-template-columns:1fr 1fr}.trk-setup{grid-template-columns:1fr 1fr}}
+    @media(max-width:768px){.split,.subgrid,.uuid-grid,.fw-tabs,.stats-row{grid-template-columns:1fr}.hero{flex-direction:column;padding:24px;text-align:center}.hero-img{width:120px;height:120px}.grid4{grid-template-columns:1fr 1fr}.trk-setup{grid-template-columns:1fr}}
+    @media(max-width:480px){.wrap{padding:14px}.grid4,.subgrid{grid-template-columns:1fr}.card{padding:16px}.sb-time{font-size:2rem}}
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="pill">📶 STEMbotix ESP32 · BLE Dashboard</div>
+    <h1>AI & Robotics Kit</h1>
+    <p>Connect directly to your ESP32 via Bluetooth, control every pin, and track student progress automatically.</p>
+    <div class="hero-status">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText">Offline</span>
+    </div>
+    <div class="info-strip">
+      <div class="info-chip">📶 BLE Direct</div>
+      <div class="info-chip">Device: <span id="bleNameChip">--</span></div>
+    </div>
+  </div>
+  <img src="{{ url_for('static', filename='iot.png') }}" alt="STEMbotix" class="hero-img">
+</section>
+
+<!-- ══ BLE CONNECTION + TELEMETRY ══ -->
+<div class="row">
+  <section class="card">
+    <h2>📡 Bluetooth Connection</h2>
+    <div class="topbar">
+      <div class="field" style="min-width:170px">
+        <label>Device Name Filter</label>
+        <input id="bleNamePrefix" value="STEMbotix"/>
+      </div>
+      <div class="field" style="max-width:140px">
+        <label>Poll (ms)</label>
+        <input id="bleRefreshMs" type="number" value="1500" min="500" step="100"/>
+      </div>
+      <button class="btn blue" id="bleConnectBtn">🔗 Connect BLE</button>
+      <button class="btn ghost" id="bleRefreshBtn">↻ Refresh</button>
+      <button class="btn red"  id="bleDisconnectBtn">✕ Disconnect</button>
+      <button class="btn red sm" id="stopAllBtn">⛔ Stop All</button>
+    </div>
+
+    <div class="field" style="margin-top:12px;max-width:340px">
+      <label>Status</label>
+      <input id="bleStatusField" value="Not connected" readonly/>
+    </div>
+
+    <button class="adv-btn" onclick="toggleAdv(this)">▶ Advanced — UUIDs</button>
+    <div class="uuid-grid" id="uuidGrid">
+      <div class="field">
+        <label>Service UUID</label>
+        <input id="bleServiceUuid" style="font-family:'JetBrains Mono',monospace;font-size:.76rem" value="6e400001-b5a3-f393-e0a9-e50e24dcca9e"/>
+      </div>
+      <div class="field">
+        <label>RX Notify (ESP32 → Browser)</label>
+        <input id="bleRxUuid" style="font-family:'JetBrains Mono',monospace;font-size:.76rem" value="6e400003-b5a3-f393-e0a9-e50e24dcca9e"/>
+      </div>
+      <div class="field">
+        <label>TX Write (Browser → ESP32)</label>
+        <input id="bleTxUuid" style="font-family:'JetBrains Mono',monospace;font-size:.76rem" value="6e400002-b5a3-f393-e0a9-e50e24dcca9e"/>
+      </div>
+    </div>
+
+    <div class="warn-strip">⚡ Web Bluetooth requires Chrome or Edge on Android, macOS or ChromeOS. Keep this page open while using the kit.</div>
+  </section>
+
+  <section class="card">
+    <h2>📡 Live Telemetry</h2>
+    <div class="grid4" style="grid-template-columns:repeat(2,1fr)">
+      <div class="metric"><small>Device</small><strong id="mDevice">--</strong></div>
+      <div class="metric"><small>BLE RSSI</small><strong id="mRssi">--</strong></div>
+      <div class="metric"><small>Uptime</small><strong id="mUp">--</strong></div>
+      <div class="metric"><small>Last Ping</small><strong id="mPing">--</strong></div>
+    </div>
+  </section>
+</div>
+
+<!-- ══ ANALOG ══ -->
+<section class="card section">
+  <h2>📊 Analog Inputs</h2>
+  <div id="analogGrid" class="subgrid"></div>
+</section>
+
+<!-- ══ DIGITAL + SERVO ══ -->
+<div class="split section">
+  <section class="card">
+    <h2>🔌 Digital Pins</h2>
+    <div id="digitalGrid" class="subgrid"></div>
+  </section>
+  <section class="card">
+    <h2>🎛️ Servo Control</h2>
+    <div id="servoGrid" class="subgrid"></div>
+    <p class="hint">S1=D14 · S2=D32 · S3=D5(shared) · S4=D33</p>
+  </section>
+</div>
+
+<!-- ══ MOTORS ══ -->
+<section class="card section">
+  <h2>⚙️ Motor Driver Control</h2>
+  <div id="motorGrid" class="grid4"></div>
+  <p class="hint">M1 D23/D15 · M2 D27/D19 · M3 D12/D18 · M4 D13/D2</p>
+</section>
+
+<!-- ══ FIRMWARE ══ -->
+<section class="card section">
+  <h2>💾 Firmware — Copy or Download for Arduino IDE</h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:14px">Pick a sketch, copy or download the <code>.ino</code>, then upload via Arduino IDE (Board: ESP32 Dev Module).</p>
+  <div class="fw-tabs">
+    <div class="fw-tab on" id="fw-blink" onclick="selFw('blink')">💡 Blink LED — Beginner</div>
+    <div class="fw-tab"    id="fw-full"  onclick="selFw('full')">🤖 Full BLE Kit Control</div>
+  </div>
+  <div class="fw-toolbar">
+    <button class="btn ghost sm" onclick="copyFw()">📋 Copy Code</button>
+    <button class="btn sm" onclick="dlFw()">⬇️ Download .ino</button>
+    <span id="cpyok" class="cpyok">✓ Copied!</span>
+  </div>
+  <div class="fw-box" id="fwBox"></div>
+  <div class="fw-note">📦 Required Libraries (Arduino Library Manager): <b>ESP32 BLE Arduino · ESP32Servo · ArduinoJson</b></div>
+</section>
+
+<!-- ══ STUDENT ACTIVITY TRACKER ══ -->
+<section class="card section">
+  <h2>🎓 Student Activity Tracker
+    <span style="float:right;font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;color:#1d4ed8;background:rgba(37,99,235,.08);padding:4px 10px;border-radius:8px;border:1px solid rgba(37,99,235,.14)">✦ Auto-detected from kit actions</span>
+  </h2>
+
+  <div class="trk-setup">
+    <div class="field"><label>Student Name</label><input id="studentName" placeholder="e.g. Arjun Shah"/></div>
+    <div class="field"><label>Class / Section</label><input id="studentClass" placeholder="e.g. 7-B"/></div>
+    <button class="btn green" id="startBtn" onclick="startSession()" style="align-self:flex-end">▶ Start Session</button>
+    <button class="btn red"   id="endBtn"   onclick="endSession()"   disabled style="align-self:flex-end">■ End Session</button>
+  </div>
+
+  <!-- Session banner -->
+  <div class="sess-banner">
+    <div class="sb-left">
+      <div class="sb-time" id="sessTimer">00:00</div>
+      <div class="sb-lbl">Session Timer</div>
+      <div class="sb-name" id="sessName">No active session — enter name and press ▶ Start Session</div>
+    </div>
+    <div class="sb-right">
+      <div class="sb-count" id="sessCount">0</div>
+      <div class="sb-count-lbl">Tasks detected</div>
+    </div>
+  </div>
+
+  <!-- Latest auto-detected task -->
+  <div class="latest-task" id="latestTask">
+    <div class="lt-left">
+      <div class="lt-ico">🤖</div>
+      <div>
+        <div class="lt-name" style="color:var(--muted)">Waiting for activity…</div>
+        <div class="lt-sub">Start a session, connect the kit, then use any control above</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-chip"><div class="sv" id="stTotal">0</div><div class="sl">Tasks Done</div></div>
+    <div class="stat-chip"><div class="sv" id="stExc">0</div><div class="sl">🏆 Excellent</div></div>
+    <div class="stat-chip"><div class="sv" id="stAvg">--</div><div class="sl">Avg Time</div></div>
+    <div class="stat-chip"><div class="sv" id="stBest">--</div><div class="sl">Best Time</div></div>
+  </div>
+
+  <!-- Table -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-weight:800;font-size:.9rem">📋 Activity Log</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn ghost sm" onclick="exportCSV()">⬇️ Export CSV</button>
+      <button class="btn ghost sm" onclick="clearLog()">🗑️ Clear</button>
+    </div>
+  </div>
+  <div class="act-wrap">
+    <table class="act-tbl">
+      <thead><tr>
+        <th>#</th><th>Student</th><th>Class</th>
+        <th>Task (auto-detected)</th>
+        <th>Time in Session</th><th>Benchmark</th><th>At</th>
+      </tr></thead>
+      <tbody id="actBody"></tbody>
+    </table>
+  </div>
+  <div class="bench-leg">
+    <span style="font-size:.74rem;font-weight:800;color:var(--muted)">BENCHMARKS:</span>
+    <span class="spill ex">🏆 Excellent ≤ 2 min</span>
+    <span class="spill go">⭐ Good ≤ 4 min</span>
+    <span class="spill av">👍 Average ≤ 7 min</span>
+    <span class="spill pr">💪 Keep Practicing > 7 min</span>
+    <span style="margin-left:auto;font-size:.74rem;color:var(--muted)">Avg benchmark = 7 min</span>
+  </div>
+</section>
+
+<!-- ══ BOARD MAP + LOG ══ -->
+<div class="split section">
+  <section class="card">
+    <h2>📋 Board Map</h2>
+    <div id="boardMap" class="map-content">Waiting for device state…</div>
+  </section>
+  <section class="card">
+    <h2>📊 Activity Log</h2>
+    <div id="sysLog" class="log-box"></div>
+  </section>
+</div>
+
+</div><!-- /wrap -->
+<script>
+// ═══════════════════════════════════════════════════
+//  FIRMWARE  (each #define on its own line)
+// ═══════════════════════════════════════════════════
+const FW = {
+
+blink:
+`// STEMbotix AI & Robotics Kit
+// Sketch  : Blink LED  (Beginner Activity)
+// Pin     : GPIO 25  (D25 on the kit)
+// Upload  : Arduino IDE → Board: ESP32 Dev Module
+// ─────────────────────────────────────────────────
+
+#define LED_PIN 25   // Change to your LED pin if needed
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.println("STEMbotix Kit Ready - Blink LED!");
+}
+
+void loop() {
+  digitalWrite(LED_PIN, HIGH);  // LED ON
+  Serial.println("LED: ON");
+  delay(500);
+
+  digitalWrite(LED_PIN, LOW);   // LED OFF
+  Serial.println("LED: OFF");
+  delay(500);
+}`,
+
+full:
+`// STEMbotix AI & Robotics Kit
+// Sketch  : Full BLE Control
+// Features: Digital pins · Servos · Motors · Analog read
+// Protocol: Nordic UART Service (NUS) JSON over Bluetooth LE
+// Libraries: ESP32 BLE Arduino · ESP32Servo · ArduinoJson
+// Upload  : Arduino IDE → Board: ESP32 Dev Module
+// ─────────────────────────────────────────────────
+
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+#include <ESP32Servo.h>
+#include <ArduinoJson.h>
+
+// ── BLE Service / Characteristic UUIDs (Nordic UART) ──
+#define SERVICE_UUID  "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+#define NOTIFY_UUID   "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
+#define WRITE_UUID    "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+#define DEVICE_NAME   "STEMbotix-Kit"
+
+// ── Digital output pins ────────────────────────────────
+#define D25_PIN 25
+#define D4_PIN   4
+#define D26_PIN 26
+
+// ── Motor H-bridge pin pairs (each on its own line) ───
+#define M1_A 23
+#define M1_B 15
+#define M2_A 27
+#define M2_B 19
+#define M3_A 12
+#define M3_B 18
+#define M4_A 13
+#define M4_B  2
+
+// ── Servo signal pins ─────────────────────────────────
+#define SERVO1_PIN 14
+#define SERVO2_PIN 32
+#define SERVO3_PIN  5
+#define SERVO4_PIN 33
+
+// ── Globals ───────────────────────────────────────────
+bool               bleConnected = false;
+BLECharacteristic* notifyChar   = nullptr;
+Servo              servos[4];
+String             rxBuffer     = "";
+
+// ── Send JSON string to the browser ──────────────────
+void bleSend(const String& json) {
+  if (!bleConnected || !notifyChar) return;
+  notifyChar->setValue(json.c_str());
+  notifyChar->notify();
+}
+
+// ── Build and transmit current device state ──────────
+void sendState() {
+  StaticJsonDocument<512> doc;
+  doc["deviceId"] = DEVICE_NAME;
+  doc["uptimeMs"] = millis();
+
+  JsonObject dig = doc.createNestedObject("digital");
+  dig["D25"] = digitalRead(D25_PIN);
+  dig["D4"]  = digitalRead(D4_PIN);
+  dig["D26"] = digitalRead(D26_PIN);
+
+  JsonObject ana = doc.createNestedObject("analog");
+  ana["D34"] = analogRead(34);
+  ana["D35"] = analogRead(35);
+  ana["VP"]  = analogRead(36);
+  ana["VN"]  = analogRead(39);
+
+  String out;
+  serializeJson(doc, out);
+  out += "\\n";
+  bleSend(out);
+}
+
+// ── Drive one H-bridge motor ──────────────────────────
+// dir:  1 = forward,  -1 = reverse,  0 = stop
+void driveMotor(int pinA, int pinB, int dir) {
+  digitalWrite(pinA, (dir ==  1) ? HIGH : LOW);
+  digitalWrite(pinB, (dir == -1) ? HIGH : LOW);
+}
+
+// ── Execute one parsed command ────────────────────────
+void handleCommand(JsonObject& cmd) {
+  const char* type = cmd["type"];
+  if (!type) return;
+
+  if (strcmp(type, "digital_write") == 0) {
+    const char* pin = cmd["pin"];
+    int val = (int)cmd["value"];
+    if      (strcmp(pin, "D25") == 0) digitalWrite(D25_PIN, val);
+    else if (strcmp(pin, "D4")  == 0) digitalWrite(D4_PIN,  val);
+    else if (strcmp(pin, "D26") == 0) digitalWrite(D26_PIN, val);
+
+  } else if (strcmp(type, "servo_set") == 0) {
+    int idx   = (int)cmd["index"];
+    int angle = constrain((int)cmd["angle"], 0, 180);
+    if (idx >= 1 && idx <= 4) servos[idx - 1].write(angle);
+
+  } else if (strcmp(type, "motor_set") == 0) {
+    int m   = (int)cmd["motor"];
+    int dir = (int)cmd["dir"];
+    if      (m == 1) driveMotor(M1_A, M1_B, dir);
+    else if (m == 2) driveMotor(M2_A, M2_B, dir);
+    else if (m == 3) driveMotor(M3_A, M3_B, dir);
+    else if (m == 4) driveMotor(M4_A, M4_B, dir);
+
+  } else if (strcmp(type, "stop_all") == 0) {
+    digitalWrite(M1_A, LOW); digitalWrite(M1_B, LOW);
+    digitalWrite(M2_A, LOW); digitalWrite(M2_B, LOW);
+    digitalWrite(M3_A, LOW); digitalWrite(M3_B, LOW);
+    digitalWrite(M4_A, LOW); digitalWrite(M4_B, LOW);
+    for (int i = 0; i < 4; i++) servos[i].write(90);
+
+  } else if (strcmp(type, "get_state") == 0) {
+    sendState();
+  }
+}
+
+// ── Parse newline-delimited JSON from browser ─────────
+void processBuffer() {
+  int nl;
+  while ((nl = rxBuffer.indexOf('\\n')) >= 0) {
+    String line = rxBuffer.substring(0, nl);
+    rxBuffer    = rxBuffer.substring(nl + 1);
+    line.trim();
+    if (line.length() == 0) continue;
+
+    StaticJsonDocument<256> doc;
+    DeserializationError err = deserializeJson(doc, line);
+    if (err) continue;
+
+    // Dashboard wraps commands: { "type":"command", "command":{...} }
+    if (doc.containsKey("command")) {
+      JsonObject cmd = doc["command"].as<JsonObject>();
+      handleCommand(cmd);
+    } else {
+      JsonObject cmd = doc.as<JsonObject>();
+      handleCommand(cmd);
+    }
+  }
+}
+
+// ── BLE server callbacks ──────────────────────────────
+struct ConnHandler : public BLEServerCallbacks {
+  void onConnect(BLEServer*) {
+    bleConnected = true;
+    Serial.println("BLE: dashboard connected");
+  }
+  void onDisconnect(BLEServer*) {
+    bleConnected = false;
+    Serial.println("BLE: disconnected — restarting advertising");
+    BLEDevice::startAdvertising();
+  }
+};
+
+// ── BLE write characteristic callbacks ───────────────
+struct WriteHandler : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic* chr) {
+    rxBuffer += chr->getValue().c_str();
+    processBuffer();
+  }
+};
+
+// ── Arduino setup ─────────────────────────────────────
+void setup() {
+  Serial.begin(115200);
+
+  // Digital output pins
+  pinMode(D25_PIN, OUTPUT); digitalWrite(D25_PIN, LOW);
+  pinMode(D4_PIN,  OUTPUT); digitalWrite(D4_PIN,  LOW);
+  pinMode(D26_PIN, OUTPUT); digitalWrite(D26_PIN, LOW);
+
+  // Motor pins — all stopped at startup
+  pinMode(M1_A, OUTPUT); pinMode(M1_B, OUTPUT);
+  pinMode(M2_A, OUTPUT); pinMode(M2_B, OUTPUT);
+  pinMode(M3_A, OUTPUT); pinMode(M3_B, OUTPUT);
+  pinMode(M4_A, OUTPUT); pinMode(M4_B, OUTPUT);
+  digitalWrite(M1_A,LOW); digitalWrite(M1_B,LOW);
+  digitalWrite(M2_A,LOW); digitalWrite(M2_B,LOW);
+  digitalWrite(M3_A,LOW); digitalWrite(M3_B,LOW);
+  digitalWrite(M4_A,LOW); digitalWrite(M4_B,LOW);
+
+  // Servos centred at 90°
+  servos[0].attach(SERVO1_PIN); servos[0].write(90);
+  servos[1].attach(SERVO2_PIN); servos[1].write(90);
+  servos[2].attach(SERVO3_PIN); servos[2].write(90);
+  servos[3].attach(SERVO4_PIN); servos[3].write(90);
+
+  // BLE stack
+  BLEDevice::init(DEVICE_NAME);
+  BLEServer* server = BLEDevice::createServer();
+  server->setCallbacks(new ConnHandler());
+
+  BLEService* svc = server->createService(SERVICE_UUID);
+
+  // Notify characteristic (ESP32 → browser)
+  notifyChar = svc->createCharacteristic(NOTIFY_UUID, BLECharacteristic::PROPERTY_NOTIFY);
+  notifyChar->addDescriptor(new BLE2902());
+
+  // Write characteristic (browser → ESP32)
+  BLECharacteristic* writeChar = svc->createCharacteristic(
+    WRITE_UUID,
+    BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR
+  );
+  writeChar->setCallbacks(new WriteHandler());
+
+  svc->start();
+  BLEDevice::startAdvertising();
+  Serial.println("STEMbotix BLE ready — open dashboard and connect!");
+}
+
+// ── Arduino loop ──────────────────────────────────────
+unsigned long lastSent = 0;
+void loop() {
+  // Push state to dashboard every 2 seconds while connected
+  if (bleConnected && (millis() - lastSent > 2000)) {
+    sendState();
+    lastSent = millis();
+  }
+  delay(10);
+}`
+
+}; // end FW
+
+// ─────────────────────────────────────────────────────
+//  FIRMWARE UI
+// ─────────────────────────────────────────────────────
+let curFw = 'blink';
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderFw(k) {
+  let h = esc(FW[k])
+    .replace(/(\/\/.+)/g,                  '<span class="cm">$1</span>')
+    .replace(/\b(void|int|bool|const|unsigned|long|for|if|else|while|return|struct|true|false|nullptr|continue|delay)\b/g,
+             '<span class="kw">$1</span>')
+    .replace(/\b(String|Serial|BLEDevice|BLEServer|BLEService|BLECharacteristic|BLE2902|Servo|StaticJsonDocument|JsonObject|DeserializationError|ConnHandler|WriteHandler)\b/g,
+             '<span class="ty">$1</span>')
+    .replace(/#(include|define)/g,         '<span class="pr">#$1</span>')
+    .replace(/"([^"]*)"/g,                 '<span class="st">"$1"</span>');
+  document.getElementById('fwBox').innerHTML = h;
+}
+
+function selFw(k) {
+  curFw = k;
+  document.getElementById('fw-blink').className = 'fw-tab' + (k === 'blink' ? ' on' : '');
+  document.getElementById('fw-full' ).className = 'fw-tab' + (k === 'full'  ? ' on' : '');
+  renderFw(k);
+}
+
+async function copyFw() {
+  try {
+    await navigator.clipboard.writeText(FW[curFw]);
+    const el = document.getElementById('cpyok');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+  } catch(e) { sysLog('Clipboard copy failed: ' + e.message, 'warn'); }
+}
+
+function dlFw() {
+  const name = curFw === 'blink' ? 'stembot_blink_led' : 'stembot_full_ble';
+  const blob = new Blob([FW[curFw]], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + '.ino';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  sysLog('Downloaded: ' + name + '.ino', 'ok');
+}
+
+function toggleAdv(btn) {
+  const grid = document.getElementById('uuidGrid');
+  const open = grid.classList.toggle('open');
+  btn.textContent = (open ? '▼' : '▶') + ' Advanced — UUIDs';
+}
+
+// ─────────────────────────────────────────────────────
+//  STATE  (mirrors original working dashboard structure)
+// ─────────────────────────────────────────────────────
+const state = {
+  ble: {
+    device: null, server: null, service: null,
+    txChar: null, rxChar: null,
+    connected: false,
+    decoder: new TextDecoder(),
+    encoder: new TextEncoder(),
+    buffer: '',
+    timer: null,
+    name: '',
+    serviceUuid: '', txUuid: '', rxUuid: ''
+  },
+  current: null,
+
+  digitalPins: [
+    { name:'D25', gpio:25, shared:false, note:'General digital output'  },
+    { name:'D4',  gpio:4,  shared:false, note:'General digital output'  },
+    { name:'D26', gpio:26, shared:false, note:'General digital output'  },
+    { name:'D5',  gpio:5,  shared:true,  note:'Shared with Servo 3'     },
+    { name:'D3',  gpio:3,  shared:true,  note:'Shared with UART0 RX'    },
+    { name:'D1',  gpio:1,  shared:true,  note:'Shared with UART0 TX'    },
+  ],
+  analogPins: ['D34','D35','VP','VN'],
+  servos: [
+    { idx:1, pin:'D14', label:'Servo 1' },
+    { idx:2, pin:'D32', label:'Servo 2' },
+    { idx:3, pin:'D5',  label:'Servo 3' },
+    { idx:4, pin:'D33', label:'Servo 4' }
+  ],
+  motors: [
+    { idx:1, pins:'D23 / D15' },
+    { idx:2, pins:'D27 / D19' },
+    { idx:3, pins:'D12 / D18' },
+    { idx:4, pins:'D13 / D2'  }
+  ],
+
+  // Activity tracker session
+  sess: {
+    active: false, name: '', cls: '',
+    startMs: 0, timerIv: null,
+    detected: new Set(),   // task keys already logged this session
+    blinkHigh: {}          // pin -> true while waiting for LOW (blink detection)
+  },
+  actLog: []
+};
+
+const $ = id => document.getElementById(id);
+
+// ─────────────────────────────────────────────────────
+//  CONSOLE
+// ─────────────────────────────────────────────────────
+function sysLog(msg, type = '') {
+  const el = document.createElement('div');
+  el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  if (type) el.classList.add(type);
+  $('sysLog').prepend(el);
+}
+
+// ─────────────────────────────────────────────────────
+//  STATUS  (identical to original)
+// ─────────────────────────────────────────────────────
+function setStatus(ok, text) {
+  $('statusDot').className = ok ? 'dot ok' : 'dot';
+  $('statusText').textContent = text;
+}
+
+// ─────────────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────────────
+function fmtMs(ms) {
+  const s = Math.floor(ms / 1000);
+  return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+function fmtUptime(ms) {
+  const s = Math.floor((ms || 0) / 1000);
+  return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm ' + (s%60) + 's';
+}
+
+// ─────────────────────────────────────────────────────
+//  BENCHMARKS
+// ─────────────────────────────────────────────────────
+const BENCH = [
+  { maxMs:2*60*1000, label:'🏆 Excellent',       key:'ex', msg:'Outstanding! You aced it!'         },
+  { maxMs:4*60*1000, label:'⭐ Good',             key:'go', msg:'Great work! Almost perfect.'       },
+  { maxMs:7*60*1000, label:'👍 Average',          key:'av', msg:'Good job — keep practising.'       },
+  { maxMs:Infinity,  label:'💪 Keep Practicing', key:'pr', msg:"You'll get faster — keep going!"   }
+];
+const TASK = {
+  'BLE Connect':    { icon:'📡', label:'BLE Connection'  },
+  'Analog Read':    { icon:'📈', label:'Analog Read'     },
+  'Digital Output': { icon:'🔌', label:'Digital Output'  },
+  'Blink LED':      { icon:'💡', label:'Blink LED'       },
+  'Servo Control':  { icon:'🎛️', label:'Servo Control'  },
+  'Motor Control':  { icon:'⚙️', label:'Motor Control'  }
+};
+function getBench(ms) { return BENCH.find(b => ms <= b.maxMs); }
+
+// ─────────────────────────────────────────────────────
+//  SESSION
+// ─────────────────────────────────────────────────────
+function startSession() {
+  const name = ($('studentName').value || '').trim();
+  if (!name) { alert('Please enter a student name first.'); return; }
+  if (state.sess.active) endSession();
+
+  state.sess = {
+    active: true, name,
+    cls:     ($('studentClass').value || '--').trim(),
+    startMs: Date.now(),
+    timerIv: null,
+    detected: new Set(),
+    blinkHigh: {}
+  };
+  $('startBtn').disabled = true;
+  $('endBtn').disabled   = false;
+  $('sessName').textContent  = name + ' · ' + state.sess.cls;
+  $('sessCount').textContent = '0';
+
+  state.sess.timerIv = setInterval(() => {
+    $('sessTimer').textContent = fmtMs(Date.now() - state.sess.startMs);
+  }, 500);
+
+  if (state.ble.connected) autoDetect('BLE Connect');
+  renderStats();
+  sysLog('Session started: ' + name, 'ok');
+}
+
+function endSession() {
+  if (!state.sess.active) return;
+  clearInterval(state.sess.timerIv);
+  const dur = fmtMs(Date.now() - state.sess.startMs);
+  state.sess.active = false;
+  $('startBtn').disabled = false;
+  $('endBtn').disabled   = true;
+  $('sessName').textContent = 'Session ended · ' + state.sess.name + ' · ' + dur;
+  sysLog('Session ended · ' + state.sess.name + ' · ' + dur, 'ok');
+}
+
+// ─────────────────────────────────────────────────────
+//  AUTO-DETECT  — called from every BLE action
+// ─────────────────────────────────────────────────────
+function autoDetect(taskKey) {
+  if (!state.sess.active) return;
+  if (state.sess.detected.has(taskKey)) return;
+  state.sess.detected.add(taskKey);
+
+  const elapsed = Date.now() - state.sess.startMs;
+  const bench   = getBench(elapsed);
+  const meta    = TASK[taskKey] || { icon:'✅', label: taskKey };
+  const isTimed = (taskKey !== 'BLE Connect');
+
+  $('sessCount').textContent = state.sess.detected.size;
+
+  const entry = {
+    id: state.actLog.length + 1,
+    student: state.sess.name,
+    cls:     state.sess.cls,
+    task:    meta.label,
+    icon:    meta.icon,
+    elapsedMs: elapsed,
+    elapsed:   isTimed ? fmtMs(elapsed) : '--',
+    bench:     bench.key,
+    benchLabel: bench.label,
+    ts: new Date().toLocaleTimeString()
+  };
+  state.actLog.push(entry);
+
+  const lt = $('latestTask');
+  lt.className = 'latest-task ' + bench.key;
+  lt.innerHTML =
+    '<div class="lt-left">' +
+      '<div class="lt-ico">' + meta.icon + '</div>' +
+      '<div>' +
+        '<div class="lt-name">' + meta.label + ' detected</div>' +
+        '<div class="lt-sub">' + state.sess.name +
+          (isTimed ? ' · ' + fmtMs(elapsed) + ' · ' + bench.msg : ' · Connected to kit') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    (isTimed ? '<span class="lt-badge ' + bench.key + '">' + bench.label + '</span>' : '');
+
+  renderTable();
+  renderStats();
+  sysLog('Auto-detected: ' + meta.label + (isTimed ? ' in ' + fmtMs(elapsed) + ' → ' + bench.label : ''), 'ok');
+}
+
+// Blink = same pin goes HIGH then LOW within one session
+function trackBlink(pin, value) {
+  if (!state.sess.active || state.sess.detected.has('Blink LED')) return;
+  if (value === 1) {
+    state.sess.blinkHigh[pin] = true;
+  } else if (value === 0 && state.sess.blinkHigh[pin]) {
+    delete state.sess.blinkHigh[pin];
+    autoDetect('Blink LED');
+  }
+}
+
+function renderStats() {
+  const timed = state.actLog.filter(e => e.elapsed !== '--');
+  const exc   = state.actLog.filter(e => e.bench  === 'ex').length;
+  const total = state.actLog.filter(e => e.task   !== 'BLE Connection').length;
+  const avgMs = timed.length ? Math.round(timed.reduce((a,e) => a + e.elapsedMs, 0) / timed.length) : 0;
+  const best  = timed.reduce((a,e) => Math.min(a, e.elapsedMs), Infinity);
+  $('stTotal').textContent = total;
+  $('stExc').textContent   = exc;
+  $('stAvg').textContent   = timed.length ? fmtMs(avgMs) : '--';
+  $('stBest').textContent  = best < Infinity ? fmtMs(best) : '--';
+}
+
+function renderTable() {
+  const tb = $('actBody');
+  if (!state.actLog.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px;font-size:.87rem">Start a session → connect BLE → interact with the kit.<br>Tasks log here automatically.</td></tr>';
+    return;
+  }
+  tb.innerHTML = [...state.actLog].reverse().map(e =>
+    '<tr>' +
+    '<td style="font-weight:800;color:var(--muted)">' + e.id + '</td>' +
+    '<td style="font-weight:800">' + e.student + '</td>' +
+    '<td style="color:var(--muted)">' + e.cls + '</td>' +
+    '<td>' + e.icon + ' ' + e.task + '</td>' +
+    '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700">' + e.elapsed + '</td>' +
+    '<td><span class="spill ' + e.bench + '">' + e.benchLabel + '</span></td>' +
+    '<td style="color:var(--muted);font-size:.76rem">' + e.ts + '</td></tr>'
+  ).join('');
+}
+
+function clearLog() {
+  if (!confirm('Clear all activity records?')) return;
+  state.actLog = [];
+  renderTable(); renderStats();
+  $('latestTask').className = 'latest-task';
+  $('latestTask').innerHTML = '<div class="lt-left"><div class="lt-ico">🤖</div><div><div class="lt-name" style="color:var(--muted)">Waiting for activity…</div><div class="lt-sub">Start a session, connect the kit, then use any control above</div></div></div>';
+}
+
+function exportCSV() {
+  if (!state.actLog.length) { alert('No data to export.'); return; }
+  const hdr  = '#,Student,Class,Task,Time,Benchmark,At';
+  const rows = state.actLog.map(e =>
+    [e.id, '"'+e.student+'"', '"'+e.cls+'"', '"'+e.task+'"', e.elapsed, '"'+e.benchLabel+'"', '"'+e.ts+'"'].join(',')
+  );
+  const blob = new Blob([[hdr, ...rows].join('\n')], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stembot_activity_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  sysLog('Exported ' + state.actLog.length + ' records', 'ok');
+}
+
+// ─────────────────────────────────────────────────────
+//  PIN RENDERS
+// ─────────────────────────────────────────────────────
+function renderDigitalCards() {
+  $('digitalGrid').innerHTML = state.digitalPins.map(p =>
+    '<div class="pin-card">' +
+      '<div class="pin-head"><div><b>' + p.name + '</b><div style="font-size:.8rem;color:var(--muted)">GPIO ' + p.gpio + '</div></div>' +
+        '<span class="badge' + (p.shared ? ' shared' : '') + '">' + (p.shared ? 'shared' : 'digital') + '</span></div>' +
+      '<div style="font-size:.8rem;color:var(--muted);margin-bottom:6px">' + p.note + '</div>' +
+      '<div class="pin-val" id="dig-' + p.name + '">--</div>' +
+      '<div class="dig-btns">' +
+        '<button class="btn green" onclick="setDigital(\'' + p.name + '\',1)">HIGH</button>' +
+        '<button class="btn red"   onclick="setDigital(\'' + p.name + '\',0)">LOW</button>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function renderAnalogCards() {
+  $('analogGrid').innerHTML = state.analogPins.map(n =>
+    '<div class="pin-card">' +
+      '<div class="pin-head"><div><b>' + n + '</b><div style="font-size:.8rem;color:var(--muted)">ADC1 analog read</div></div>' +
+        '<span class="badge analog">ADC</span></div>' +
+      '<div class="pin-val" id="ana-' + n + '">--</div>' +
+    '</div>'
+  ).join('');
+}
+
+function renderServoCards() {
+  $('servoGrid').innerHTML = state.servos.map(s =>
+    '<div class="servo-card">' +
+      '<div class="servo-head"><div><b>' + s.label + '</b><div style="font-size:.8rem;color:var(--muted)">Pin ' + s.pin + '</div></div>' +
+        '<span class="badge' + (s.idx===3?' shared':'') + '">' + (s.idx===3?'shared':'PWM') + '</span></div>' +
+      '<div class="pin-val"><span id="sv-' + s.idx + '">90</span>°</div>' +
+      '<input class="slider" type="range" min="0" max="180" value="90"' +
+        ' oninput="document.getElementById(\'sv-' + s.idx + '\').textContent=this.value"' +
+        ' onchange="setServo(' + s.idx + ',this.value)"/>' +
+    '</div>'
+  ).join('');
+}
+
+function renderMotorCards() {
+  $('motorGrid').innerHTML = state.motors.map(m =>
+    '<div class="motor-card">' +
+      '<div class="motor-head"><div><b>Motor ' + m.idx + '</b><div style="font-size:.8rem;color:var(--muted)">' + m.pins + '</div></div>' +
+        '<span class="badge">H-Bridge</span></div>' +
+      '<div class="pin-val" id="mv-' + m.idx + '">STOP</div>' +
+      '<div class="motor-btns">' +
+        '<button class="btn green" onclick="setMotor(' + m.idx + ',1)">▶ Forward</button>' +
+        '<button class="btn ghost" onclick="setMotor(' + m.idx + ',0)">■ Stop</button>' +
+        '<button class="btn blue"  onclick="setMotor(' + m.idx + ',-1)">◀ Reverse</button>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function renderMap() {
+  $('boardMap').innerHTML =
+    '<b>Digital</b><br>' +
+    state.digitalPins.map(p => p.name + ' → GPIO ' + p.gpio + (p.shared ? ' (shared)' : '')).join('<br>') +
+    '<br><br><b>Analog</b><br>' + state.analogPins.join(' · ') +
+    '<br><br><b>Servos</b><br>' +
+    state.servos.map(s => s.label + ' = ' + s.pin).join(' · ') +
+    '<br><br><b>Motors</b><br>' +
+    state.motors.map(m => 'M' + m.idx + ' ' + m.pins).join(' · ') +
+    '<br><br><b>I2C</b>: SDA=GPIO 21 · SCL=GPIO 22' +
+    '<br><b>UART2</b>: TX=GPIO 17 · RX=GPIO 16';
+}
+
+// ─────────────────────────────────────────────────────
+//  STATE RENDER
+// ─────────────────────────────────────────────────────
+function normalizeIncomingState(data) {
+  if (!data || typeof data !== 'object') return null;
+  if (data.state && typeof data.state === 'object') return data.state;
+  if (data.deviceId || data.digital || data.analog || data.servo ||
+      data.motors   || data.rssi != null || data.uptimeMs != null) return data;
+  if (data.type === 'state' && data.payload) return data.payload;
+  return null;
+}
+
+function renderState() {
+  const d = state.current;
+  if (!d) return;
+  $('mDevice').textContent = d.deviceId || state.ble.name || '--';
+  $('mPing').textContent   = new Date().toLocaleTimeString();
+  $('mRssi').textContent   = d.rssi != null ? d.rssi + ' dBm' : 'BLE';
+  $('mUp').textContent     = fmtUptime(d.uptimeMs || d.uptime || 0);
+
+  Object.entries(d.digital || {}).forEach(([name, val]) => {
+    const el = $('dig-' + name);
+    if (el) el.textContent = val ? 'HIGH' : 'LOW';
+  });
+
+  let hasAnalog = false;
+  Object.entries(d.analog || {}).forEach(([name, val]) => {
+    const el = $('ana-' + name);
+    if (el) el.textContent = val;
+    if (val > 0) hasAnalog = true;
+  });
+  if (hasAnalog) autoDetect('Analog Read');
+
+  Object.entries(d.servo || {}).forEach(([name, val]) => {
+    const idx = String(name).replace('servo','');
+    const el  = $('sv-' + idx);
+    if (el) el.textContent = val;
+  });
+
+  Object.entries(d.motors || {}).forEach(([name, val]) => {
+    const idx = String(name).replace('m','');
+    const el  = $('mv-' + idx);
+    if (el) el.textContent = val === 1 ? 'FORWARD' : val === -1 ? 'REVERSE' : 'STOP';
+  });
+}
+
+// ─────────────────────────────────────────────────────
+//  BLE CORE — exact logic from original working code
+// ─────────────────────────────────────────────────────
+function supportsWebBluetooth() { return !!navigator.bluetooth; }
+
+async function bleWriteJson(obj) {
+  if (!state.ble.connected || !state.ble.txChar) {
+    throw new Error('BLE not connected');
+  }
+  const text  = JSON.stringify(obj) + '\n';
+  const bytes = state.ble.encoder.encode(text);
+  const CHUNK = 180;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    await state.ble.txChar.writeValue(bytes.slice(i, i + CHUNK));
+    await new Promise(r => setTimeout(r, 20));
+  }
+}
+
+async function bleRequestState() {
+  await bleWriteJson({ type: 'get_state' });
+}
+
+function bleHandleDisconnected() {
+  clearInterval(state.ble.timer);
+  state.ble.connected = false;
+  state.ble.server    = null;
+  state.ble.service   = null;
+  state.ble.txChar    = null;
+  state.ble.rxChar    = null;
+  $('bleStatusField').value  = 'Disconnected';
+  $('bleNameChip').textContent = '--';
+  $('bleConnectBtn').disabled  = false;
+  $('bleConnectBtn').textContent = '🔗 Connect BLE';
+  setStatus(false, 'BLE disconnected');
+  sysLog('BLE device disconnected', 'warn');
+}
+
+// Notify handler — processes EVERY line in the buffer (use continue, not return)
+function bleHandleNotify(event) {
+  try {
+    state.ble.buffer += state.ble.decoder.decode(event.target.value);
+
+    let idx;
+    while ((idx = state.ble.buffer.indexOf('\n')) >= 0) {
+      const line = state.ble.buffer.slice(0, idx).trim();
+      state.ble.buffer = state.ble.buffer.slice(idx + 1);
+      if (!line) continue;
+
+      let parsed;
+      try { parsed = JSON.parse(line); }
+      catch { sysLog('BLE: bad JSON: ' + line.slice(0,40), 'warn'); continue; }
+
+      // Device state update
+      const ns = normalizeIncomingState(parsed);
+      if (ns) {
+        state.current = ns;
+        renderState();
+        setStatus(true, 'BLE connected · ' + (state.ble.name || 'ESP32'));
+        continue;
+      }
+
+      if (parsed.type === 'ack') continue;
+      if (parsed.type === 'log' && parsed.message) sysLog('ESP32: ' + parsed.message);
+    }
+  } catch(e) {
+    sysLog('BLE notify error: ' + e.message, 'err');
+  }
+}
+
+// Connect — identical flow to original working code
+async function bleConnect() {
+  if (!supportsWebBluetooth()) {
+    sysLog('Web Bluetooth not supported. Use Chrome or Edge.', 'err');
+    $('bleStatusField').value = 'Error: Web Bluetooth not supported';
+    return;
+  }
+
+  const namePrefix  = ($('bleNamePrefix').value  || 'STEMbotix').trim();
+  const serviceUuid = ($('bleServiceUuid').value || '').trim().toLowerCase();
+  const rxUuid      = ($('bleRxUuid').value      || '').trim().toLowerCase();
+  const txUuid      = ($('bleTxUuid').value      || '').trim().toLowerCase();
+
+  if (!serviceUuid || !rxUuid || !txUuid) {
+    sysLog('UUID fields empty — expand Advanced to check.', 'err');
+    return;
+  }
+
+  $('bleConnectBtn').disabled    = true;
+  $('bleConnectBtn').textContent = '⏳ Connecting…';
+
+  try {
+    $('bleStatusField').value = 'Requesting device…';
+
+    const options = { optionalServices: [serviceUuid] };
+    if (namePrefix) { options.filters = [{ namePrefix }]; }
+    else            { options.acceptAllDevices = true; }
+
+    // Step 1: browser device picker
+    const device = await navigator.bluetooth.requestDevice(options);
+    state.ble.device      = device;
+    state.ble.name        = device.name || 'ESP32';
+    state.ble.serviceUuid = serviceUuid;
+    state.ble.rxUuid      = rxUuid;
+    state.ble.txUuid      = txUuid;
+    $('bleNameChip').textContent = state.ble.name;
+    device.addEventListener('gattserverdisconnected', bleHandleDisconnected);
+
+    // Step 2: GATT connect
+    $('bleStatusField').value = 'Connecting GATT…';
+    const server = await device.gatt.connect();
+    state.ble.server = server;
+
+    // Step 3: get primary service
+    $('bleStatusField').value = 'Getting service…';
+    const service = await server.getPrimaryService(serviceUuid);
+    state.ble.service = service;
+
+    // Step 4: get characteristics
+    $('bleStatusField').value = 'Getting characteristics…';
+    const txChar = await service.getCharacteristic(txUuid);  // write
+    const rxChar = await service.getCharacteristic(rxUuid);  // notify
+    state.ble.txChar = txChar;
+    state.ble.rxChar = rxChar;
+
+    // Step 5: enable notifications
+    await rxChar.startNotifications();
+    rxChar.addEventListener('characteristicvaluechanged', bleHandleNotify);
+
+    // Step 6: mark connected
+    state.ble.connected            = true;
+    $('bleStatusField').value      = 'Connected: ' + state.ble.name;
+    $('bleConnectBtn').disabled    = false;
+    $('bleConnectBtn').textContent = '✓ Connected';
+    setStatus(true, 'BLE connected · ' + state.ble.name);
+    sysLog('BLE connected to ' + state.ble.name, 'ok');
+
+    // Step 7: auto-detect BLE Connect task
+    autoDetect('BLE Connect');
+
+    // Step 8: fetch initial state
+    await bleRequestState();
+
+    // Step 9: start polling
+    clearInterval(state.ble.timer);
+    const pollMs = Math.max(500, Number($('bleRefreshMs').value || 1500));
+    state.ble.timer = setInterval(async () => {
+      if (!state.ble.connected) return;
+      try { await bleRequestState(); }
+      catch(e) { sysLog('BLE poll failed: ' + e.message, 'warn'); }
+    }, pollMs);
+
+  } catch(e) {
+    $('bleStatusField').value      = 'Error: ' + e.message;
+    $('bleConnectBtn').disabled    = false;
+    $('bleConnectBtn').textContent = '🔗 Connect BLE';
+    setStatus(false, 'BLE connect failed');
+    sysLog('BLE connect failed: ' + e.message, 'err');
+  }
+}
+
+async function bleDisconnect() {
+  clearInterval(state.ble.timer);
+  try {
+    if (state.ble.rxChar) {
+      try { await state.ble.rxChar.stopNotifications(); } catch {}
+    }
+    if (state.ble.device && state.ble.device.gatt && state.ble.device.gatt.connected) {
+      state.ble.device.gatt.disconnect();
+    }
+  } finally {
+    bleHandleDisconnected();
+  }
+}
+
+// ─────────────────────────────────────────────────────
+//  SEND COMMAND  — wraps payload exactly as original
+// ─────────────────────────────────────────────────────
+async function sendCommand(command) {
+  await bleWriteJson({ type: 'command', command });
+  return { ok: true };
+}
+
+async function refreshState() {
+  if (!state.ble.connected) return;
+  try { await bleRequestState(); }
+  catch(e) { sysLog('BLE refresh failed: ' + e.message, 'warn'); }
+}
+
+// ─────────────────────────────────────────────────────
+//  KIT CONTROL  — each fires autoDetect
+// ─────────────────────────────────────────────────────
+async function setDigital(pinName, value) {
+  try {
+    await sendCommand({ type:'digital_write', pin:pinName, value: value ? 1 : 0 });
+    sysLog(pinName + ' → ' + (value ? 'HIGH' : 'LOW'), 'ok');
+    autoDetect('Digital Output');
+    trackBlink(pinName, value);
+    setTimeout(refreshState, 300);
+  } catch(e) { sysLog('Digital write failed: ' + e.message, 'err'); }
+}
+
+async function setServo(index, angle) {
+  try {
+    await sendCommand({ type:'servo_set', index:Number(index), angle:Number(angle) });
+    sysLog('Servo ' + index + ' → ' + angle + '°');
+    autoDetect('Servo Control');
+    setTimeout(refreshState, 300);
+  } catch(e) { sysLog('Servo failed: ' + e.message, 'err'); }
+}
+
+async function setMotor(motor, dir) {
+  try {
+    await sendCommand({ type:'motor_set', motor:Number(motor), dir:Number(dir) });
+    sysLog('Motor ' + motor + ' → ' + (dir===1?'Forward':dir===-1?'Reverse':'Stop'));
+    if (dir !== 0) autoDetect('Motor Control');
+    setTimeout(refreshState, 300);
+  } catch(e) { sysLog('Motor failed: ' + e.message, 'err'); }
+}
+
+async function stopAll() {
+  try {
+    await sendCommand({ type:'stop_all' });
+    sysLog('All outputs stopped', 'ok');
+    setTimeout(refreshState, 300);
+  } catch(e) { sysLog('Stop all failed: ' + e.message, 'err'); }
+}
+
+// ─────────────────────────────────────────────────────
+//  EVENT LISTENERS
+// ─────────────────────────────────────────────────────
+$('bleConnectBtn').addEventListener('click', bleConnect);
+$('bleRefreshBtn').addEventListener('click', async () => {
+  try { await bleRequestState(); }
+  catch(e) { sysLog('Refresh failed: ' + e.message, 'warn'); }
+});
+$('bleDisconnectBtn').addEventListener('click', bleDisconnect);
+$('stopAllBtn').addEventListener('click', stopAll);
+
+// ─────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────
+renderDigitalCards();
+renderAnalogCards();
+renderServoCards();
+renderMotorCards();
+renderMap();
+renderFw('blink');
+renderTable();
+sysLog('STEMbotix Dashboard loaded', 'ok');
+sysLog('BLE-only mode. Press Connect BLE to pair with your kit.', 'ok');
+if (!supportsWebBluetooth()) {
+  sysLog('⚠️ Web Bluetooth not supported. Please use Chrome or Edge.', 'warn');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockzie Bridge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #1e1e2e; }
+
+    #status-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 28px;
+      background: #2E3B6D;
+      color: #fff;
+      font-family: monospace;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      z-index: 9999;
+      transition: opacity 0.3s;
+    }
+    #status-bar.hidden { opacity: 0; pointer-events: none; }
+    #status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      flex-shrink: 0;
+    }
+    #status-dot.ready { background: #22c55e; }
+    #status-dot.error { background: #ef4444; }
+
+    #blockzie-frame {
+      position: absolute;
+      top: 28px; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: calc(100% - 28px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="status-bar">
+    <div id="status-dot"></div>
+    <span id="status-text">Loading Blockzie...</span>
+  </div>
+
+  <iframe
+    id="blockzie-frame"
+    src="https://blockzie.info"
+    allow="fullscreen; clipboard-read; clipboard-write; microphone"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+  ></iframe>
+
+  <script>
+    const frame     = document.getElementById("blockzie-frame");
+    const statusDot = document.getElementById("status-dot");
+    const statusText= document.getElementById("status-text");
+    const statusBar = document.getElementById("status-bar");
+
+    let blockzieReady = false;
+    let pendingXML    = null;   // queued while editor is loading
+    let pollInterval  = null;
+
+    // ── Status helpers ─────────────────────────────────────────────────────────
+    function setStatus(msg, state = "loading") {
+      statusText.textContent = msg;
+      statusDot.className = state === "ready" ? "ready"
+                          : state === "error"  ? "error"
+                          : "";
+      if (state === "ready") {
+        setTimeout(() => statusBar.classList.add("hidden"), 3000);
+      } else {
+        statusBar.classList.remove("hidden");
+      }
+    }
+
+    // ── Step 1: Handle landing page inside iframe ──────────────────────────────
+    // blockzie.info shows "What would you like to do?" — we need to click
+    // "Block Coding" (first card, class contains "newScreenBox")
+    frame.addEventListener("load", () => {
+      setStatus("Blockzie loaded — selecting Block Coding...");
+
+      // Give the page JS time to render
+      setTimeout(() => {
+        try {
+          const iDoc = frame.contentDocument || frame.contentWindow.document;
+
+          const selectors = [
+            "img[src*='1ecb758138ff5f6e832707425a5c5075']",
+            "div[class*='newScreenBox']:first-of-type",
+            "div[class*='newScreenBox']",
+            "div[class*='gui_newScreenBox']",
+          ];
+
+          let clicked = false;
+          for (const sel of selectors) {
+            const el = iDoc.querySelector(sel);
+            if (el) {
+              el.click();
+              setStatus("Block Coding selected — waiting for editor...");
+              clicked = true;
+              break;
+            }
+          }
+
+          if (!clicked) {
+            setStatus("Editor loading...");
+          }
+        } catch(e) {
+          // Cross-origin — blockzie.info is already in editor mode or
+          // we cannot access the document. Fall through to poller.
+          setStatus("Editor loading (cross-origin)...");
+        }
+
+        // Start polling for workspace readiness
+        startWorkspacePoller();
+
+      }, 3000);
+    });
+
+    // ── Step 2: Poll until Blockly workspace is ready ──────────────────────────
+    function startWorkspacePoller() {
+      let elapsed = 0;
+      const maxWait  = 120000; // 2 minutes hard cap
+      const interval = 2000;
+
+      // ── FIX: Cross-origin fallback reduced from 30 s → 8 s.
+      //         blockzie.info editor loads in ~4-6 s on a normal connection.
+      //         The original 30 s caused a 30-second freeze before first inject.
+      const CROSS_ORIGIN_FALLBACK_MS = 8000;
+
+      pollInterval = setInterval(() => {
+        elapsed += interval;
+        setStatus(`Waiting for Blockly... ${elapsed / 1000}s`);
+
+        try {
+          const iWin = frame.contentWindow;
+          const B = iWin.Blockly || iWin.ScratchBlocks;
+          if (B && B.Blocks) {
+            const count = Object.keys(B.Blocks).length;
+            if (count > 10) {
+              clearInterval(pollInterval);
+              _markReady(count);
+              return;
+            }
+          }
+        } catch(e) {
+          // Cross-origin — cannot read frame internals.
+          // Use time-based fallback.
+          if (elapsed >= CROSS_ORIGIN_FALLBACK_MS) {
+            clearInterval(pollInterval);
+            _markReady(0, true);
+            return;
+          }
+        }
+
+        if (elapsed >= maxWait) {
+          clearInterval(pollInterval);
+          setStatus("⚠️ Timeout waiting for Blockzie", "error");
+        }
+      }, interval);
+    }
+
+    // ── FIX: _markReady centralises the "editor is ready" logic so the
+    //         pendingXML flush and postMessage always happen in the same order,
+    //         eliminating the previous race where pendingXML could be set to null
+    //         AFTER the timeout branch already read it as non-null.
+    function _markReady(blockCount, crossOrigin = false) {
+      blockzieReady = true;
+
+      const label = crossOrigin
+        ? "Editor assumed ready (cross-origin)"
+        : `✅ Blockzie ready! ${blockCount} blocks registered.`;
+      setStatus(label, "ready");
+
+      // Capture and clear pendingXML atomically before injecting,
+      // so a concurrent INJECT_XML message cannot double-inject.
+      const toInject = pendingXML;
+      pendingXML = null;
+
+      // Notify parent FIRST — parent may push more XML on this event,
+      // which will go through the normal injectXML path since blockzieReady=true.
+      window.parent.postMessage({ type: "BLOCKZIE_READY", blockCount }, "*");
+
+      // Then flush any XML that arrived before we were ready.
+      if (toInject) {
+        // Small delay to let the workspace fully settle after Blockly init.
+        setTimeout(() => injectXML(toInject), 400);
+      }
+    }
+
+    // ── Step 3: XML injection ──────────────────────────────────────────────────
+    // ── FIX: injectXML is now debounced (300 ms) so rapid back-to-back calls
+    //         (e.g. from pendingXML flush + an immediate INJECT_XML message)
+    //         collapse into a single inject, preventing the "isConnected null"
+    //         crash that fired when domToWorkspace was called mid-flight.
+    let _injectTimer = null;
+    function injectXML(xmlStr) {
+      clearTimeout(_injectTimer);
+      _injectTimer = setTimeout(() => _doInjectXML(xmlStr), 300);
+    }
+
+    function _doInjectXML(xmlStr) {
+      setStatus("Injecting blocks...");
+
+      try {
+        const iWin = frame.contentWindow;
+        const B    = iWin.Blockly || iWin.ScratchBlocks;
+
+        if (!B) throw new Error("No Blockly found");
+
+        const ws = B.getMainWorkspace && B.getMainWorkspace();
+        if (!ws) throw new Error("No workspace");
+
+        const parser = new iWin.DOMParser();
+        const doc    = parser.parseFromString(xmlStr, "text/xml");
+        const parseErr = doc.querySelector("parsererror");
+        if (parseErr) throw new Error("XML parse error: " + parseErr.textContent.slice(0, 120));
+
+        // Validate block types
+        const registered = Object.keys(B.Blocks || {});
+        const unknown    = [];
+        doc.querySelectorAll("block").forEach(b => {
+          const t = b.getAttribute("type");
+          if (t && registered.length > 0 && !registered.includes(t)) unknown.push(t);
+        });
+
+        if (unknown.length > 0) {
+          const msg = "Unknown block types: " + [...new Set(unknown)].join(", ");
+          setStatus("⚠️ " + msg, "error");
+          window.parent.postMessage({ type: "BLOCKZIE_ERROR", error: msg, unknown_types: [...new Set(unknown)] }, "*");
+          return;
+        }
+
+        // ── FIX: Use ws.setResizesEnabled(false/true) around the clear+load
+        //         in addition to B.Events.disable/enable.
+        //         This prevents the "Cannot read properties of null (reading
+        //         'isConnected')" crash which occurs when Blockly tries to
+        //         resize the SVG while blocks are mid-insertion.
+        if (ws.setResizesEnabled) ws.setResizesEnabled(false);
+
+        // Disable events during load to prevent getBlockById null crash
+        if (B.Events && typeof B.Events.disable === "function") {
+          B.Events.disable();
+        } else if (B.Events && B.Events.fire) {
+          B.Events._origFire = B.Events._origFire || B.Events.fire;
+          B.Events.fire = () => {};
+        }
+
+        try {
+          ws.clear();
+          B.Xml.domToWorkspace(doc.documentElement, ws);
+        } finally {
+          // Always re-enable, even if domToWorkspace threw
+          if (B.Events && typeof B.Events.enable === "function") {
+            B.Events.enable();
+          } else if (B.Events && B.Events._origFire) {
+            B.Events.fire = B.Events._origFire;
+            delete B.Events._origFire;
+          }
+          if (ws.setResizesEnabled) ws.setResizesEnabled(true);
+        }
+
+        if (ws.render) ws.render();
+
+        const blockCount = ws.getAllBlocks(false).length;
+        setStatus(`✅ ${blockCount} blocks loaded!`, "ready");
+        window.parent.postMessage({ type: "BLOCKZIE_LOADED", blockCount }, "*");
+
+      } catch(e) {
+        setStatus("❌ Inject failed: " + e.message, "error");
+        window.parent.postMessage({ type: "BLOCKZIE_ERROR", error: e.message }, "*");
+      }
+    }
+
+    // ── Listen for messages from parent (STEMbotix chat UI) ───────────────────
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+
+      if (data.type === "INJECT_XML") {
+        if (!blockzieReady) {
+          // Queue it — will inject once _markReady() is called.
+          // Always replace (don't stack) so only the latest program is loaded.
+          pendingXML = data.xml;
+          setStatus("XML queued — waiting for editor to be ready...");
+        } else {
+          injectXML(data.xml);
+        }
+      }
+
+      if (data.type === "CLEAR_WORKSPACE") {
+        try {
+          const iWin = frame.contentWindow;
+          const B    = iWin.Blockly || iWin.ScratchBlocks;
+          const ws   = B && B.getMainWorkspace && B.getMainWorkspace();
+          if (ws) {
+            ws.clear();
+            setStatus("Workspace cleared", "ready");
+          }
+        } catch(e) {
+          setStatus("Clear failed: " + e.message, "error");
+        }
+      }
+
+      if (data.type === "GET_XML") {
+        try {
+          const iWin = frame.contentWindow;
+          const B    = iWin.Blockly || iWin.ScratchBlocks;
+          const ws   = B && B.getMainWorkspace && B.getMainWorkspace();
+          if (ws) {
+            const dom = B.Xml.workspaceToDom(ws);
+            const xml = B.Xml.domToText
+              ? B.Xml.domToText(dom)
+              : new XMLSerializer().serializeToString(dom);
+            window.parent.postMessage({ type: "BLOCKZIE_XML", xml }, "*");
+          }
+        } catch(e) {
+          window.parent.postMessage({ type: "BLOCKZIE_ERROR", error: e.message }, "*");
+        }
+      }
+    });
+  </script>
+</body>
+</html>

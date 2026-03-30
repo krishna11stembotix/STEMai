@@ -1,0 +1,134 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# =========================
+# Environment Variables
+# =========================
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+*.out
+*.err
+
+# =========================
+# Flask / FastAPI
+# =========================
+instance/
+.webassets-cache/
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite3
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Node (Frontend / Vercel)
+# =========================
+node_modules/
+.next/
+out/
+dist/
+.vercel/
+*.tsbuildinfo
+
+# =========================
+# Docker
+# =========================
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+
+# =========================
+# Uploaded / Generated files
+# =========================
+uploads/
+generated/
+exports/
+
+# =========================
+# Blockzie / Static Build Cache
+# =========================
+static/blockzie/build/
+static/blockzie/cache/
+
+# =========================
+# Secrets / API Keys
+# =========================
+secrets.json
+credentials.json
+
+# =========================
+# Mac / Linux hidden
+# =========================
+.*.swp
+.cache/
+
+# =========================
+# Testing / Coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Compiled C/C++
+# =========================
+*.o
+*.out
+*.exe
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.backup
+

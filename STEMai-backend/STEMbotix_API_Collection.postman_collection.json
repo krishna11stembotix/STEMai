@@ -1,0 +1,401 @@
+{
+  "info": {
+    "_postman_id": "stembotix-ai-backend",
+    "name": "STEMbotix AI Backend API",
+    "description": "Complete API collection for STEMbotix AI Backend - includes all routes for Auth, Blockzie, Chat, Voice, Simulator, IoT, Agents, Programming Lab, ESP32 Simulator, and Firmware modules",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"student\"\n}"
+            },
+            "url": "{{api_base}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{api_base}}/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{api_base}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blockzie",
+      "description": "Visual programming with Blockzie blocks",
+      "item": [
+        {
+          "name": "Open Blockzie",
+          "request": {"method": "POST", "url": "{{api_base}}/blockzie/open"}
+        },
+        {
+          "name": "Close Blockzie",
+          "request": {"method": "POST", "url": "{{api_base}}/blockzie/close"}
+        },
+        {
+          "name": "Inject Program",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"when green_flag:\\n  forever:\\n    move 10 steps\",\n  \"auto_start\": true\n}"
+            },
+            "url": "{{api_base}}/blockzie/inject"
+          }
+        },
+        {
+          "name": "Append Program",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"say Hello\",\n  \"auto_start\": false\n}"
+            },
+            "url": "{{api_base}}/blockzie/append"
+          }
+        },
+        {
+          "name": "Load XML Program",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"xml\": \"<xml></xml>\",\n  \"auto_start\": true,\n  \"mode\": \"load\"\n}"
+            },
+            "url": "{{api_base}}/blockzie/load_xml"
+          }
+        },
+        {
+          "name": "Stop All",
+          "request": {"method": "POST", "url": "{{api_base}}/blockzie/stop"}
+        },
+        {
+          "name": "Clear Workspace",
+          "request": {"method": "POST", "url": "{{api_base}}/blockzie/clear"}
+        },
+        {
+          "name": "Export XML",
+          "request": {"method": "GET", "url": "{{api_base}}/blockzie/export"}
+        },
+        {
+          "name": "Remove Block Type",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"block_type\": \"controls_repeat\"\n}"
+            },
+            "url": "{{api_base}}/blockzie/remove_type"
+          }
+        },
+        {
+          "name": "Debug Frames",
+          "request": {"method": "GET", "url": "{{api_base}}/blockzie/debug_frames"}
+        },
+        {
+          "name": "Generate Blockzie (AI)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create a program that moves sprite back and forth\"\n}"
+            },
+            "url": "{{api_base}}/blockzie/generate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "description": "Chat and tutoring endpoints",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"How does a motor work?\"\n    }\n  ],\n  \"image_data_url\": null,\n  \"user_id\": \"demo\",\n  \"preferred_model\": \"openai/gpt-4o-mini\"\n}"
+            },
+            "url": "{{api_base}}/chat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice",
+      "description": "Voice input/output endpoints",
+      "item": [
+        {
+          "name": "Send Audio",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "audio", "type": "file"},
+                {"key": "user_id", "type": "text", "value": "demo"},
+                {"key": "lang", "type": "text", "value": "en"}
+              ]
+            },
+            "url": "{{api_base}}/voice"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Simulator",
+      "description": "Circuit simulator and AI planning",
+      "item": [
+        {
+          "name": "Generate Project (Sim AI)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"agent_build\",\n  \"prompt\": \"Build a LED blinker circuit\",\n  \"circuit\": {}\n}"
+            },
+            "url": "{{api_base}}/sim_ai"
+          }
+        }
+      ]
+    },
+    {
+      "name": "IoT",
+      "description": "IoT device telemetry and command management",
+      "item": [
+        {
+          "name": "Send Telemetry",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"esp32_001\",\n  \"ts\": 1234567890,\n  \"data\": {\n    \"temperature\": 25.5,\n    \"humidity\": 60\n  }\n}"
+            },
+            "url": "{{api_base}}/iot/telemetry"
+          }
+        },
+        {
+          "name": "Get Latest Telemetry",
+          "request": {"method": "GET", "url": "{{api_base}}/iot/device/{{device_id}}/latest"}
+        },
+        {
+          "name": "Send Device Command",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd_id\": \"cmd_001\",\n  \"ts\": 1234567890,\n  \"action\": \"led_on\",\n  \"Stembotix\": {}\n}"
+            },
+            "url": "{{api_base}}/iot/device/{{device_id}}/command"
+          }
+        },
+        {
+          "name": "Get Next Command",
+          "request": {"method": "GET", "url": "{{api_base}}/iot/device/{{device_id}}/command/next"}
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "description": "AI agent endpoints",
+      "item": [
+        {
+          "name": "Make Program (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create a program that makes sprite spin in circles\"\n}"
+            },
+            "url": "{{api_base}}/agent/make"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programming Lab",
+      "description": "Code execution and terminal",
+      "item": [
+        {
+          "name": "Run Code",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"print('Hello, World!')\",\n  \"language\": \"python\"\n}"
+            },
+            "url": "{{api_base}}/api/lab/run"
+          }
+        },
+        {
+          "name": "Start Terminal Session",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"print('Starting session')\",\n  \"language\": \"python\"\n}"
+            },
+            "url": "{{api_base}}/api/lab/terminal/start"
+          }
+        },
+        {
+          "name": "Send Terminal Input",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"print('test')\"\n}"
+            },
+            "url": "{{api_base}}/api/lab/terminal/send"
+          }
+        },
+        {
+          "name": "Kill Terminal",
+          "request": {
+            "method": "POST",
+            "url": "{{api_base}}/api/lab/terminal/kill"
+          }
+        },
+        {
+          "name": "Agentic AI Code Generation",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Write a program to calculate factorial\",\n  \"language\": \"python\"\n}"
+            },
+            "url": "{{api_base}}/api/lab/agentic"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ESP32 Simulator",
+      "description": "ESP32 virtual lab and circuit design",
+      "item": [
+        {
+          "name": "Generate Simulation (AI)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create temperature monitoring with DHT11\",\n  \"mode\": \"agent_build\"\n}"
+            },
+            "url": "{{api_base}}/api/sim_ai"
+          }
+        },
+        {
+          "name": "Simulate Circuit",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Design an LED blinker circuit\"\n}"
+            },
+            "url": "{{api_base}}/api/sim"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Firmware",
+      "description": "Arduino firmware generation and device management",
+      "item": [
+        {
+          "name": "AI Generate Firmware Code",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create servo motor control program\",\n  \"device_id\": \"my_device\",\n  \"board\": \"ESP32\",\n  \"libraries\": [\"Servo.h\"]\n}"
+            },
+            "url": "{{api_base}}/firmware/ai_generate"
+          }
+        },
+        {
+          "name": "Ping Device",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"my_device\",\n  \"ip\": \"192.168.1.100\"\n}"
+            },
+            "url": "{{api_base}}/firmware/device_ping"
+          }
+        },
+        {
+          "name": "Push Code (OTA)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"my_device\",\n  \"code\": \"void setup() {}\\nvoid loop() {}\"\n}"
+            },
+            "url": "{{api_base}}/firmware/ota_push"
+          }
+        },
+        {
+          "name": "Register Device",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"my_device\",\n  \"ip\": \"192.168.1.100\",\n  \"board\": \"ESP32\",\n  \"fqbn\": \"esp32:esp32:esp32\"\n}"
+            },
+            "url": "{{api_base}}/firmware/register_device"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "api_base", "value": "http://localhost:8000"},
+    {"key": "token", "value": "your_jwt_token_here"},
+    {"key": "device_id", "value": "esp32_001"}
+  ]
+}

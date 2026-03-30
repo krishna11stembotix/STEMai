@@ -1,0 +1,3528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEMbotix · Firmware Studio</title>
+<!-- FAVICON (STEMbotix Inline SVG - No file needed) -->
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='stembot.png') }}"/>
+
+<meta name="theme-color" content="#080c14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES
+═══════════════════════════════════════════════ */
+:root {
+  /* Core palette */
+  --bg-void:      #080c14;
+  --bg-deep:      #0d1422;
+  --bg-base:      #111827;
+  --bg-surface:   #141d2e;
+  --bg-raised:    #1a2540;
+  --bg-overlay:   #1e2d4a;
+  --bg-hover:     #243356;
+  --bg-active:    #2a3d66;
+
+  /* Borders */
+  --border-dim:   rgba(255,255,255,0.04);
+  --border-soft:  rgba(255,255,255,0.08);
+  --border-med:   rgba(255,255,255,0.12);
+  --border-bold:  rgba(255,255,255,0.20);
+
+  /* Blue brand */
+  --blue-900:     #0a2240;
+  --blue-800:     #0f3460;
+  --blue-600:     #1a56db;
+  --blue-500:     #2563eb;
+  --blue-400:     #3b82f6;
+  --blue-300:     #60a5fa;
+  --blue-200:     #93c5fd;
+  --blue-glow:    rgba(37,99,235,0.35);
+
+  /* Orange accent */
+  --orange-500:   #ff6b35;
+  --orange-400:   #ff8c5a;
+  --orange-300:   #ffaa7f;
+  --orange-glow:  rgba(255,107,53,0.30);
+
+  /* Semantic */
+  --green:        #22c55e;
+  --green-dim:    rgba(34,197,94,0.15);
+  --red:          #ef4444;
+  --red-dim:      rgba(239,68,68,0.15);
+  --yellow:       #f59e0b;
+  --yellow-dim:   rgba(245,158,11,0.15);
+  --teal:         #06b6d4;
+  --purple:       #a855f7;
+
+  /* Text */
+  --text-primary:   #e2e8f5;
+  --text-secondary: #94a3b8;
+  --text-muted:     #4b6080;
+  --text-dim:       #2d3f56;
+
+  /* Syntax */
+  --syn-keyword:    #f97316;
+  --syn-builtin:    #38bdf8;
+  --syn-string:     #4ade80;
+  --syn-comment:    #4b6080;
+  --syn-number:     #fb7185;
+  --syn-preproc:    #c084fc;
+  --syn-type:       #34d399;
+
+  /* Editor */
+  --editor-bg:      #0d1117;
+  --editor-gutter:  #111827;
+  --editor-line-hi: rgba(37,99,235,0.07);
+  --editor-cursor:  #ff6b35;
+
+  /* Layout */
+  --sidebar-w:    280px;
+  --topbar-h:     56px;
+  --toolbar-h:    46px;
+  --statusbar-h:  26px;
+  --console-h:    220px;
+
+  /* Animation */
+  --ease-snap:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBARS
+═══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bold); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-400); }
+
+/* ═══════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════ */
+#app {
+  display: grid;
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-areas:
+    "topbar topbar"
+    "sidebar workspace";
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   TOP NAV BAR
+═══════════════════════════════════════════════ */
+#topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0;
+  z-index: 100;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle animated gradient shimmer on topbar */
+#topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(37,99,235,0.04) 30%,
+    rgba(255,107,53,0.03) 70%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  height: var(--topbar-h);
+  border-right: 1px solid var(--border-soft);
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, var(--blue-500), var(--orange-500));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px var(--blue-glow);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.logo-sub {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Project info */
+.proj-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-right: 1px solid var(--border-soft);
+  height: var(--topbar-h);
+}
+
+.proj-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.proj-name span { color: var(--text-primary); }
+
+.device-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s var(--ease-snap);
+}
+
+.device-pill:hover { border-color: var(--border-med); background: var(--bg-overlay); }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.status-dot.online {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+  50% { opacity: 0.6; box-shadow: 0 0 12px var(--green); }
+}
+
+/* Tabs */
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  height: var(--topbar-h);
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--topbar-h);
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.18s var(--ease-snap);
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.nav-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.03);
+}
+
+.nav-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--orange-500);
+  background: rgba(255,107,53,0.05);
+}
+
+.nav-tab .tab-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.nav-tab.active .tab-icon { opacity: 1; }
+
+.tab-badge {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+.tab-badge.modified { background: var(--yellow); }
+
+/* Right actions */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-left: 1px solid var(--border-soft);
+  height: var(--topbar-h);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTON SYSTEM
+═══════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 30px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s var(--ease-snap);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0.1px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.15s;
+}
+
+.btn:hover::after { background: rgba(255,255,255,0.04); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.35; pointer-events: none; }
+
+.btn svg { flex-shrink: 0; }
+
+/* Primary — orange */
+.btn-primary {
+  background: linear-gradient(135deg, var(--orange-500), #ff4d00);
+  color: #fff;
+  box-shadow: 0 2px 12px var(--orange-glow);
+}
+.btn-primary:hover { box-shadow: 0 4px 20px var(--orange-glow); transform: translateY(-1px); }
+
+/* Secondary — blue */
+.btn-secondary {
+  background: var(--bg-overlay);
+  border-color: var(--border-med);
+  color: var(--text-secondary);
+}
+.btn-secondary:hover { border-color: var(--blue-400); color: var(--blue-300); background: var(--bg-active); }
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-muted);
+}
+.btn-ghost:hover { border-color: var(--border-med); color: var(--text-secondary); background: var(--bg-raised); }
+
+/* Success */
+.btn-success {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(22,163,74,0.3);
+}
+.btn-success:hover { box-shadow: 0 4px 18px rgba(22,163,74,0.4); transform: translateY(-1px); }
+
+/* AI button */
+.btn-ai {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(79,70,229,0.35);
+}
+.btn-ai:hover { box-shadow: 0 4px 20px rgba(79,70,229,0.5); transform: translateY(-1px); }
+
+/* Icon only */
+.btn-icon {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* Spinning loader */
+.spin { animation: spin 0.7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════════════════ */
+#sidebar {
+  grid-area: sidebar;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Sidebar section */
+.s-section {
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.s-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.s-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.s-section-hdr:hover .s-section-title { color: var(--text-secondary); }
+
+.s-chevron {
+  color: var(--text-dim);
+  transition: transform 0.2s var(--ease-snap);
+  flex-shrink: 0;
+}
+
+.s-section.collapsed .s-chevron { transform: rotate(-90deg); }
+.s-section.collapsed .s-body { display: none; }
+
+.s-body { padding: 0 12px 10px; }
+
+/* Form fields */
+.field-group { margin-bottom: 8px; }
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.field-label svg { opacity: 0.6; }
+
+.field-input {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.15s var(--ease-snap);
+  appearance: none;
+}
+
+.field-input:focus {
+  border-color: var(--blue-400);
+  background: var(--bg-raised);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+.field-input::placeholder { color: var(--text-dim); }
+
+.field-input[type="number"] { -moz-appearance: textfield; }
+.field-input[type="number"]::-webkit-outer-spin-button,
+.field-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.field-input.select-wrap {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234b6080' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  cursor: pointer;
+}
+
+/* Pin row — two columns */
+.pin-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* Board selector */
+.board-selector {
+  margin: 0 12px 10px;
+}
+
+/* Library checkboxes */
+.lib-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.lib-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.lib-item:hover { background: var(--bg-raised); }
+
+.lib-item input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  accent-color: var(--orange-500);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.lib-item-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.lib-item.hidden { display: none; }
+
+/* Generate button */
+.gen-btn-wrap {
+  padding: 8px 12px 4px;
+}
+
+/* Status badge */
+.dev-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 12px;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.dev-status .s-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dev-status.offline .s-dot { background: var(--red); box-shadow: 0 0 5px var(--red); }
+.dev-status.online  .s-dot { background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse-dot 2s infinite; }
+
+/* Template items */
+.tmpl-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.15s var(--ease-snap);
+  border: 1px solid transparent;
+}
+
+.tmpl-item:hover {
+  background: var(--bg-raised);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.tmpl-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+/* LED control */
+.led-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+/* ═══════════════════════════════════════════════
+   WORKSPACE
+═══════════════════════════════════════════════ */
+#workspace {
+  grid-area: workspace;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--editor-bg);
+}
+
+/* ── AI PROMPT BAR ── */
+#ai-bar {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.ai-icon-wrap {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 1px;
+  box-shadow: 0 2px 10px rgba(79,70,229,0.3);
+}
+
+#ai-prompt {
+  flex: 1;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: 'Outfit', sans-serif;
+  resize: none;
+  min-height: 36px;
+  max-height: 80px;
+  line-height: 1.5;
+  transition: all 0.15s var(--ease-snap);
+}
+
+#ai-prompt:focus { border-color: var(--blue-400); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+#ai-prompt::placeholder { color: var(--text-dim); }
+
+/* ── AI CHAT ── */
+#ai-chat {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-soft);
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+}
+
+#ai-chat.show { display: block; }
+
+.chat-msg {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  gap: 10px;
+}
+
+.chat-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.chat-msg.user .chat-avatar { background: var(--bg-active); color: var(--blue-300); }
+.chat-msg.bot  .chat-avatar { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; }
+
+.chat-content { flex: 1; min-width: 0; }
+
+.chat-role {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.chat-msg.user .chat-role { color: var(--blue-300); }
+.chat-msg.bot  .chat-role { color: var(--purple); }
+
+.chat-body {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.apply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 5px 12px;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+
+.apply-btn:hover { background: rgba(34,197,94,0.25); }
+
+.chat-code {
+  margin-top: 8px;
+  background: var(--editor-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow: auto;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* ── ACTION TOOLBAR ── */
+#toolbar {
+  height: var(--toolbar-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+.tsep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-soft);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  height: 30px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  transition: all 0.15s var(--ease-snap);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.toolbar-btn:hover { background: var(--bg-overlay); border-color: var(--border-med); color: var(--text-primary); transform: translateY(-1px); }
+.toolbar-btn:active { transform: scale(0.97) translateY(0); }
+.toolbar-btn.tb-primary { background: linear-gradient(135deg, var(--orange-500), #ff4d00); border-color: transparent; color: #fff; box-shadow: 0 2px 10px var(--orange-glow); }
+.toolbar-btn.tb-primary:hover { box-shadow: 0 4px 18px var(--orange-glow); }
+.toolbar-btn.tb-success { background: linear-gradient(135deg, #16a34a, #15803d); border-color: transparent; color: #fff; box-shadow: 0 2px 10px rgba(22,163,74,0.25); }
+.toolbar-btn.tb-success:hover { box-shadow: 0 4px 18px rgba(22,163,74,0.35); }
+.toolbar-btn.tb-blue { background: linear-gradient(135deg, var(--blue-600), var(--blue-500)); border-color: transparent; color: #fff; box-shadow: 0 2px 10px var(--blue-glow); }
+.toolbar-btn.tb-blue:hover { box-shadow: 0 4px 18px var(--blue-glow); }
+.toolbar-btn.tb-ghost { background: transparent; border-color: transparent; }
+.toolbar-btn:disabled { opacity: 0.35; pointer-events: none; transform: none; }
+
+.char-info {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── CODE EDITOR ── */
+#editor-area {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
+#gutter {
+  width: 54px;
+  background: var(--editor-gutter);
+  border-right: 1px solid var(--border-dim);
+  padding: 14px 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 12px;
+  user-select: none;
+}
+
+.ln {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 20px;
+  min-height: 20px;
+  color: var(--text-dim);
+  font-weight: 400;
+  transition: color 0.1s;
+}
+
+.ln.active { color: var(--text-secondary); }
+
+/* Highlight overlay */
+#highlight {
+  position: absolute;
+  top: 0; left: 54px; right: 0; bottom: 0;
+  padding: 14px 16px 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 20px;
+  pointer-events: none;
+  white-space: pre;
+  overflow: hidden;
+  z-index: 1;
+  color: var(--text-primary);
+}
+
+#highlight i { font-style: normal; }
+
+/* Syntax classes */
+.sk  { color: var(--syn-keyword); font-weight: 600; }
+.sb  { color: var(--syn-builtin); }
+.ss  { color: var(--syn-string); }
+.sc  { color: var(--syn-comment); font-style: italic !important; }
+.sp  { color: var(--syn-preproc); }
+.sn  { color: var(--syn-number); }
+.st  { color: var(--syn-type); }
+
+/* Editor textarea */
+#editor {
+  position: absolute;
+  top: 0; left: 54px; right: 0; bottom: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--editor-cursor);
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 20px;
+  resize: none;
+  z-index: 2;
+  overflow: auto;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+/* Current line highlight */
+.cur-line-hi {
+  position: absolute;
+  left: 54px; right: 0;
+  background: var(--editor-line-hi);
+  pointer-events: none;
+  z-index: 0;
+  height: 20px;
+  transition: top 0.05s;
+}
+
+/* ── STATUS BAR ── */
+#statusbar {
+  height: var(--statusbar-h);
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 14px;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  padding: 0 10px;
+  height: 100%;
+  border-right: 1px solid var(--border-dim);
+  transition: all 0.1s;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.sb-item:first-child { padding-left: 0; }
+.sb-item:hover { color: var(--text-secondary); }
+.sb-item.ok { color: var(--green); }
+.sb-item.err { color: var(--red); }
+.sb-item.warn { color: var(--yellow); }
+
+/* ── BOTTOM PANEL ── */
+#bottom {
+  height: var(--console-h);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--border-soft);
+  background: var(--bg-void);
+  resize: vertical;
+  overflow: hidden;
+  min-height: 120px;
+  max-height: 50vh;
+}
+
+#out-tabs {
+  height: 38px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.out-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s var(--ease-snap);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.out-tab:hover { color: var(--text-secondary); }
+
+.out-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--orange-500);
+}
+
+.err-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 1px 5px;
+  display: none;
+}
+
+.err-badge.show { display: inline; }
+
+#out-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.out-btn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.out-btn:hover { border-color: var(--border-med); color: var(--text-secondary); }
+
+#out-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.7;
+  background: var(--bg-void);
+}
+
+.log-entry {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 1px 0;
+}
+
+.log-ts { color: var(--text-dim); flex-shrink: 0; min-width: 60px; font-size: 10px; margin-top: 1px; }
+.log-msg { color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; }
+.log-entry.ok  .log-msg { color: var(--green); }
+.log-entry.err .log-msg { color: var(--red); }
+.log-entry.warn .log-msg { color: var(--yellow); }
+.log-entry.info .log-msg { color: var(--blue-300); }
+.log-entry.ai  .log-msg { color: var(--purple); }
+.log-entry.dim .log-msg { color: var(--text-muted); }
+
+/* ─────────────────────────────────────────────
+   PANELS (MODALS)
+───────────────────────────────────────────── */
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+
+.panel-overlay.show { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-med);
+  border-radius: 16px;
+  width: min(560px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow:
+    0 0 0 1px var(--border-dim),
+    0 20px 60px rgba(0,0,0,0.6),
+    0 0 80px rgba(37,99,235,0.08);
+  animation: panelUp 0.2s var(--ease-spring);
+}
+
+@keyframes panelUp {
+  from { transform: translateY(16px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+
+.panel-head {
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.panel-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+.panel-body { padding: 18px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+.panel-foot {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.panel-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border-med);
+  border-radius: 10px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s var(--ease-snap);
+  background: var(--bg-base);
+}
+
+.drop-zone:hover, .drop-zone.drag {
+  border-color: var(--blue-400);
+  background: rgba(37,99,235,0.05);
+}
+
+.drop-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+.drop-zone .dz-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.drop-zone .dz-file { font-size: 12px; color: var(--blue-300); font-weight: 600; margin-top: 4px; }
+
+/* Serial output area */
+.ser-out {
+  background: var(--editor-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--green);
+  min-height: 70px;
+  max-height: 130px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  display: none;
+  line-height: 1.7;
+}
+
+.ser-out.show { display: block; }
+
+/* OTA progress */
+#ota-progress-wrap {
+  display: none;
+  background: var(--bg-raised);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 4px;
+}
+
+#ota-progress-wrap.show { display: block; }
+#ota-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--green), var(--teal));
+  transition: width 0.3s ease;
+  border-radius: 6px;
+}
+
+/* Source selector for OTA */
+.src-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.src-btn {
+  padding: 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s var(--ease-snap);
+  line-height: 1.3;
+}
+
+.src-btn:hover { border-color: var(--border-med); background: var(--bg-overlay); }
+.src-btn.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* ─────────────────────────────────────────────
+   SERIAL MONITOR PANEL
+───────────────────────────────────────────── */
+#serial-mon {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: none;
+  flex-direction: column;
+  background: var(--bg-void);
+}
+
+#serial-mon.show { display: flex; }
+
+#sm-topbar {
+  height: 50px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#sm-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--orange-400);
+  flex: 1;
+  font-family: 'Outfit', sans-serif;
+}
+
+.sm-ctrl {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sm-ctrl:focus { border-color: var(--orange-500); }
+
+.sm-hbtn {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.sm-hbtn:hover { border-color: var(--border-med); color: var(--text-primary); }
+.sm-hbtn.active { background: var(--orange-500); border-color: transparent; color: #fff; }
+
+#sm-status { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: all 0.3s; }
+#sm-status.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+#sm-status.connecting { background: var(--yellow); animation: pulse-dot 1s infinite; }
+
+#sm-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: var(--editor-bg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.sm-line { display: flex; gap: 10px; align-items: flex-start; }
+.sm-ts { color: var(--text-dim); font-size: 10px; min-width: 55px; flex-shrink: 0; padding-top: 2px; }
+.sm-txt { color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; }
+.sm-line.ok  .sm-txt { color: var(--green); }
+.sm-line.err .sm-txt { color: var(--red); }
+.sm-line.sys .sm-txt { color: var(--blue-300); font-style: italic; }
+.sm-line.in  .sm-txt { color: var(--yellow); }
+
+#sm-statsbar {
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border-dim);
+  padding: 3px 16px;
+  display: flex;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+#sm-statsbar span { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+#sm-statsbar span.live { color: var(--blue-300); }
+
+#sm-toolbar {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-soft);
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#sm-port { flex: 1; background: var(--bg-raised); border: 1px solid var(--border-soft); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 7px 10px; border-radius: 7px; outline: none; min-width: 0; }
+#sm-port:focus { border-color: var(--orange-500); }
+
+#sm-connect {
+  padding: 7px 18px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, var(--green), #15803d);
+  color: #fff;
+  transition: all 0.15s;
+}
+
+#sm-connect:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,0.35); }
+#sm-connect.dis { background: linear-gradient(135deg, var(--red), #b91c1c); }
+
+#sm-input-row {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-dim);
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#sm-input {
+  flex: 1;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  outline: none;
+}
+
+#sm-input::placeholder { color: var(--text-dim); }
+#sm-input:focus { border-color: var(--orange-500); }
+
+#sm-send { padding: 8px 18px; border-radius: 7px; font-size: 11px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; border: none; background: var(--orange-500); color: #fff; transition: all 0.15s; }
+#sm-send:hover { background: var(--orange-400); }
+#sm-send:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ─────────────────────────────────────────────
+   TELEMETRY PANEL (SLIDE-IN)
+───────────────────────────────────────────── */
+#telem-panel {
+  position: fixed;
+  right: 0; top: 0; bottom: 0;
+  width: min(380px, 95vw);
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-soft);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s var(--ease-out);
+  box-shadow: -20px 0 80px rgba(0,0,0,0.5);
+}
+
+#telem-panel.show { transform: translateX(0); }
+
+#tp-header {
+  height: 56px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tp-title { font-size: 15px; font-weight: 700; color: var(--text-primary); flex: 1; }
+
+#tp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tcard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.tcard {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: all 0.2s var(--ease-snap);
+}
+
+.tcard:hover { border-color: var(--border-med); transform: translateY(-2px); }
+.tcard .tc-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.tcard .tc-value { font-size: 24px; font-weight: 700; line-height: 1; font-family: 'JetBrains Mono', monospace; }
+.tcard .tc-unit { font-size: 12px; color: var(--text-muted); }
+.tcard.c-green { border-color: rgba(34,197,94,0.2); } .tcard.c-green .tc-value { color: var(--green); }
+.tcard.c-blue  { border-color: rgba(59,130,246,0.2); } .tcard.c-blue  .tc-value { color: var(--blue-300); }
+.tcard.c-yellow{ border-color: rgba(245,158,11,0.2); } .tcard.c-yellow .tc-value { color: var(--yellow); }
+.tcard.c-purple{ border-color: rgba(168,85,247,0.2); } .tcard.c-purple .tc-value { color: var(--purple); }
+
+#tp-raw {
+  background: var(--editor-bg);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  max-height: 100px;
+  overflow-y: auto;
+  border: 1px solid var(--border-dim);
+  line-height: 1.6;
+}
+
+#tp-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────
+   PROGRESS BAR
+───────────────────────────────────────────── */
+#topbar-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#topbar-progress-i {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--orange-500), var(--blue-400), var(--orange-500));
+  background-size: 200% 100%;
+}
+
+#topbar-progress.run #topbar-progress-i {
+  animation: progSweep 1.4s ease-in-out infinite, progShimmer 1s linear infinite;
+}
+
+@keyframes progSweep {
+  0%   { width: 0%;   margin-left: 0; }
+  50%  { width: 60%;  margin-left: 20%; }
+  100% { width: 0%;   margin-left: 100%; }
+}
+
+@keyframes progShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-med);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s var(--ease-spring);
+  white-space: nowrap;
+  max-width: 90vw;
+  font-family: 'Outfit', sans-serif;
+}
+
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─────────────────────────────────────────────
+   MISC
+───────────────────────────────────────────── */
+@media (max-width: 720px) {
+  :root { --sidebar-w: 0px; }
+  #sidebar { display: none; }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<!-- ══════════════════════════════════════════════
+     TOP NAV BAR
+══════════════════════════════════════════════ -->
+<header id="topbar">
+  <div id="topbar-progress"><div id="topbar-progress-i"></div></div>
+
+  <a class="logo" href="#" onclick="return false">
+    <div class="logo-mark">S</div>
+    <div class="logo-text">
+      <span class="logo-name">STEMbotix</span>
+      <span class="logo-sub">Firmware Studio</span>
+    </div>
+  </a>
+
+  <div class="proj-info">
+    <span class="proj-name"><span>sketch</span>.ino</span>
+    <div class="device-pill" id="main-device-pill">
+      <span class="status-dot" id="main-status-dot"></span>
+      <span id="main-device-label">esp32-01</span>
+    </div>
+  </div>
+
+  <nav class="nav-tabs">
+    <div class="nav-tab active" data-tab="editor">
+      <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+      sketch.ino
+      <span class="tab-badge modified" id="dirty-badge"></span>
+    </div>
+    <div class="nav-tab" data-tab="serial">
+      <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M4 6l4-4 4 4M4 10l4 4 4-4"/></svg>
+      Serial Upload
+    </div>
+    <div class="nav-tab" data-tab="ota">
+      <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10a5 5 0 0 0-4-8H8a5 5 0 0 0-5 5"/><path d="M10 8l3-3-3-3M6 10l-3 3 3 3"/></svg>
+      OTA Upload
+    </div>
+    <div class="nav-tab" data-tab="telem">
+      <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,8 4,8 6,14 10,2 12,8 15,8"/></svg>
+      Live Telemetry
+    </div>
+    <div class="nav-tab" data-tab="sermon">
+      <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1.5"/><path d="M5 15h6M8 12v3"/><path d="M4 5h2M4 8h2M9 5l2 2-2 2"/></svg>
+      Serial Monitor
+    </div>
+  </nav>
+
+  <div class="topbar-actions">
+    <button class="btn btn-ai" id="btn-ask">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l4.93-1.38C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 10h8M8 14h5"/></svg>
+      Ask AI
+    </button>
+    <button class="btn btn-primary" id="btn-generate">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Generate
+    </button>
+    <button class="btn btn-ghost" onclick="history.back()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     LEFT SIDEBAR
+══════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-scroll">
+
+    <!-- Board & Device -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">Board &amp; Device</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body">
+        <div class="field-group">
+          <div class="field-label">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Board
+          </div>
+          <select id="cfg-board" class="field-input select-wrap" onchange="onBoardChange()">
+            <optgroup label="── ESP32 Family ──">
+              <option value="esp32:esp32:esp32" data-wifi="1" data-led="2"  data-dht="25" data-adc="34" selected>ESP32 Dev Module</option>
+              <option value="esp32:esp32:esp32s2" data-wifi="1" data-led="2"  data-dht="25" data-adc="1">ESP32-S2</option>
+              <option value="esp32:esp32:esp32s3" data-wifi="1" data-led="2"  data-dht="25" data-adc="1">ESP32-S3</option>
+              <option value="esp32:esp32:esp32c3" data-wifi="1" data-led="8"  data-dht="20" data-adc="0">ESP32-C3</option>
+              <option value="esp32:esp32:esp32wrover" data-wifi="1" data-led="2" data-dht="25" data-adc="34">ESP32 WROVER</option>
+            </optgroup>
+            <optgroup label="── NodeMCU / ESP8266 ──">
+              <option value="esp8266:esp8266:nodemcuv2" data-wifi="1" data-led="2" data-dht="4" data-adc="0">NodeMCU v2 (ESP8266)</option>
+              <option value="esp8266:esp8266:d1_mini"   data-wifi="1" data-led="2" data-dht="4" data-adc="0">Wemos D1 Mini</option>
+              <option value="esp8266:esp8266:generic"   data-wifi="1" data-led="2" data-dht="4" data-adc="0">Generic ESP8266</option>
+            </optgroup>
+            <optgroup label="── Arduino ──">
+              <option value="arduino:avr:uno"   data-wifi="0" data-led="13" data-dht="2" data-adc="0">Arduino Uno</option>
+              <option value="arduino:avr:nano"  data-wifi="0" data-led="13" data-dht="2" data-adc="0">Arduino Nano</option>
+              <option value="arduino:avr:mega"  data-wifi="0" data-led="13" data-dht="2" data-adc="0">Arduino Mega 2560</option>
+              <option value="arduino:avr:leonardo" data-wifi="0" data-led="13" data-dht="2" data-adc="0">Arduino Leonardo</option>
+            </optgroup>
+            <optgroup label="── Arduino (ARM / WiFi) ──">
+              <option value="arduino:samd:mkr1000" data-wifi="1" data-led="6" data-dht="1" data-adc="0">Arduino MKR1000</option>
+              <option value="arduino:samd:mkrwifi1010" data-wifi="1" data-led="6" data-dht="1" data-adc="0">Arduino MKR WiFi 1010</option>
+              <option value="arduino:mbed_nano:nanorp2040connect" data-wifi="1" data-led="13" data-dht="2" data-adc="0">Nano RP2040 Connect</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+            Device ID
+          </div>
+          <input type="text" class="field-input" id="cfg-device" value="esp32-01" placeholder="esp32-01">
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="dev-status offline" id="dev-status">
+      <span class="s-dot"></span>
+      <span id="dev-status-label">Offline</span>
+    </div>
+
+    <!-- Server / WiFi -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">Server / WiFi</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body">
+        <div class="field-group">
+          <div class="field-label">Backend API URL</div>
+          <input type="text" class="field-input" id="cfg-api" value="/api" placeholder="http://192.168.x.x:8000">
+        </div>
+        <div class="field-group">
+          <div class="field-label">WiFi SSID</div>
+          <input type="text" class="field-input" id="cfg-ssid" value="MyNetwork" placeholder="Your WiFi name">
+        </div>
+        <div class="field-group">
+          <div class="field-label">WiFi Password</div>
+          <input type="password" class="field-input" id="cfg-pass" value="password123" placeholder="Password">
+        </div>
+        <div class="field-group">
+          <div class="field-label">OTA Token</div>
+          <input type="text" class="field-input" id="cfg-token" value="tok1" placeholder="tok1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Libraries -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">Libraries</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body" style="padding-bottom:8px">
+        <div class="lib-list" id="lib-list">
+          <label class="lib-item"><input type="checkbox" value="DHT sensor library" data-inc='"DHT.h"'><span class="lib-item-name">DHT11 / DHT22</span></label>
+          <label class="lib-item"><input type="checkbox" value="Servo" data-inc='<Servo.h>'><span class="lib-item-name">Servo</span></label>
+          <label class="lib-item"><input type="checkbox" value="ESP32Servo" data-inc='<ESP32Servo.h>' data-board="esp32"><span class="lib-item-name">ESP32Servo</span></label>
+          <label class="lib-item"><input type="checkbox" value="PubSubClient" data-inc='<PubSubClient.h>'><span class="lib-item-name">MQTT (PubSubClient)</span></label>
+          <label class="lib-item"><input type="checkbox" value="ArduinoIoTCloud" data-inc='<ArduinoIoTCloud.h>'><span class="lib-item-name">Arduino IoT Cloud</span></label>
+          <label class="lib-item"><input type="checkbox" value="Arduino_ConnectionHandler" data-inc='<Arduino_ConnectionHandler.h>'><span class="lib-item-name">Arduino Connection Handler</span></label>
+          <label class="lib-item"><input type="checkbox" value="ArduinoJson" data-inc='<ArduinoJson.h>'><span class="lib-item-name">ArduinoJson</span></label>
+          <label class="lib-item"><input type="checkbox" value="Adafruit GFX Library" data-inc='<Adafruit_GFX.h>'><span class="lib-item-name">Adafruit GFX</span></label>
+          <label class="lib-item"><input type="checkbox" value="Adafruit SSD1306" data-inc='<Adafruit_SSD1306.h>'><span class="lib-item-name">Adafruit SSD1306 OLED</span></label>
+          <label class="lib-item"><input type="checkbox" value="Adafruit BME280 Library" data-inc='<Adafruit_BME280.h>'><span class="lib-item-name">Adafruit BME280</span></label>
+          <label class="lib-item"><input type="checkbox" value="Adafruit NeoPixel" data-inc='<Adafruit_NeoPixel.h>'><span class="lib-item-name">NeoPixel (WS2812)</span></label>
+          <label class="lib-item"><input type="checkbox" value="IRremote" data-inc='<IRremote.hpp>'><span class="lib-item-name">IR Remote</span></label>
+          <label class="lib-item"><input type="checkbox" value="LiquidCrystal I2C" data-inc='<LiquidCrystal_I2C.h>'><span class="lib-item-name">LCD I2C</span></label>
+          <label class="lib-item"><input type="checkbox" value="Wire" data-inc='<Wire.h>'><span class="lib-item-name">Wire (I2C)</span></label>
+          <label class="lib-item"><input type="checkbox" value="SPI" data-inc='<SPI.h>'><span class="lib-item-name">SPI</span></label>
+          <label class="lib-item"><input type="checkbox" value="SD" data-inc='<SD.h>'><span class="lib-item-name">SD Card</span></label>
+          <label class="lib-item"><input type="checkbox" value="Stepper" data-inc='<Stepper.h>'><span class="lib-item-name">Stepper Motor</span></label>
+          <label class="lib-item"><input type="checkbox" value="OneWire" data-inc='<OneWire.h>'><span class="lib-item-name">OneWire (DS18B20)</span></label>
+          <label class="lib-item"><input type="checkbox" value="DallasTemperature" data-inc='<DallasTemperature.h>'><span class="lib-item-name">Dallas Temperature</span></label>
+          <label class="lib-item"><input type="checkbox" value="Blynk" data-inc='<BlynkSimpleEsp32.h>' data-board="esp32"><span class="lib-item-name">Blynk (ESP32)</span></label>
+          <label class="lib-item"><input type="checkbox" value="Firebase ESP32 Client" data-inc='<Firebase_ESP_Client.h>' data-board="esp32"><span class="lib-item-name">Firebase ESP32</span></label>
+          <label class="lib-item"><input type="checkbox" value="TelegramBot" data-inc='<UniversalTelegramBot.h>'><span class="lib-item-name">Telegram Bot</span></label>
+          <label class="lib-item"><input type="checkbox" value="ESPAsyncWebServer" data-inc='<ESPAsyncWebServer.h>'><span class="lib-item-name">ESPAsyncWebServer</span></label>
+          <label class="lib-item"><input type="checkbox" value="AsyncTCP" data-inc='<AsyncTCP.h>' data-board="esp32"><span class="lib-item-name">AsyncTCP (ESP32)</span></label>
+          <label class="lib-item"><input type="checkbox" value="Ticker" data-inc='<Ticker.h>'><span class="lib-item-name">Ticker (Timer)</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- OTA Code Builder -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">OTA Code Builder</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body">
+        <div class="field-group">
+          <div class="field-label">Build Type</div>
+          <select id="cfg-build" class="field-input select-wrap">
+            <option value="led">LED + Web OTA</option>
+            <option value="led_telem">LED + OTA + Telemetry</option>
+            <option value="dht_telem">DHT11 + LED + OTA + Telemetry</option>
+          </select>
+        </div>
+      </div>
+      <div class="gen-btn-wrap">
+        <button class="btn btn-success" id="btn-build-ota" style="width:100%;justify-content:center;height:34px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate OTA Firmware
+        </button>
+      </div>
+    </div>
+
+    <!-- Board Pins -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">Board Pins</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body">
+        <div class="pin-row">
+          <div class="field-group">
+            <div class="field-label">LED Pin</div>
+            <input type="number" class="field-input" id="cfg-led" value="2">
+          </div>
+          <div class="field-group">
+            <div class="field-label">DHT11 Pin</div>
+            <input type="number" class="field-input" id="cfg-dht" value="25">
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">ADC Pin</div>
+          <input type="number" class="field-input" id="cfg-adc" value="34">
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">Templates</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="s-body" style="padding-bottom:6px">
+        <div class="tmpl-item" id="sn-blink">
+          <div class="tmpl-icon" style="background:rgba(245,158,11,0.12);color:var(--yellow)">💡</div>
+          Blink LED
+        </div>
+        <div class="tmpl-item" id="sn-dht">
+          <div class="tmpl-icon" style="background:rgba(34,197,94,0.12);color:var(--green)">🌡</div>
+          DHT11 Sensor
+        </div>
+        <div class="tmpl-item" id="sn-servo">
+          <div class="tmpl-icon" style="background:rgba(59,130,246,0.12);color:var(--blue-300)">⚙️</div>
+          Servo Motor
+        </div>
+        <div class="tmpl-item" id="sn-telemetry">
+          <div class="tmpl-icon" style="background:rgba(168,85,247,0.12);color:var(--purple)">📡</div>
+          Telemetry + OTA
+        </div>
+        <div class="tmpl-item" id="sn-register">
+          <div class="tmpl-icon" style="background:rgba(6,182,212,0.12);color:var(--teal)">🔗</div>
+          Register Device
+        </div>
+      </div>
+    </div>
+
+    <!-- LED Control -->
+    <div class="s-section">
+      <div class="s-section-hdr" onclick="toggleSection(this)">
+        <span class="s-section-title">LED Control</span>
+        <svg class="s-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="led-btns">
+        <button class="btn btn-ghost" id="led-on-btn" style="justify-content:center;height:32px;font-size:11px">💡 ON</button>
+        <button class="btn btn-ghost" id="led-off-btn" style="justify-content:center;height:32px;font-size:11px">🌙 OFF</button>
+      </div>
+    </div>
+
+  </div><!-- /sidebar-scroll -->
+</aside>
+
+<!-- ══════════════════════════════════════════════
+     MAIN WORKSPACE
+══════════════════════════════════════════════ -->
+<main id="workspace">
+
+  <!-- AI Prompt Bar -->
+  <div id="ai-bar">
+    <div class="ai-icon-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    </div>
+    <textarea id="ai-prompt" rows="1"
+      placeholder="Describe firmware: 'Blink LED with DHT11 sensor'  ·  or ask: 'fix the WiFi reconnect', 'explain this code'"></textarea>
+    <button class="btn btn-ai" id="btn-ask-ai">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Ask AI
+    </button>
+    <button class="btn btn-primary" id="btn-gen-fw">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Generate
+    </button>
+  </div>
+
+  <!-- AI Chat -->
+  <div id="ai-chat"></div>
+
+  <!-- Action Toolbar -->
+  <div id="toolbar">
+    <button class="toolbar-btn tb-primary" id="btn-ota">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></svg>
+      Upload OTA
+    </button>
+    <button class="toolbar-btn tb-success" id="btn-serial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Serial
+    </button>
+    <div class="tsep"></div>
+    <button class="toolbar-btn" onclick="navigator.clipboard?.writeText(editor.value);toast('📋 Copied to clipboard')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy
+    </button>
+    <button class="toolbar-btn" onclick="editor.value='';syncEditor();savedCode='';toast('🗑 Editor cleared')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+      Clear
+    </button>
+    <div class="tsep"></div>
+    <button class="toolbar-btn tb-blue" id="btn-telem">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Live Data
+    </button>
+    <button class="toolbar-btn" id="btn-sermon" style="border-color:rgba(34,197,94,0.3);color:var(--green)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h2M7 11h2M13 8l2 1.5L13 11"/></svg>
+      Serial Monitor
+    </button>
+
+    <div class="char-info">
+      <span id="cc-chars">0 chars</span>
+      <span>·</span>
+      <span id="cc-lines">0 lines</span>
+    </div>
+  </div>
+
+  <!-- Code Editor -->
+  <div id="editor-area">
+    <div class="cur-line-hi" id="cur-line-hi"></div>
+    <div id="gutter"></div>
+    <div id="highlight"></div>
+    <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+      placeholder="// Paste or generate firmware code here...&#10;// Use Generate button or pick a template from the sidebar"></textarea>
+  </div>
+
+  <!-- Status Bar -->
+  <div id="statusbar">
+    <div class="sb-item" id="sb-cursor">Ln 1, Col 1</div>
+    <div class="sb-item" id="sb-board">ESP32 Dev Module</div>
+    <div class="sb-item">Arduino C++</div>
+    <div class="sb-item" id="sb-device">esp32-01</div>
+    <div class="sb-item ok" id="sb-status" style="margin-left:auto;border-right:none">● Ready</div>
+  </div>
+
+  <!-- Bottom Console -->
+  <div id="bottom">
+    <div id="out-tabs">
+      <div class="out-tab active" data-ot="console">
+        Console
+        <span class="err-badge" id="err-badge">0</span>
+      </div>
+      <div class="out-tab" data-ot="telem">Live Telemetry</div>
+      <div id="out-actions">
+        <button class="out-btn" id="clear-out">Clear</button>
+      </div>
+    </div>
+    <div id="out-body"></div>
+  </div>
+
+</main>
+</div><!-- /#app -->
+
+<!-- ══════════════════════════════════════════════
+     SERIAL UPLOAD MODAL
+══════════════════════════════════════════════ -->
+<div class="panel-overlay" id="serial-modal">
+  <div class="panel-card">
+    <div class="panel-head">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#16a34a,#15803d)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">Upload via Serial (USB)</div>
+        <div class="panel-sub">Connect your board via USB and flash directly</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div>
+        <span class="panel-field-label">Board (FQBN)</span>
+        <select id="serial-fqbn" class="field-input select-wrap">
+          <option value="esp32:esp32:esp32">ESP32 Dev Module</option>
+          <option value="esp32:esp32:esp32s2">ESP32-S2</option>
+          <option value="esp32:esp32:esp32s3">ESP32-S3</option>
+          <option value="esp32:esp32:esp32c3">ESP32-C3</option>
+          <option value="esp8266:esp8266:nodemcuv2">NodeMCU v2 (ESP8266)</option>
+          <option value="esp8266:esp8266:d1_mini">Wemos D1 Mini</option>
+          <option value="arduino:avr:uno">Arduino Uno</option>
+          <option value="arduino:avr:nano">Arduino Nano</option>
+          <option value="arduino:avr:mega">Arduino Mega 2560</option>
+          <option value="arduino:avr:leonardo">Arduino Leonardo</option>
+          <option value="arduino:samd:mkr1000">Arduino MKR1000</option>
+          <option value="arduino:samd:mkrwifi1010">Arduino MKR WiFi 1010</option>
+          <option value="arduino:mbed_nano:nanorp2040connect">Nano RP2040 Connect</option>
+        </select>
+      </div>
+      <div>
+        <span class="panel-field-label">COM Port</span>
+        <div style="display:flex;gap:8px">
+          <select id="port-select" class="field-input select-wrap" style="flex:1"><option value="">-- Select Port --</option></select>
+          <button class="btn btn-secondary" id="port-scan">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+            Scan
+          </button>
+        </div>
+      </div>
+      <div>
+        <span class="panel-field-label">File (optional — uses editor if empty)</span>
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="ser-file" accept=".ino,.hex,.bin">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="dz-hint">Drop .ino / .bin / .hex  or click to browse</div>
+          <div class="dz-file" id="ser-filename"></div>
+        </div>
+      </div>
+      <div class="ser-out" id="ser-out"></div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn btn-ghost" id="serial-cancel">Cancel</button>
+      <button class="btn btn-success" id="serial-flash">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Flash via Serial
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     OTA UPLOAD MODAL
+══════════════════════════════════════════════ -->
+<div class="panel-overlay" id="ota-modal">
+  <div class="panel-card">
+    <div class="panel-head">
+      <div class="panel-icon" style="background:linear-gradient(135deg,var(--orange-500),#ff4d00)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">OTA WiFi Upload</div>
+        <div class="panel-sub">Flash firmware wirelessly over your network</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div>
+        <span class="panel-field-label">Source</span>
+        <div class="src-btns">
+          <button class="src-btn active" id="ota-src-backend" onclick="selectOtaSrc('backend')">🔧 Backend<br><span style="font-weight:400;font-size:10px;color:var(--text-muted)">Compile + Push</span></button>
+          <button class="src-btn" id="ota-src-editor" onclick="selectOtaSrc('editor')">📝 Editor<br><span style="font-weight:400;font-size:10px;color:var(--text-muted)">Code from IDE</span></button>
+          <button class="src-btn" id="ota-src-file" onclick="selectOtaSrc('file')">📦 .bin File<br><span style="font-weight:400;font-size:10px;color:var(--text-muted)">Pre-compiled</span></button>
+        </div>
+      </div>
+      <div id="ota-ip-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <span class="panel-field-label" id="ota-ip-label">ESP32 IP Address</span>
+          <input type="text" class="field-input" id="ota-ip" placeholder="192.168.1.100">
+          <div style="font-size:10px;color:var(--text-dim);margin-top:3px">Check Serial Monitor for IP</div>
+        </div>
+        <div>
+          <span class="panel-field-label">OTA Token</span>
+          <input type="text" class="field-input" id="ota-token-inp" placeholder="tok1">
+        </div>
+      </div>
+      <div id="ota-file-area" style="display:none">
+        <span class="panel-field-label">Firmware .bin File</span>
+        <div class="drop-zone" id="ota-drop-zone">
+          <input type="file" id="ota-file" accept=".bin">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="dz-hint">Drop .bin firmware file</div>
+          <div class="dz-file" id="ota-filename"></div>
+        </div>
+      </div>
+      <div id="ota-progress-wrap"><div id="ota-progress-bar"></div></div>
+      <div class="ser-out" id="ota-out"></div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn btn-ghost" id="ota-cancel">Cancel</button>
+      <button class="btn btn-secondary" id="ota-ping-btn" style="border-color:rgba(6,182,212,0.4);color:var(--teal)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Ping
+      </button>
+      <button class="btn btn-primary" id="ota-flash-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></svg>
+        Flash OTA
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TELEMETRY PANEL
+══════════════════════════════════════════════ -->
+<div id="telem-panel">
+  <div id="tp-header">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange-400)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <div class="tp-title">Live Telemetry</div>
+    <div class="dev-status offline" id="tp-dev-status" style="margin:0;padding:5px 10px;border-radius:20px">
+      <span class="s-dot"></span>
+      <span>Offline</span>
+    </div>
+    <button id="tp-close" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;margin-left:6px;line-height:1">✕</button>
+  </div>
+  <div id="tp-body">
+    <div class="tcard-grid" id="tp-cards">
+      <div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--text-muted);font-size:12px">
+        Polling device...<br>
+        <span style="font-size:10px;color:var(--text-dim);margin-top:6px;display:block">ESP32 must be running telemetry firmware</span>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-top:8px;margin-bottom:6px">Raw JSON</div>
+    <pre id="tp-raw">{}</pre>
+  </div>
+  <div id="tp-footer">
+    <button class="btn btn-ghost" id="led-on-telem" style="flex:1;justify-content:center;height:32px;font-size:11px">💡 LED ON</button>
+    <button class="btn btn-ghost" id="led-off-telem" style="flex:1;justify-content:center;height:32px;font-size:11px">🌙 LED OFF</button>
+    <button class="btn btn-ghost" id="tp-stop" style="color:var(--red);border-color:rgba(239,68,68,0.3)">■ Stop</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SERIAL MONITOR FULL-SCREEN
+══════════════════════════════════════════════ -->
+<div id="serial-mon">
+  <div id="sm-topbar">
+    <div id="sm-status"></div>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange-400)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h2M7 11h2M13 8l2 1.5L13 11"/></svg>
+    <div id="sm-title">Serial Monitor</div>
+    <select id="sm-baud" class="sm-ctrl">
+      <option value="9600">9600</option>
+      <option value="19200">19200</option>
+      <option value="38400">38400</option>
+      <option value="57600">57600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="500000">500000</option>
+    </select>
+    <button class="sm-hbtn" id="sm-autoscroll-btn">⬇ Auto</button>
+    <button class="sm-hbtn" id="sm-ts-btn">🕐 TS</button>
+    <button class="sm-hbtn" id="sm-clear-btn" style="color:var(--red)">✕ Clear</button>
+    <button class="sm-hbtn" id="sm-close-btn" style="margin-left:8px;color:var(--red)">✕ Close</button>
+  </div>
+  <div id="sm-output"></div>
+  <div id="sm-statsbar">
+    <span id="sm-stat-conn">Not connected</span>
+    <span id="sm-stat-rx" class="live">RX: 0 B</span>
+    <span id="sm-stat-lines">Lines: 0</span>
+    <span id="sm-stat-port" style="margin-left:auto"></span>
+  </div>
+  <div id="sm-toolbar">
+    <select id="sm-port">
+      <option value="">-- Select COM Port --</option>
+      <option value="webserial">🌐 WebSerial (Chrome / Edge)</option>
+    </select>
+    <button class="sm-hbtn" id="sm-scan-btn">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+      Scan
+    </button>
+    <button id="sm-connect">▶ Connect</button>
+  </div>
+  <div id="sm-input-row">
+    <input type="text" id="sm-input" placeholder="Send command to device... (Enter to send)" autocomplete="off" spellcheck="false">
+    <select id="sm-line-end" class="sm-ctrl">
+      <option value="\n">NL</option>
+      <option value="\r\n" selected>CR+NL</option>
+      <option value="\r">CR</option>
+      <option value="">None</option>
+    </select>
+    <button id="sm-send" disabled>Send</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════
+//  CONSTANTS & STATE
+// ═══════════════════════════════════════════
+let API         = '/api';
+const LOCAL_AGENT = 'http://127.0.0.1:8787';
+
+let savedCode   = '';
+let aiHistory   = [];
+let telemTimer  = null;
+let activeOutTab = 'console';
+let serFile     = null;
+let otaFile     = null;
+let otaSrc      = 'backend';
+let errCount    = 0;
+const AI_MAX_HISTORY = 12;
+const DEFAULT_GENERATE_PROMPT = 'Full firmware: WiFi + telemetry + LED + OTA';
+
+// Serial Monitor
+let smPort        = null;
+let smReader      = null;
+let smWriter      = null;
+let smConnected   = false;
+let smAutoScroll  = true;
+let smShowTs      = false;
+let smRxBytes     = 0;
+let smLineCount   = 0;
+let smUseBackend  = false;
+let smBackendPort = '';
+let smEventSource = null;
+const SM_MAX_LINES = 2000;
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+const $   = id => document.getElementById(id);
+const qsa = s  => document.querySelectorAll(s);
+
+const esc = s => String(s || '')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const now = () => new Date().toLocaleTimeString('en',{hour12:false});
+
+const cfgDevice = () => $('cfg-device').value.trim() || 'esp32-01';
+const cfgLed    = () => parseInt($('cfg-led').value,10) || 2;
+const cfgDht    = () => parseInt($('cfg-dht').value,10) || 25;
+const cfgAdc    = () => parseInt($('cfg-adc').value,10) || 34;
+const cfgApi    = () => ($('cfg-api')?.value||'').trim() || API;
+const cfgSsid   = () => ($('cfg-ssid')?.value||'').trim() || 'MyNetwork';
+const cfgPass   = () => ($('cfg-pass')?.value||'').trim() || 'password';
+const cfgToken  = () => ($('cfg-token')?.value||'').trim() || 'tok1';
+const cfgBuild  = () => ($('cfg-build')?.value||'led');
+
+// Board helpers
+function cfgBoardEl()    { return $('cfg-board'); }
+function cfgFqbn()       { return cfgBoardEl()?.value || 'esp32:esp32:esp32'; }
+function cfgBoardName()  { return cfgBoardEl()?.options[cfgBoardEl().selectedIndex]?.text || 'ESP32 Dev Module'; }
+function cfgBoardHasWifi(){ return cfgBoardEl()?.options[cfgBoardEl().selectedIndex]?.dataset.wifi === '1'; }
+function cfgBoardFamily(){
+  const f = cfgFqbn();
+  if(f.startsWith('esp32:'))   return 'esp32';
+  if(f.startsWith('esp8266:')) return 'esp8266';
+  return 'avr';
+}
+
+// Library helpers
+function getCheckedLibs(){
+  return [...qsa('#lib-list input[type=checkbox]:checked')]
+    .map(cb => ({ name: cb.value, inc: cb.dataset.inc }));
+}
+
+// Board change handler
+function onBoardChange(){
+  const sel = cfgBoardEl();
+  const opt = sel?.options[sel.selectedIndex];
+  if(!opt) return;
+  if(opt.dataset.led) $('cfg-led').value = opt.dataset.led;
+  if(opt.dataset.dht) $('cfg-dht').value = opt.dataset.dht;
+  if(opt.dataset.adc) $('cfg-adc').value = opt.dataset.adc;
+  const sf = $('serial-fqbn');
+  if(sf) sf.value = opt.value;
+  $('sb-board').textContent = opt.text;
+  // Show/hide board-specific libraries
+  qsa('#lib-list .lib-item').forEach(li => {
+    const cb = li.querySelector('input');
+    const brd = cb?.dataset.board;
+    if(!brd){ li.classList.remove('hidden'); return; }
+    const fam = cfgBoardFamily();
+    li.classList.toggle('hidden', !fam.startsWith(brd));
+    if(li.classList.contains('hidden')) cb.checked = false;
+  });
+  toast('📋 Board: ' + opt.text);
+}
+
+function syncApiFromInput(save=true){
+  const v = cfgApi(); API = v;
+  if(save) localStorage.setItem('fw_api', v);
+}
+
+function toast(msg, dur=2600){
+  const t = $('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+function busy(on){ $('topbar-progress')?.classList.toggle('run', on); }
+
+function setStatus(txt, cls='ok'){
+  const el = $('sb-status');
+  if(!el) return;
+  el.textContent = '● ' + txt;
+  el.className = 'sb-item ' + cls;
+  el.style.marginLeft = 'auto';
+  el.style.borderRight = 'none';
+}
+
+function normText(v){
+  if(v === null || v === undefined) return '';
+  if(typeof v === 'string') return v;
+  if(Array.isArray(v)) return v.map(normText).filter(Boolean).join('\n');
+  if(typeof v === 'object'){
+    return v.text || v.message || v.reply || v.content || v.output || v.answer || v.response || '';
+  }
+  return String(v);
+}
+
+function safeJsonParse(txt){
+  try{ return JSON.parse(txt); }catch(_){ return null; }
+}
+
+async function apiFetchJSON(url, options={}, timeoutMs=45000){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    const raw = await res.text();
+    const data = raw ? (safeJsonParse(raw) || { raw_text: raw }) : {};
+    if(!res.ok){
+      const msg = normText(data) || data.error || data.detail || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+function buildAiContext(){
+  const libs = getCheckedLibs().map(l=>l.name).join(', ') || 'none';
+  const history = aiHistory.slice(-AI_MAX_HISTORY).map(m=>`${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+  return `You are an expert Arduino/ESP32 firmware engineer and debugging copilot.
+Always be accurate, practical, and production-oriented.
+When asked to generate or rewrite firmware, return ONE complete .ino file inside a single \`\`\`cpp code block.
+When asked to explain or debug, keep the explanation concise and actionable.
+
+Project context:
+- Board: ${cfgBoardName()}
+- FQBN: ${cfgFqbn()}
+- Family: ${cfgBoardFamily()}
+- WiFi capable: ${cfgBoardHasWifi() ? 'yes' : 'no'}
+- Device ID: ${cfgDevice()}
+- LED pin: ${cfgLed()}
+- DHT pin: ${cfgDht()}
+- ADC pin: ${cfgAdc()}
+- Selected libraries: ${libs}
+
+Current editor code:
+\`\`\`cpp
+${editor.value || '(empty)'}
+\`\`\`
+
+Recent conversation:
+${history || '(none)'}`;
+}
+
+function inferAiTask(text){
+  const t = String(text || '').trim().toLowerCase();
+  if(!t) return 'chat';
+  const generateLike = /^(make|build|generate|create|write)\b/.test(t) || /(full firmware|complete firmware|complete code|generate code|create code|write code|build firmware)/.test(t);
+  const fixLike = /^(fix|repair|debug|solve|improve|optimi[sz]e|refactor)\b/.test(t) || /(bug|error|issue|glitch|not work|fails?)/.test(t);
+  if(generateLike || fixLike) return 'generate';
+  return 'chat';
+}
+
+function extractCodeBlock(text){
+  const m = String(text || '').match(/```(?:cpp|c\+\+|arduino|ino)?\n([\s\S]*?)```/i);
+  return m ? m[1].trim() : '';
+}
+
+function renderChatBody(text){
+  const src = String(text || '');
+  const parts = src.split(/```(?:cpp|c\+\+|arduino|ino)?\n([\s\S]*?)```/gi);
+  return parts.map((part, idx)=>{
+    if(idx % 2 === 1){
+      return `<pre class="chat-code"><code>${esc(part)}</code></pre>`;
+    }
+    return esc(part).replace(/\n/g,'<br>');
+  }).join('');
+}
+
+async function requestAiChat(question){
+  const payload = {
+    user_id:'fw_ide',
+    text: `${buildAiContext()}\n\nUser request: ${question}`,
+    want_voice:false,
+    history: aiHistory.slice(-AI_MAX_HISTORY)
+  };
+  const data = await apiFetchJSON(`${API}/chat`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }, 60000);
+  return normText(data) || 'Sorry, no response from backend.';
+}
+
+async function requestAiGenerate(prompt){
+  const payload = {
+    device_id: cfgDevice(),
+    prompt,
+    board: cfgBoardName(),
+    fqbn: cfgFqbn(),
+    board_family: cfgBoardFamily(),
+    has_wifi: cfgBoardHasWifi(),
+    libraries: getCheckedLibs().map(l=>l.name),
+    led_pin: cfgLed(),
+    dht_pin: cfgDht(),
+    adc_pin: cfgAdc(),
+    current_code: editor.value || '',
+    history: aiHistory.slice(-AI_MAX_HISTORY)
+  };
+  const data = await apiFetchJSON(`${API}/firmware/ai_generate`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }, 90000);
+  const ino = data.ino || data.code || extractCodeBlock(normText(data));
+  return { ino, data, text: normText(data) };
+}
+
+// ═══════════════════════════════════════════
+//  SIDEBAR COLLAPSE
+// ═══════════════════════════════════════════
+function toggleSection(hdr){
+  hdr.parentElement.classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════
+//  SYNTAX HIGHLIGHTER — Single-pass tokeniser
+// ═══════════════════════════════════════════
+function highlight(code){
+  const KW = new Set([
+    'void','int','float','double','bool','char','long','unsigned','byte',
+    'String','boolean','if','else','for','while','do','return','break','continue',
+    'switch','case','default','const','static','class','struct','new','delete',
+    'true','false','NULL','nullptr','volatile','public','private','protected','word',
+    'auto','typedef','enum','template','namespace','using','operator','sizeof','typeof'
+  ]);
+  const BI = new Set([
+    'setup','loop','pinMode','digitalWrite','digitalRead','analogRead',
+    'analogWrite','delay','millis','micros','HIGH','LOW','INPUT','OUTPUT',
+    'INPUT_PULLUP','LED_BUILTIN','Serial','begin','print','println','available',
+    'read','write','flush','end','WiFi','HTTPClient','WebServer','ArduinoJson',
+    'DHT','Wire','SPI','attachInterrupt','detachInterrupt','map','constrain',
+    'min','max','abs','random','pow','sqrt','readTemperature','readHumidity',
+    'isnan','handleClient','send','on','arg','UPDATE','connect','disconnect',
+    'status','localIP','mode','WIFI_STA','WIFI_AP','WL_CONNECTED','ESP',
+    'Serial1','Serial2','EEPROM','Servo','Stepper','ToneESP32','ledcWrite'
+  ]);
+
+  // Single-pass regex tokeniser
+  const TOK = /("(?:\\.|[^"\\])*")|(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|(#[^\n]*)|\b(\d+\.?\d*[uUlLfF]*)\b|([A-Za-z_]\w*)|([^A-Za-z_\d"#\/]+|.)/g;
+  let out = '';
+  let m;
+  while((m = TOK.exec(code)) !== null){
+    if(m[1] !== undefined){
+      out += `<i class="ss">${m[1].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</i>`;
+    } else if(m[2] !== undefined){
+      out += `<i class="sc">${m[2].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</i>`;
+    } else if(m[3] !== undefined){
+      out += `<i class="sc">${m[3].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</i>`;
+    } else if(m[4] !== undefined){
+      out += `<i class="sp">${m[4].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</i>`;
+    } else if(m[5] !== undefined){
+      out += `<i class="sn">${m[5]}</i>`;
+    } else if(m[6] !== undefined){
+      const w = m[6];
+      if(KW.has(w))      out += `<i class="sk">${w}</i>`;
+      else if(BI.has(w)) out += `<i class="sb">${w}</i>`;
+      else               out += w;
+    } else {
+      out += (m[7]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════
+//  EDITOR
+// ═══════════════════════════════════════════
+const editor  = $('editor');
+const hlEl    = $('highlight');
+const gutter  = $('gutter');
+const curLineHi = $('cur-line-hi');
+
+function syncEditor(){
+  const code  = editor.value;
+  hlEl.innerHTML = highlight(code) + '\n';
+  const lines = code.split('\n');
+  gutter.innerHTML = lines.map((_,i)=>`<div class="ln">${i+1}</div>`).join('');
+  $('cc-chars').textContent = code.length.toLocaleString() + ' chars';
+  $('cc-lines').textContent = lines.length.toLocaleString() + ' lines';
+  const dirty = code !== savedCode && code.trim() !== '';
+  $('dirty-badge').style.display = dirty ? '' : 'none';
+  updateCursorLine();
+}
+
+function updateCursorLine(){
+  const code = editor.value;
+  const pos  = editor.selectionStart;
+  const lineIdx = code.substring(0,pos).split('\n').length - 1;
+  const lineTop = 14 + lineIdx * 20; // 14px padding, 20px line-height
+  curLineHi.style.top = lineTop + 'px';
+  // Update gutter active line
+  qsa('#gutter .ln').forEach((el,i)=>{
+    el.classList.toggle('active', i === lineIdx);
+  });
+  // Status bar cursor position
+  const lines = code.substring(0,pos).split('\n');
+  $('sb-cursor').textContent = `Ln ${lines.length}, Col ${lines[lines.length-1].length+1}`;
+}
+
+editor.addEventListener('input', syncEditor);
+
+editor.addEventListener('scroll', ()=>{
+  hlEl.scrollTop  = editor.scrollTop;
+  hlEl.scrollLeft = editor.scrollLeft;
+  gutter.scrollTop = editor.scrollTop;
+});
+
+editor.addEventListener('keydown', e => {
+  // Tab → 2 spaces
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    const s = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if(s === end){
+      editor.value = editor.value.substring(0,s) + '  ' + editor.value.substring(s);
+      editor.selectionStart = editor.selectionEnd = s + 2;
+    }
+    syncEditor();
+  }
+  // Ctrl+S → save (mark clean)
+  if((e.ctrlKey||e.metaKey) && e.key === 's'){
+    e.preventDefault();
+    savedCode = editor.value;
+    $('dirty-badge').style.display = 'none';
+    toast('💾 Saved');
+    setStatus('Saved ✓');
+  }
+  // Ctrl+Enter → generate
+  if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){
+    e.preventDefault();
+    $('btn-gen-fw').click();
+  }
+  // Auto-close brackets/quotes
+  const pairs = {'(':')','[':']','{':'}','"':'"',"'":"'"};
+  if(pairs[e.key] && !e.ctrlKey && !e.metaKey){
+    const s = editor.selectionStart;
+    if(editor.selectionStart === editor.selectionEnd){
+      e.preventDefault();
+      const close = pairs[e.key];
+      editor.value = editor.value.substring(0,s) + e.key + close + editor.value.substring(s);
+      editor.selectionStart = editor.selectionEnd = s + 1;
+      syncEditor();
+    }
+  }
+});
+
+['keyup','click','mouseup'].forEach(ev => editor.addEventListener(ev, updateCursorLine));
+
+// AI prompt auto-resize
+const aiPrompt = $('ai-prompt');
+aiPrompt.addEventListener('input', ()=>{
+  aiPrompt.style.height = 'auto';
+  aiPrompt.style.height = Math.min(80, aiPrompt.scrollHeight) + 'px';
+});
+
+// ═══════════════════════════════════════════
+//  LOGGING
+// ═══════════════════════════════════════════
+function log(msg, type=''){
+  if(activeOutTab !== 'console') return;
+  if(type === 'err'){
+    errCount++;
+    $('err-badge').textContent = errCount;
+    $('err-badge').classList.add('show');
+  }
+  const el = document.createElement('div');
+  el.className = 'log-entry ' + type;
+  el.innerHTML = `<span class="log-ts">${now()}</span><span class="log-msg">${esc(msg)}</span>`;
+  $('out-body').appendChild(el);
+  $('out-body').scrollTop = $('out-body').scrollHeight;
+}
+
+// ═══════════════════════════════════════════
+//  AI CHAT
+// ═══════════════════════════════════════════
+function addChatMsg(role, text){
+  const chat = $('ai-chat');
+  chat.classList.add('show');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + (role==='user'?'user':'bot');
+  const av = role==='user'?'U':'AI';
+  el.innerHTML = `
+    <div class="chat-avatar">${av}</div>
+    <div class="chat-content">
+      <div class="chat-role">${role==='user'?'You':'AI Assistant'}</div>
+      <div class="chat-body">${renderChatBody(text)}</div>
+    </div>`;
+
+  const code = extractCodeBlock(text);
+  if(code){
+    const btn = document.createElement('button');
+    btn.className = 'apply-btn';
+    btn.innerHTML = '✓ Apply to Editor';
+    btn.onclick = ()=>{
+      editor.value = code;
+      syncEditor();
+      savedCode = '';
+      toast('✅ Code applied to editor');
+      btn.textContent = '✓ Applied';
+      btn.disabled = true;
+      setStatus('Code applied','ok');
+    };
+    el.querySelector('.chat-body').appendChild(btn);
+  }
+
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+  aiHistory.push({ role: role==='user' ? 'user' : 'assistant', content: String(text || '') });
+  if(aiHistory.length > AI_MAX_HISTORY) aiHistory = aiHistory.slice(-AI_MAX_HISTORY);
+}
+
+// ── Ask AI ──
+async function doAskAI(){
+  const q = aiPrompt.value.trim();
+  if(!q){ toast('⚠ Type a question first'); return; }
+
+  const btn1 = $('btn-ask'), btn2 = $('btn-ask-ai');
+  [btn1,btn2].forEach(b=>{ if(b){ b.disabled = true; b.innerHTML = '<span class="spin">⟳</span>'; }});
+
+  addChatMsg('user', q);
+  aiPrompt.value = '';
+  aiPrompt.style.height = 'auto';
+  busy(true);
+  setStatus('AI thinking...','warn');
+
+  try{
+    const mode = inferAiTask(q);
+    let reply = '';
+
+    if(mode === 'generate'){
+      const gen = await requestAiGenerate(q);
+      if(gen.ino){
+        reply = `Here is the generated firmware:
+
+\`\`\`cpp
+${gen.ino}
+\`\`\``;
+      }else{
+        reply = gen.text || 'Generation completed, but no code was returned.';
+      }
+      log('AI generate: ' + q.substring(0,80), 'ai');
+    }else{
+      reply = await requestAiChat(q);
+      log('AI chat: ' + q.substring(0,80), 'ai');
+    }
+
+    addChatMsg('bot', reply || 'Sorry, no response from backend.');
+    setStatus('Ready');
+  }catch(e){
+    addChatMsg('bot', '❌ Backend unreachable: ' + e.message);
+    log('❌ AI failed: ' + e.message, 'err');
+    setStatus('Error','err');
+  }finally{
+    [btn1,btn2].forEach(b=>{
+      if(!b) return;
+      b.disabled=false;
+      if(b.id==='btn-ask')    b.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l4.93-1.38C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 10h8M8 14h5"/></svg> Ask AI';
+      if(b.id==='btn-ask-ai') b.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Ask AI';
+    });
+    busy(false);
+  }
+}
+
+$('btn-ask')?.addEventListener('click', doAskAI);
+$('btn-ask-ai')?.addEventListener('click', doAskAI);
+
+aiPrompt.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); doAskAI(); }
+});
+
+// ── Generate ──
+async function doGenerate(){
+  const p = aiPrompt.value.trim() || DEFAULT_GENERATE_PROMPT;
+  const btns = [$('btn-generate'), $('btn-gen-fw')];
+  btns.forEach(b=>{ if(b){ b.disabled = true; b.innerHTML = '<span class="spin">⟳</span> Generating...'; }});
+  busy(true);
+  setStatus('Generating...','warn');
+  log('⚡ Generating: ' + p);
+
+  try{
+    const gen = await requestAiGenerate(p);
+    if(!gen.ino) throw new Error(gen.text || 'Generate failed');
+    editor.value = gen.ino;
+    syncEditor();
+    savedCode = '';
+    log('✅ Generated — ' + gen.ino.split('\n').length + ' lines', 'ok');
+    log('⚠ Review pins, credentials, and libraries before uploading', 'warn');
+    setStatus('Generated ✓');
+    toast('✅ Firmware generated!');
+    aiPrompt.value = '';
+    aiPrompt.style.height = 'auto';
+    aiHistory.push({ role:'assistant', content:`Generated firmware for prompt: ${p}` });
+    if(aiHistory.length > AI_MAX_HISTORY) aiHistory = aiHistory.slice(-AI_MAX_HISTORY);
+  }catch(e){
+    log('❌ ' + e.message, 'err');
+    setStatus('Error','err');
+    toast('❌ ' + e.message);
+  }finally{
+    btns.forEach(b=>{
+      if(!b) return;
+      b.disabled=false;
+      if(b.id==='btn-generate') b.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Generate';
+      if(b.id==='btn-gen-fw')  b.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Generate';
+    });
+    busy(false);
+  }
+}
+
+$('btn-generate')?.addEventListener('click', doGenerate);
+$('btn-gen-fw')?.addEventListener('click', doGenerate);
+
+// ═══════════════════════════════════════════
+//  OTA FIRMWARE BUILDER
+// ═══════════════════════════════════════════
+function buildOtaFirmware(){
+  const LED    = cfgLed(), DHT = cfgDht(), ADC = cfgAdc();
+  const DEVICE = cfgDevice();
+  const SSID   = cfgSsid().replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  const PASS   = cfgPass().replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  const TOKEN  = cfgToken().replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  const BUILD  = cfgBuild();
+  const FAMILY = cfgBoardFamily();
+  const WIFI   = cfgBoardHasWifi();
+  const hasDht   = (BUILD === 'dht_telem');
+  const hasTelem = (BUILD !== 'led') && WIFI;
+  const apiBase  = cfgApi().replace(/\/+$/, '');
+  const lines    = [];
+
+  // Includes — board-specific
+  if(FAMILY === 'esp32'){
+    lines.push('#include <WiFi.h>');
+    lines.push('#include <WebServer.h>');
+    lines.push('#include <Update.h>');
+    if(hasTelem) lines.push('#include <HTTPClient.h>');
+  } else if(FAMILY === 'esp8266'){
+    lines.push('#include <ESP8266WiFi.h>');
+    lines.push('#include <ESP8266WebServer.h>');
+    lines.push('#include <ESP8266HTTPUpdateServer.h>');
+    if(hasTelem) lines.push('#include <ESP8266HTTPClient.h>');
+  } else {
+    lines.push('#include <Arduino.h>');
+  }
+
+  // User-selected library includes
+  const userLibs = getCheckedLibs();
+  if(userLibs.length){ lines.push(''); userLibs.forEach(l=>lines.push(`#include ${l.inc}`)); }
+  if(hasDht && !userLibs.find(l=>l.inc.includes('DHT'))){ lines.push(''); lines.push('#include "DHT.h"'); }
+
+  lines.push('');
+  if(hasDht){
+    lines.push(`#define DHT_PIN   ${DHT}`);
+    lines.push('#define DHT_TYPE  DHT11');
+    lines.push('DHT dht(DHT_PIN, DHT_TYPE);');
+    lines.push('');
+  }
+  if(WIFI){
+    lines.push(`const char* WIFI_SSID = "${SSID}";`);
+    lines.push(`const char* WIFI_PASS = "${PASS}";`);
+    lines.push(`const char* OTA_TOKEN = "${TOKEN}";`);
+  }
+  lines.push(`const char* DEVICE_ID = "${DEVICE}";`);
+  lines.push('');
+  if(hasTelem) lines.push(`String API_BASE = "${apiBase}";`);
+  lines.push(`#define LED_PIN ${LED}`);
+  if(WIFI) lines.push(`#define ADC_PIN ${ADC}`);
+  lines.push('');
+
+  if(FAMILY === 'esp32'){
+    lines.push('WebServer server(80);');
+  } else if(FAMILY === 'esp8266'){
+    lines.push('ESP8266WebServer server(80);');
+    lines.push('ESP8266HTTPUpdateServer httpUpdater;');
+  }
+  if(WIFI){
+    lines.push('unsigned long lastTelem = 0;');
+    if(hasDht) lines.push('float g_temp = 0, g_hum = 0;');
+    lines.push('');
+  }
+
+  if(FAMILY === 'esp32' && WIFI){
+    lines.push('bool isAuthed(){');
+    lines.push('  return server.hasArg("token") && server.arg("token") == OTA_TOKEN;');
+    lines.push('}');
+    lines.push('');
+    lines.push('void sendIndex(){');
+    lines.push('  String p = "<!doctype html><html><head><meta name=\'viewport\' content=\'width=device-width,initial-scale=1\'>";');
+    lines.push('  p += "<title>OTA - " + String(DEVICE_ID) + "</title><style>body{font-family:Arial;padding:20px;background:#111827;color:#e2e8f5}h2{color:#ff6b35}button{padding:10px 18px;background:#ff6b35;color:#fff;border:none;border-radius:8px;cursor:pointer}</style></head><body>";');
+    lines.push('  p += "<h2>&#x26A1; Web OTA — " + String(DEVICE_ID) + "</h2>";');
+    lines.push('  p += "<form method=\'POST\' action=\'/update?token=" + String(OTA_TOKEN) + "\' enctype=\'multipart/form-data\'>";');
+    lines.push('  p += "<input type=\'file\' name=\'update\' accept=\'.bin\' required> <button type=\'submit\'>Upload Firmware</button></form>";');
+    lines.push('  p += "<p><b>LED:</b> <a href=\'/led?state=1\' style=\'color:#22c55e\'>ON</a> &middot; <a href=\'/led?state=0\' style=\'color:#ef4444\'>OFF</a></p>";');
+    lines.push('  p += "</body></html>";');
+    lines.push('  server.send(200, "text/html", p);');
+    lines.push('}');
+    lines.push('');
+    lines.push('void setupWebOta(){');
+    lines.push('  server.on("/", HTTP_GET, [](){ sendIndex(); });');
+    lines.push('  server.on("/led", HTTP_GET, [](){');
+    lines.push('    if(!server.hasArg("state")){ server.send(400,"text/plain","missing state"); return; }');
+    lines.push('    int v = server.arg("state").toInt();');
+    lines.push('    digitalWrite(LED_PIN, v ? HIGH : LOW);');
+    lines.push('    server.send(200,"text/plain", v ? "LED ON" : "LED OFF");');
+    lines.push('  });');
+    lines.push('  server.on("/update", HTTP_POST,');
+    lines.push('    [](){');
+    lines.push('      if(!isAuthed()){ server.send(401,"text/plain","Unauthorized"); return; }');
+    lines.push('      server.sendHeader("Connection","close");');
+    lines.push('      server.send(200,"text/plain", Update.hasError() ? "FAIL" : "OK");');
+    lines.push('      delay(300); ESP.restart();');
+    lines.push('    },');
+    lines.push('    [](){');
+    lines.push('      HTTPUpload& upload = server.upload();');
+    lines.push('      if(upload.status == UPLOAD_FILE_START){');
+    lines.push('        Serial.printf("OTA start: %s\\n", upload.filename.c_str());');
+    lines.push('        if(!Update.begin(UPDATE_SIZE_UNKNOWN)){ Update.printError(Serial); }');
+    lines.push('      } else if(upload.status == UPLOAD_FILE_WRITE){');
+    lines.push('        if(Update.write(upload.buf, upload.currentSize) != upload.currentSize) Update.printError(Serial);');
+    lines.push('      } else if(upload.status == UPLOAD_FILE_END){');
+    lines.push('        if(Update.end(true)) Serial.printf("OTA OK: %u bytes\\n", upload.totalSize);');
+    lines.push('        else Update.printError(Serial);');
+    lines.push('      }');
+    lines.push('    }');
+    lines.push('  );');
+    lines.push('  server.begin();');
+    lines.push('  Serial.println("Web OTA ready — http://" + WiFi.localIP().toString() + "/");');
+    lines.push('}');
+    lines.push('');
+  } else if(FAMILY === 'esp8266' && WIFI){
+    lines.push('void setupWebOta(){');
+    lines.push('  httpUpdater.setup(&server, "/update", "admin", OTA_TOKEN);');
+    lines.push('  server.on("/led", HTTP_GET, [](){');
+    lines.push('    int v = server.arg("state").toInt();');
+    lines.push('    digitalWrite(LED_PIN, v ? HIGH : LOW);');
+    lines.push('    server.send(200,"text/plain", v ? "LED ON" : "LED OFF");');
+    lines.push('  });');
+    lines.push('  server.begin();');
+    lines.push('  Serial.println("ESP8266 OTA ready — http://" + WiFi.localIP().toString() + "/");');
+    lines.push('}');
+    lines.push('');
+  }
+
+  if(hasTelem){
+    lines.push('void sendTelemetry(float t, float h, int adc, int rssi){');
+    lines.push('  if(WiFi.status() != WL_CONNECTED) return;');
+    if(FAMILY==='esp32'){
+      lines.push('  HTTPClient http;');
+      lines.push('  http.begin(API_BASE + "/iot/device/" + String(DEVICE_ID) + "/telemetry");');
+    } else {
+      lines.push('  WiFiClient wc; HTTPClient http;');
+      lines.push('  http.begin(wc, API_BASE + "/iot/device/" + String(DEVICE_ID) + "/telemetry");');
+    }
+    lines.push('  http.addHeader("Content-Type","application/json");');
+    lines.push('  String body = "{\\"device_id\\":\\"" + String(DEVICE_ID) + "\\",\\"data\\":{";');
+    lines.push('  body += "\\"rssi\\":" + String(rssi) + ",\\"adc\\":" + String(adc);');
+    if(hasDht) lines.push('  body += ",\\"temp\\":" + String(t,1) + ",\\"hum\\":" + String(h,1);');
+    lines.push('  body += "}}";');
+    lines.push('  int code = http.POST(body);');
+    lines.push('  Serial.printf("Telemetry -> %d\\n", code);');
+    lines.push('  http.end();');
+    lines.push('}');
+    lines.push('');
+  }
+
+  lines.push('void setup(){');
+  lines.push('  Serial.begin(115200);');
+  lines.push('  pinMode(LED_PIN, OUTPUT);');
+  lines.push('  digitalWrite(LED_PIN, LOW);');
+  if(hasDht) lines.push('  dht.begin();');
+  lines.push('');
+  if(WIFI){
+    lines.push('  WiFi.mode(WIFI_STA);');
+    lines.push('  WiFi.begin(WIFI_SSID, WIFI_PASS);');
+    lines.push('  Serial.print("Connecting to WiFi");');
+    lines.push('  while(WiFi.status() != WL_CONNECTED){ delay(400); Serial.print("."); }');
+    lines.push('  Serial.println("\\nWiFi connected!");');
+    lines.push('  Serial.print("IP address: "); Serial.println(WiFi.localIP());');
+    lines.push('');
+    lines.push('  setupWebOta();');
+  } else {
+    lines.push('  // No WiFi on this board — add your WiFi/networking code here if needed');
+  }
+  lines.push('}');
+  lines.push('');
+  lines.push('void loop(){');
+  if(WIFI) lines.push('  server.handleClient();');
+  if(hasTelem){
+    lines.push('  if(millis() - lastTelem > 2000){');
+    lines.push('    lastTelem = millis();');
+    lines.push('    int adc  = analogRead(ADC_PIN);');
+    lines.push('    int rssi = WiFi.RSSI();');
+    if(hasDht){
+      lines.push('    g_temp = dht.readTemperature();');
+      lines.push('    g_hum  = dht.readHumidity();');
+      lines.push('    sendTelemetry(g_temp, g_hum, adc, rssi);');
+    } else {
+      lines.push('    sendTelemetry(0, 0, adc, rssi);');
+    }
+    lines.push('  }');
+  }
+  if(!WIFI) lines.push('  // Add your main loop code here');
+  lines.push('}');
+
+  return lines.join('\n');
+}
+
+$('btn-build-ota')?.addEventListener('click', ()=>{
+  editor.value = buildOtaFirmware();
+  syncEditor();
+  savedCode = '';
+  log('🧩 OTA firmware generated for: '+cfgBoardName(),'ok');
+  log('➡️ Flash once via USB Serial, then use OTA Upload for wireless updates','dim');
+  toast('✅ Firmware generated for '+cfgBoardName());
+});
+
+// ═══════════════════════════════════════════
+//  SNIPPETS / TEMPLATES
+// ═══════════════════════════════════════════
+$('sn-blink').addEventListener('click', ()=>{
+  editor.value = `// Blink LED — ${cfgBoardName()}
+#include <Arduino.h>
+
+#define LED_PIN ${cfgLed()}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.println("Blink started on GPIO ${cfgLed()}");
+}
+
+void loop() {
+  digitalWrite(LED_PIN, HIGH);
+  Serial.println("LED ON");
+  delay(500);
+  digitalWrite(LED_PIN, LOW);
+  Serial.println("LED OFF");
+  delay(500);
+}`;
+  syncEditor(); savedCode='';
+  log('📋 Blink LED template loaded for '+cfgBoardName(),'info');
+  toast('📋 Blink template loaded');
+});
+
+$('sn-dht').addEventListener('click', ()=>{
+  editor.value = `// DHT11 Sensor — ${cfgBoardName()}
+#include <DHT.h>
+
+#define DHTPIN  ${cfgDht()}
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+  Serial.println("DHT11 ready!");
+}
+
+void loop() {
+  float temp = dht.readTemperature();
+  float hum  = dht.readHumidity();
+  if (!isnan(temp) && !isnan(hum)) {
+    Serial.printf("Temp: %.1f°C  Humidity: %.1f%%\\n", temp, hum);
+  } else {
+    Serial.println("DHT read error!");
+  }
+  delay(2000);
+}`;
+  syncEditor(); savedCode='';
+  log('📋 DHT11 template loaded','info');
+  toast('📋 DHT11 template loaded');
+});
+
+$('sn-servo').addEventListener('click', ()=>{
+  const servoInc = cfgBoardFamily()==='esp32' ? '#include <ESP32Servo.h>' : '#include <Servo.h>';
+  editor.value = `// Servo Motor — ${cfgBoardName()}
+${servoInc}
+
+Servo myServo;
+#define SERVO_PIN 18
+
+void setup() {
+  Serial.begin(115200);
+  myServo.attach(SERVO_PIN);
+  Serial.println("Servo ready!");
+}
+
+void loop() {
+  for (int pos = 0; pos <= 180; pos++) {
+    myServo.write(pos);
+    delay(10);
+  }
+  for (int pos = 180; pos >= 0; pos--) {
+    myServo.write(pos);
+    delay(10);
+  }
+}`;
+  syncEditor(); savedCode='';
+  log('📋 Servo template loaded for '+cfgBoardName(),'info');
+  toast('📋 Servo template loaded');
+});
+
+$('sn-telemetry').addEventListener('click', ()=>{
+  aiPrompt.value = 'Full firmware: WiFi telemetry + LED command + OTA update server';
+  doGenerate();
+});
+
+$('sn-register').addEventListener('click', ()=>{
+  const cmd = `curl -X POST ${cfgApi()}/firmware/register_device \\
+  -H "Content-Type: application/json" \\
+  -d '{"device_id":"${cfgDevice()}","ip":"DEVICE_IP_HERE","token":"${cfgToken()}","fqbn":"${cfgFqbn()}"}'`;
+  log('📋 Register device command:', 'info');
+  log(cmd, 'dim');
+  toast('📋 Register command in console');
+});
+
+// ═══════════════════════════════════════════
+//  NAV TABS
+// ═══════════════════════════════════════════
+qsa('.nav-tab[data-tab]').forEach(t=>{
+  t.addEventListener('click',()=>{
+    qsa('.nav-tab[data-tab]').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    if(tab==='serial') $('btn-serial').click();
+    if(tab==='ota')    $('btn-ota').click();
+    if(tab==='telem')  startTelem();
+    if(tab==='sermon') openSerialMonitor();
+    if(tab==='editor') editor.focus();
+  });
+});
+
+// Output tabs
+qsa('.out-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    qsa('.out-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeOutTab = t.dataset.ot;
+    $('out-body').innerHTML = '';
+    if(activeOutTab==='telem') startTelem();
+    else stopTelem();
+  });
+});
+
+$('clear-out').addEventListener('click',()=>{
+  $('out-body').innerHTML='';
+  errCount=0;
+  $('err-badge').textContent='0';
+  $('err-badge').classList.remove('show');
+});
+
+// Device ID → status bar
+$('cfg-device').addEventListener('input',()=>{ $('sb-device').textContent = cfgDevice(); $('main-device-label').textContent = cfgDevice(); });
+['cfg-led','cfg-dht','cfg-adc','cfg-ssid','cfg-pass','cfg-token','cfg-build'].forEach(id=>{ $(id)?.addEventListener('input', ()=>{ setStatus('Config updated','ok'); }); $(id)?.addEventListener('change', ()=>{ setStatus('Config updated','ok'); }); });
+
+// ═══════════════════════════════════════════
+//  SERIAL UPLOAD
+// ═══════════════════════════════════════════
+async function scanPorts(){
+  const sel = $('port-select');
+  sel.innerHTML = '<option value="">Scanning...</option>';
+  try{
+    const r = await fetch(`${LOCAL_AGENT}/serial/ports`);
+    const d = await r.json();
+    const ports = d.ports || [];
+    sel.innerHTML = '<option value="">-- Select Port --</option>';
+    if(!ports.length){ sel.innerHTML += '<option disabled value="">No ports found — check USB</option>'; }
+    else { ports.forEach(p=>{ const o=document.createElement('option'); o.value=p.port; o.textContent=`${p.port}${p.description?' — '+p.description:''}`; sel.appendChild(o); }); }
+    // Warn if arduino-cli not installed on this machine
+    if(d.arduino_cli===false){
+      const out=$('ser-out'); out.classList.add('show');
+      out.textContent='⚠️  arduino-cli not found on this machine.\nSerial upload will fail until it is installed.\n\nInstall: https://arduino.github.io/arduino-cli/latest/installation/\nThen run:  arduino-cli core install esp32:esp32\n\nAfter install, restart local_agent.py and try again.';
+    }
+  }catch(e){
+    sel.innerHTML = '<option value="">Local agent not running — start local_agent.py</option>';
+  }
+}
+
+$('btn-serial').onclick = async ()=>{
+  const sf = $('serial-fqbn');
+  if(sf) sf.value = cfgFqbn();
+  $('serial-modal').classList.add('show');
+  await scanPorts();
+};
+
+$('port-scan').addEventListener('click', scanPorts);
+$('serial-cancel').addEventListener('click', ()=>$('serial-modal').classList.remove('show'));
+
+const dz = $('drop-zone');
+$('ser-file').addEventListener('change', e=>{ serFile=e.target.files[0]; $('ser-filename').textContent=serFile?'📄 '+serFile.name:''; });
+dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('drag'); const f=e.dataTransfer.files[0]; if(f){ serFile=f; $('ser-filename').textContent='📄 '+f.name; }});
+
+$('serial-flash').addEventListener('click', async ()=>{
+  const port = $('port-select').value;
+  if(!port){ toast('⚠ Select a serial port first'); return; }
+  const out = $('ser-out');
+  out.classList.add('show'); out.textContent='';
+  const btn = $('serial-flash');
+  btn.disabled=true; btn.innerHTML='<span class="spin">⟳</span> Flashing...';
+  busy(true); setStatus('Serial flashing...','warn');
+  const slog = t=>{ out.textContent+=t+'\n'; out.scrollTop=out.scrollHeight; };
+  const fqbn = $('serial-fqbn')?.value || cfgFqbn();
+  slog('🔧 Board: '+cfgBoardName()+' ['+fqbn+']');
+  try{
+    if(serFile && (serFile.name.endsWith('.bin')||serFile.name.endsWith('.hex'))){
+      slog('📦 Uploading binary: '+serFile.name);
+      const form=new FormData(); form.append('file',serFile); form.append('port',port); form.append('fqbn',fqbn);
+      const r=await fetch(`${LOCAL_AGENT}/serial/upload_bin`,{method:'POST',body:form});
+      const d=await r.json().catch(()=>({}));
+      if(!d.ok) throw new Error(d.error||'Binary upload failed');
+      slog('✅ Flash complete!'); if(d.upload_output) slog(d.upload_output);
+    }else{
+      const ino = serFile ? await serFile.text() : editor.value.trim();
+      if(!ino) throw new Error('No code to upload. Generate or paste firmware first.');
+      slog('⚙ Compiling and flashing...');
+      let r, d;
+      try{
+        r = await fetch(`${LOCAL_AGENT}/serial/upload`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ino,port,fqbn})});
+        d = await r.json();
+      }catch(fetchErr){
+        throw new Error('Local agent not reachable at 127.0.0.1:8787 — is local_agent.py running?');
+      }
+      // Always show compile/upload output even on failure
+      if(d.compile_output) slog(d.compile_output);
+      if(d.upload_output)  slog(d.upload_output);
+      if(!d.ok){
+        const stage = d.stage ? ` [${d.stage}]` : '';
+        throw new Error((d.error||'Serial upload failed')+stage);
+      }
+      slog('✅ Compile successful');
+      slog('⚡ Flashing to '+port+'...');
+      slog('✅ Done! Device reset complete.');
+      log('✅ Serial flash → '+port,'ok'); savedCode=ino;
+    }
+    setStatus('Flashed ✓'); toast('✅ Serial flash success!');
+    btn.textContent='✓ Done!';
+    setTimeout(()=>{ btn.disabled=false; btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Flash via Serial'; },2000);
+  }catch(e){
+    slog('❌ '+e.message); log('❌ Serial failed: '+e.message,'err');
+    setStatus('Error','err'); toast('❌ '+e.message);
+    btn.disabled=false; btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Flash via Serial';
+  }finally{ busy(false); }
+});
+
+// ═══════════════════════════════════════════
+//  OTA UPLOAD
+// ═══════════════════════════════════════════
+function selectOtaSrc(src){
+  otaSrc = src;
+  ['backend','editor','file'].forEach(m=>{
+    const b=$('ota-src-'+m);
+    if(b) b.classList.toggle('active', m===src);
+  });
+  $('ota-ip-row').style.display = (src==='backend')?'none':'grid';
+  $('ota-file-area').style.display = (src==='file')?'':'none';
+}
+
+$('btn-ota').addEventListener('click',()=>{
+  $('ota-token-inp').value = cfgToken();
+  $('ota-modal').classList.add('show');
+  $('ota-out').classList.remove('show'); $('ota-out').textContent='';
+  $('ota-progress-wrap').classList.remove('show'); $('ota-progress-bar').style.width='0%';
+  otaFile=null; $('ota-filename').textContent='';
+  selectOtaSrc('backend');
+});
+
+$('ota-cancel').addEventListener('click',()=>$('ota-modal').classList.remove('show'));
+
+const otaDz = $('ota-drop-zone');
+$('ota-file').addEventListener('change',e=>{ otaFile=e.target.files[0]; $('ota-filename').textContent=otaFile?'📦 '+otaFile.name:''; });
+otaDz.addEventListener('dragover',e=>{ e.preventDefault(); otaDz.classList.add('drag'); });
+otaDz.addEventListener('dragleave',()=>otaDz.classList.remove('drag'));
+otaDz.addEventListener('drop',e=>{ e.preventDefault(); otaDz.classList.remove('drag'); const f=e.dataTransfer.files[0]; if(f&&f.name.endsWith('.bin')){ otaFile=f; $('ota-filename').textContent='📦 '+f.name; }else{ toast('⚠ Please drop a .bin file'); }});
+
+$('ota-ping-btn').addEventListener('click', async ()=>{
+  const ip=$('ota-ip').value.trim();
+  const out=$('ota-out'); out.classList.add('show');
+  const slog=t=>{ out.textContent+=t+'\n'; out.scrollTop=out.scrollHeight; };
+  if(!ip){ toast('⚠ Enter device IP address'); return; }
+  slog(`🔍 Pinging ${ip} via backend...`);
+  try{
+    const r=await fetch(`${cfgApi()}/firmware/device_ping`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip,device_id:cfgDevice()}),signal:AbortSignal.timeout(6000)});
+    const d=await r.json().catch(()=>({}));
+    if(d.online||d.ok||r.ok){ slog('✅ Device ONLINE!'); if(d.ip) slog('   IP: '+d.ip); toast('✅ Device online!'); }
+    else { slog('⚠ Device reported offline: '+(d.error||d.detail||'unknown')); }
+  }catch(e){ slog('⚠ Ping failed: '+e.message); }
+});
+
+$('ota-flash-btn').addEventListener('click', async ()=>{
+  const ip=$('ota-ip').value.trim();
+  const token=$('ota-token-inp').value.trim()||cfgToken();
+  const out=$('ota-out'); const prog=$('ota-progress-wrap'); const pbar=$('ota-progress-bar');
+  out.classList.add('show'); out.textContent='';
+  prog.classList.remove('show'); pbar.style.width='0%';
+  const slog=t=>{ out.textContent+=t+'\n'; out.scrollTop=out.scrollHeight; };
+  const setP=pct=>{ prog.classList.add('show'); pbar.style.width=Math.min(100,pct)+'%'; };
+  const btn=$('ota-flash-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spin">⟳</span> Flashing...';
+  busy(true); setStatus('OTA uploading...','warn');
+  try{
+    if(otaSrc==='backend'){
+      const code=editor.value.trim();
+      if(!code) throw new Error('Editor empty — generate firmware first.');
+      slog('⚙ Sending to backend for compile + push...'); setP(10);
+      const r=await fetch(`${cfgApi()}/firmware/push_code`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:cfgDevice(),ino:code}),signal:AbortSignal.timeout(120000)});
+      setP(80);
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.ok) throw new Error(d.error||d.detail||`HTTP ${r.status}`);
+      setP(100); slog('✅ Backend compiled and pushed firmware!'); slog('🔄 Device rebooting...');
+      savedCode=editor.value; $('dirty-badge').style.display='none';
+$('err-badge').textContent='0';
+    }else if(otaSrc==='editor'){
+      if(!ip) throw new Error('Enter device IP address.');
+      const code=editor.value.trim();
+      if(!code) throw new Error('Editor is empty.');
+      slog(`📡 Pushing editor code to http://${ip}/update...`); setP(20);
+      const r=await fetch(`${cfgApi()}/firmware/ota_push`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip,token,device_id:cfgDevice(),ino:code}),signal:AbortSignal.timeout(120000)});
+      setP(100);
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.ok) throw new Error(d.error||d.detail||`HTTP ${r.status}`);
+      slog('✅ OTA upload accepted!'); slog('🔄 Device rebooting...');
+    }else{
+      if(!otaFile) throw new Error('No .bin file selected.');
+      if(!ip) throw new Error('Enter device IP address.');
+      slog(`📦 Pushing ${otaFile.name} (${Math.round(otaFile.size/1024)} KB)...`); setP(10);
+      const fd=new FormData(); fd.append('update',otaFile,'firmware.bin');
+      await new Promise((res,rej)=>{
+        const xhr=new XMLHttpRequest();
+        xhr.upload.addEventListener('progress',e=>{ if(e.lengthComputable) setP(10+Math.round(e.loaded/e.total*85)); });
+        xhr.addEventListener('load',()=>{ if(xhr.status===200||xhr.status===0){ setP(100); res(); }else{ rej(new Error(`HTTP ${xhr.status}`)); }});
+        xhr.addEventListener('error',()=>rej(new Error('Network error — ensure IDE is on http://')));
+        xhr.timeout=90000;
+        xhr.open('POST',`http://${ip}/update?token=${encodeURIComponent(token)}`);
+        xhr.send(fd);
+      });
+      slog('✅ OTA accepted by device!'); slog('🔄 Device rebooting...');
+    }
+    setStatus('Uploaded ✓'); log('🚀 OTA flash success','ok'); toast('🚀 OTA success!');
+    $('dev-status').className='dev-status online'; $('dev-status-label').textContent='Online';
+    $('main-status-dot').classList.add('online');
+    btn.textContent='✓ Done!';
+    setTimeout(()=>{ btn.disabled=false; btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></svg> Flash OTA'; },2500);
+  }catch(e){
+    slog('❌ '+e.message); log('❌ OTA failed: '+e.message,'err');
+    setStatus('Error','err'); toast('❌ '+e.message);
+    btn.disabled=false; btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></svg> Flash OTA';
+  }finally{ busy(false); }
+});
+
+// ═══════════════════════════════════════════
+//  TELEMETRY
+// ═══════════════════════════════════════════
+function startTelem(){
+  $('telem-panel').classList.add('show');
+  if(telemTimer) return;
+  const tick = async ()=>{
+    try{
+      const r=await fetch(`${cfgApi()}/iot/device/${encodeURIComponent(cfgDevice())}/telemetry`,{signal:AbortSignal.timeout(3000)});
+      const d=await r.json();
+      $('dev-status').className='dev-status online'; $('dev-status-label').textContent='Online';
+      $('tp-dev-status').className='dev-status online'; $('tp-dev-status').querySelector('span:last-child').textContent='Online';
+      $('main-status-dot').classList.add('online');
+      $('tp-raw').textContent=JSON.stringify(d,null,2);
+      const td=d.data||d;
+      const cards=[
+        {k:'temp',  label:'Temperature', unit:'°C',  cls:'c-green', icon:'🌡'},
+        {k:'hum',   label:'Humidity',    unit:'%',   cls:'c-blue',  icon:'💧'},
+        {k:'rssi',  label:'WiFi RSSI',   unit:' dBm',cls:'c-purple',icon:'📶'},
+        {k:'adc',   label:'ADC Value',   unit:'',    cls:'c-yellow',icon:'⚡'},
+        {k:'ADC34', label:'ADC34',       unit:'',    cls:'c-yellow',icon:'⚡'},
+      ];
+      const avail=cards.filter(c=>td[c.k]!==undefined);
+      if(avail.length){
+        $('tp-cards').innerHTML=avail.map(c=>{
+          const raw = Number(td[c.k]);
+          const value = Number.isFinite(raw) ? raw.toFixed(c.k==='rssi' ? 0 : 1) : '—';
+          return `
+          <div class="tcard ${c.cls}">
+            <div class="tc-label">${c.icon} ${c.label}</div>
+            <div class="tc-value">${value}<span class="tc-unit">${c.unit}</span></div>
+          </div>`;
+        }).join('');
+      } else {
+        $('tp-cards').innerHTML = '<div class="tcard"><div class="tc-label">No telemetry keys</div><div class="tc-value">—</div></div>';
+      }
+    }catch(_){
+      $('dev-status').className='dev-status offline'; $('dev-status-label').textContent='Offline';
+      $('tp-dev-status').className='dev-status offline'; $('tp-dev-status').querySelector('span:last-child').textContent='Offline';
+      $('main-status-dot').classList.remove('online');
+      $('tp-cards').innerHTML = '<div class="tcard"><div class="tc-label">Device status</div><div class="tc-value">Offline</div></div>';
+    }
+  };
+  tick();
+  telemTimer=setInterval(tick,1500);
+}
+
+function stopTelem(){
+  if(telemTimer){ clearInterval(telemTimer); telemTimer=null; }
+  $('telem-panel').classList.remove('show');
+}
+
+$('btn-telem').addEventListener('click',()=>{ $('telem-panel').classList.contains('show')?stopTelem():startTelem(); });
+$('tp-close').addEventListener('click', stopTelem);
+$('tp-stop').addEventListener('click', stopTelem);
+
+async function ledControl(state){
+  try{
+    const d = await apiFetchJSON(`${cfgApi()}/iot/device/${encodeURIComponent(cfgDevice())}/led`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({state})
+    }, 10000);
+    toast(state ? '💡 LED ON' : '🌙 LED OFF');
+    log((state ? '💡 LED ON' : '🌙 LED OFF') + (normText(d) ? ' — ' + normText(d) : ''), 'ok');
+  }catch(e){
+    log('❌ LED control failed: ' + e.message, 'err');
+    toast('❌ ' + e.message);
+  }
+}
+
+$('led-on-btn').addEventListener('click',()=>ledControl(1));
+$('led-off-btn').addEventListener('click',()=>ledControl(0));
+$('led-on-telem').addEventListener('click',()=>ledControl(1));
+$('led-off-telem').addEventListener('click',()=>ledControl(0));
+
+// ═══════════════════════════════════════════
+//  SERIAL MONITOR
+// ═══════════════════════════════════════════
+const smOutput  = $('sm-output');
+const smInput   = $('sm-input');
+const smDot     = $('sm-status');
+const smConnBtn = $('sm-connect');
+const smSendBtn = $('sm-send');
+
+function smAddLine(text, cls=''){
+  while(smOutput.children.length > SM_MAX_LINES) smOutput.removeChild(smOutput.firstChild);
+  const div=document.createElement('div');
+  div.className='sm-line'+(cls?' sm-'+cls:'');
+  const ts=document.createElement('span'); ts.className='sm-ts'; ts.style.display=smShowTs?'':'none'; ts.textContent=now();
+  const txt=document.createElement('span'); txt.className='sm-txt'; txt.textContent=text;
+  div.appendChild(ts); div.appendChild(txt);
+  smOutput.appendChild(div);
+  smLineCount++;
+  $('sm-stat-lines').textContent='Lines: '+smLineCount;
+  if(smAutoScroll) smOutput.scrollTop=smOutput.scrollHeight;
+}
+
+function smSetConnected(on){
+  smConnected=on;
+  smDot.className=on?'connected':'';
+  if(on){ smConnBtn.textContent='■ Disconnect'; smConnBtn.classList.add('dis'); smSendBtn.disabled=false; $('sm-stat-conn').textContent='Connected'; }
+  else  { smConnBtn.textContent='▶ Connect'; smConnBtn.classList.remove('dis'); smSendBtn.disabled=true;  $('sm-stat-conn').textContent='Disconnected'; $('sm-stat-port').textContent=''; }
+}
+
+function openSerialMonitor(){
+  $('serial-mon').classList.add('show');
+  if(smOutput.dataset.booted === '1') return;
+  smOutput.dataset.booted = '1';
+  smAddLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━','sys');
+  smAddLine('📟 Serial Monitor — ready','sys');
+  smAddLine('Select a port and click ▶ Connect','sys');
+  if('serial' in navigator){ smAddLine('✅ WebSerial available — select 🌐 WebSerial in port list','sys'); }
+  else { smAddLine('⚠️ WebSerial not supported in this browser (use Chrome/Edge)','sys'); }
+  smAddLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━','sys');
+}
+
+$('btn-sermon').addEventListener('click', openSerialMonitor);
+$('sm-close-btn').addEventListener('click', ()=>{ $('serial-mon').classList.remove('show'); smDisconnect(); });
+$('sm-clear-btn').addEventListener('click', ()=>{ smOutput.innerHTML=''; smLineCount=0; $('sm-stat-lines').textContent='Lines: 0'; });
+
+$('sm-autoscroll-btn').addEventListener('click', ()=>{
+  smAutoScroll=!smAutoScroll;
+  $('sm-autoscroll-btn').classList.toggle('active',smAutoScroll);
+});
+
+$('sm-ts-btn').addEventListener('click', ()=>{
+  smShowTs=!smShowTs;
+  $('sm-ts-btn').classList.toggle('active',smShowTs);
+  qsa('.sm-ts').forEach(el=>el.style.display=smShowTs?'':'none');
+});
+
+$('sm-scan-btn').addEventListener('click', async ()=>{
+  const sel=$('sm-port');
+  sel.innerHTML='<option value="">Scanning...</option>';
+  try{
+    const r=await fetch(`${LOCAL_AGENT}/serial/ports`);
+    const d=await r.json();
+    const ports=d.ports||[];
+    sel.innerHTML='<option value="">-- Select COM Port --</option><option value="webserial">🌐 WebSerial (Chrome/Edge)</option>';
+    ports.forEach(p=>{ const o=document.createElement('option'); o.value=p.port; o.textContent=`${p.port}${p.description?' — '+p.description:''}`; sel.appendChild(o); });
+    smAddLine(`Found ${ports.length} port(s)`,'sys');
+  }catch(e){ sel.innerHTML='<option value="">🌐 WebSerial (Chrome/Edge)</option>'; smAddLine('Local agent not running — WebSerial only','sys'); }
+});
+
+async function smDisconnect(){
+  const wasConnected = smConnected || !!smEventSource || !!smPort;
+  smUseBackend = false;
+  smBackendPort = '';
+  if(smEventSource){ smEventSource.close(); smEventSource=null; }
+  if(smReader){ try{ await smReader.cancel(); }catch(_){} smReader=null; }
+  if(smWriter){ try{ await smWriter.close(); }catch(_){} smWriter=null; }
+  if(smPort){ try{ await smPort.close(); }catch(_){} smPort=null; }
+  smSetConnected(false);
+  if(wasConnected) smAddLine('Disconnected','sys');
+}
+
+smConnBtn.addEventListener('click', async ()=>{
+  if(smConnected){ await smDisconnect(); return; }
+  const portVal=$('sm-port').value;
+  if(!portVal){ toast('⚠ Select a COM port first'); return; }
+  smDot.className='connecting'; smConnBtn.disabled=true;
+  smAddLine('Connecting...','sys');
+
+  try{
+    if(portVal==='webserial'){
+      if(!('serial' in navigator)) throw new Error('WebSerial not supported — use Chrome or Edge');
+      smPort=await navigator.serial.requestPort();
+      await smPort.open({ baudRate: parseInt($('sm-baud').value)||115200 });
+      smAddLine('WebSerial connected','sys');
+      $('sm-stat-port').textContent='WebSerial';
+      smSetConnected(true);
+
+      const decoder=new TextDecoderStream();
+      smPort.readable.pipeTo(decoder.writable);
+      smReader=decoder.readable.getReader();
+
+      const encoder=new TextEncoderStream();
+      encoder.readable.pipeTo(smPort.writable);
+      smWriter=encoder.writable.getWriter();
+
+      let buf='';
+      const readLoop=async()=>{
+        try{
+          while(true){
+            const {value,done}=await smReader.read();
+            if(done) break;
+            if(value){
+              smRxBytes+=value.length;
+              $('sm-stat-rx').textContent='RX: '+smRxBytes+' B';
+              buf+=value;
+              const nl=buf.lastIndexOf('\n');
+              if(nl>=0){
+                buf.substring(0,nl).split('\n').forEach(line=>{
+                  if(line.trim()) smAddLine(line.replace(/\r/g,''));
+                });
+                buf=buf.substring(nl+1);
+              }
+            }
+          }
+        }catch(_){}
+        await smDisconnect();
+      };
+      readLoop();
+    }else{
+      // Local agent SSE
+      smUseBackend=true; smBackendPort=portVal;
+      const baud=parseInt($('sm-baud').value)||115200;
+      const r=await fetch(`${LOCAL_AGENT}/serial/monitor_start`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:portVal,baud})});
+      const d=await r.json().catch(()=>({}));
+      if(!d.ok) throw new Error(d.error||'Could not start monitor');
+      smEventSource=new EventSource(`${LOCAL_AGENT}/serial/monitor_stream?port=${encodeURIComponent(portVal)}`);
+      smEventSource.onmessage=e=>{
+        smRxBytes+=e.data.length; $('sm-stat-rx').textContent='RX: '+smRxBytes+' B';
+        smAddLine(e.data);
+      };
+      smEventSource.onerror=()=>{ smAddLine('Stream error','err'); smDisconnect(); };
+      smAddLine('Local agent connected to '+portVal,'sys');
+      $('sm-stat-port').textContent=portVal;
+      smSetConnected(true);
+    }
+  }catch(e){ smAddLine('❌ '+e.message,'err'); smDot.className=''; }
+  finally{ smConnBtn.disabled=false; }
+});
+
+smSendBtn.addEventListener('click',()=>smSend());
+smInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); smSend(); } });
+
+async function smSend(){
+  const txt=smInput.value;
+  if(!txt||!smConnected) return;
+  const le=$('sm-line-end').value||'\n';
+  try{
+    if(smWriter){ await smWriter.write(txt+le); }
+    else if(smUseBackend){
+      await fetch(`${LOCAL_AGENT}/serial/monitor_send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:smBackendPort,data:txt+le})});
+    }
+    smAddLine('> '+txt,'in');
+  }catch(e){ smAddLine('Send error: '+e.message,'err'); }
+  smInput.value='';
+}
+
+$('sm-baud').addEventListener('change',async ()=>{
+  if(!smConnected) return;
+  await smDisconnect();
+  smAddLine('Baud changed to '+$('sm-baud').value+' — reconnect','sys');
+});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+syncApiFromInput(false);
+
+if($('cfg-api')){
+  const savedApi = localStorage.getItem('fw_api');
+  if(savedApi){ API=savedApi; $('cfg-api').value=API; }
+  $('cfg-api').addEventListener('input',()=>{ syncApiFromInput(true); toast('✅ API: '+API, 1200); });
+}
+
+// Init board state
+onBoardChange();
+
+// Load initial firmware template
+editor.value = buildOtaFirmware();
+savedCode = editor.value;
+syncEditor();
+$('dirty-badge').style.display='none';
+$('err-badge').textContent='0';
+
+// Init logs
+log('⚡ STEMbotix Firmware Studio ready','ok');
+log('→ Board: '+cfgBoardName()+' | Select board & libraries in sidebar','dim');
+log('→ Ctrl+S to save  ·  Ctrl+Enter to generate firmware  ·  Tab for 2-space indent','dim');
+log('→ Click ⚙️ Generate OTA Firmware after configuring sidebar settings','dim');
+
+editor.focus();
+</script>
+</body>
+</html>

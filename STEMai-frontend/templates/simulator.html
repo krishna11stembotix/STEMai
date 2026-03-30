@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEMbotix — Virtual Circuit Lab</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="%23FF6B35"/>
+      <stop offset="100%" stop-color="%232E3B6D"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(%23g)"/>
+  <path d="M20 24h24a8 8 0 0 1 8 8v8a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8v-8a8 8 0 0 1 8-8z" fill="white"/>
+  <circle cx="26" cy="36" r="3.2" fill="%232E3B6D"/>
+  <circle cx="38" cy="36" r="3.2" fill="%232E3B6D"/>
+  <rect x="24" y="43" width="16" height="3.5" rx="1.75" fill="%23FF6B35"/>
+  <rect x="30" y="16" width="4" height="10" rx="2" fill="white"/>
+</svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   STEMBOTIX VIRTUAL CIRCUIT LAB — COMPLETE STYLES
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --org:#ff7a00;--org2:#ff9d3d;--org-glow:rgba(255,122,0,0.35);
+  --bg:#13151e;--bg2:#181b26;--bg3:#1e2130;--bg4:#242840;
+  --card:#252935;--card2:#2c3040;--hover:#333850;
+  --bdr:#353a50;--bdr2:#454c68;
+  --txt:#e8ecf8;--txt2:#9aa0bc;--txt3:#5c6380;
+  --grn:#2ecc71;--red:#e74c3c;--blu:#3b9eff;--yel:#f0c040;
+  --grn-d:rgba(46,204,113,0.15);--red-d:rgba(231,76,60,0.15);--blu-d:rgba(59,158,255,0.15);
+  --fmain:'Nunito',sans-serif;--fmono:'JetBrains Mono',monospace;--fhead:'Rajdhani',sans-serif;
+  --tb:54px;--bb:34px;--lw:210px;--rw:280px;
+  --bb-cream:#e6e8d4;--bb-border:#b8baA0;--bb-dark:#d0d2be;
+  --rail-red:#cc2222;--rail-blu:#1155bb;
+}
+
+html,body{height:100%;overflow:hidden;font-family:var(--fmain);background:var(--bg);color:var(--txt);font-size:13px;user-select:none}
+
+/* ─── SCROLLBARS ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+
+/* ─── TOOLBAR ─── */
+#toolbar{
+  height:var(--tb);background:linear-gradient(to bottom,#1c1f2e,var(--bg2));
+  border-bottom:1px solid var(--bdr);display:flex;align-items:center;
+  padding:0 14px;gap:6px;position:relative;z-index:200;
+  box-shadow:0 2px 20px rgba(0,0,0,.5)
+}
+.tb-logo{display:flex;align-items:center;gap:10px;padding-right:14px;margin-right:6px;border-right:1px solid var(--bdr)}
+.tb-logo-icon{
+  width:34px;height:34px;background:linear-gradient(135deg,#ff6600,#ff9900);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:0 0 14px var(--org-glow);flex-shrink:0
+}
+.tb-logo-text{line-height:1.15}
+.tb-logo-name{font-family:var(--fhead);font-size:19px;font-weight:700;letter-spacing:.5px}
+.tb-logo-name span{color:var(--org)}
+.tb-logo-sub{font-size:9px;color:var(--txt3);letter-spacing:2.5px;text-transform:uppercase;font-family:var(--fmono)}
+.tb-sep{width:1px;height:26px;background:var(--bdr);margin:0 4px;flex-shrink:0}
+.tb-btn{
+  display:flex;align-items:center;gap:5px;padding:6px 11px;border:1px solid var(--bdr);
+  background:var(--card);color:var(--txt2);border-radius:7px;cursor:pointer;
+  font-family:var(--fmain);font-size:12px;font-weight:700;transition:all .15s;white-space:nowrap;
+  line-height:1
+}
+.tb-btn:hover{background:var(--hover);color:var(--txt);border-color:var(--bdr2);transform:translateY(-1px)}
+.tb-btn.active{background:rgba(255,122,0,.18);color:var(--org);border-color:var(--org);box-shadow:0 0 10px var(--org-glow)}
+.tb-btn.sim{background:linear-gradient(135deg,#1a6e30,#22913e);color:#fff;border-color:var(--grn);box-shadow:0 0 14px rgba(46,204,113,.3)}
+.tb-btn.sim:hover{background:linear-gradient(135deg,#1e8037,#28b04a);box-shadow:0 0 20px rgba(46,204,113,.5)}
+.tb-btn.stop-btn{background:linear-gradient(135deg,#7a1515,#b02020);color:#fff;border-color:var(--red)}
+.tb-btn svg{flex-shrink:0}
+
+/* ─── MAIN LAYOUT ─── */
+#main{display:flex;height:calc(100vh - var(--tb) - var(--bb));overflow:hidden}
+
+/* ─── LEFT SIDEBAR ─── */
+#lsb{
+  width:var(--lw);background:var(--bg2);border-right:1px solid var(--bdr);
+  overflow-y:auto;overflow-x:hidden;flex-shrink:0;display:flex;flex-direction:column
+}
+.sb-head{
+  padding:10px 12px 6px;font-family:var(--fhead);font-size:12px;font-weight:700;
+  color:var(--txt3);text-transform:uppercase;letter-spacing:2.5px;border-bottom:1px solid var(--bdr)
+}
+.sb-search{padding:8px 10px}
+.sb-search input{
+  width:100%;background:var(--card);border:1px solid var(--bdr);color:var(--txt);
+  border-radius:7px;padding:6px 10px;font-family:var(--fmain);font-size:12px;outline:none;transition:border .15s
+}
+.sb-search input:focus{border-color:var(--org)}
+.sb-search input::placeholder{color:var(--txt3)}
+
+.cg-hdr{
+  display:flex;justify-content:space-between;align-items:center;padding:7px 12px;
+  cursor:pointer;font-weight:700;font-size:11px;color:var(--txt2);
+  background:rgba(0,0,0,.2);border-bottom:1px solid var(--bdr);transition:background .1s;
+  text-transform:uppercase;letter-spacing:1px
+}
+.cg-hdr:hover{background:var(--hover);color:var(--txt)}
+.cg-arr{font-size:9px;transition:transform .2s;color:var(--txt3)}
+.cg-body{padding:5px 6px}
+
+.ci{
+  display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;
+  cursor:grab;transition:all .13s;border:1px solid transparent;font-size:12px;font-weight:600;color:var(--txt2)
+}
+.ci:hover{background:var(--hover);border-color:var(--bdr);color:var(--txt);transform:translateX(2px)}
+.ci:active{cursor:grabbing}
+.ci.sel-pal{background:rgba(255,122,0,.12);border-color:var(--org);color:var(--org)}
+.ci-ico{width:50px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.sb-hint{padding:9px 12px;font-size:10px;color:var(--txt3);font-style:italic;border-top:1px solid var(--bdr);margin-top:auto}
+
+/* ─── CANVAS AREA ─── */
+#canvas-area{
+  flex:1;overflow:hidden;position:relative;
+  background:var(--bg) radial-gradient(circle,rgba(42,48,70,.7) 1px,transparent 1px) center/22px 22px
+}
+#cvp{width:100%;height:100%;overflow:hidden;position:relative;cursor:default}
+#cvi{
+  position:absolute;transform-origin:0 0;
+  width:1600px;height:1000px
+}
+#wire-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible}
+#bb-wrap{position:absolute;top:90px;left:80px;z-index:2}
+#comp-layer{position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none}
+
+/* ─── BREADBOARD ─── */
+#breadboard{
+  position:relative;
+  background:linear-gradient(180deg,#eceed8 0%,#e4e6ce 40%,#dfe1cb 60%,#e4e6ce 100%);
+  border:2px solid #a8aa90;border-radius:10px;
+  box-shadow:0 10px 40px rgba(0,0,0,.6),inset 0 1px 3px rgba(255,255,255,.5),inset 0 -2px 5px rgba(0,0,0,.25);
+  padding:10px 12px;display:flex;flex-direction:column;gap:0
+}
+.bb-rail{
+  position:relative;display:flex;align-items:center;height:28px;
+  background:linear-gradient(180deg,#f4f4e4 0%,#eaead8 100%);border-radius:5px;margin:2px 0;
+  overflow:hidden
+}
+.bb-rail.rt{border-bottom:1px solid #c0c0a0;box-shadow:inset 0 2px 4px rgba(0,0,0,.1)}
+.bb-rail.rb{border-top:1px solid #c0c0a0;box-shadow:inset 0 -2px 4px rgba(0,0,0,.1)}
+.rail-line{position:absolute;height:2px;border-radius:1px;pointer-events:none;top:35%;z-index:0}
+.rail-line.rp{background:linear-gradient(90deg,var(--rail-red),#ee3333);left:26px;right:4px}
+.rail-line.rn{background:linear-gradient(90deg,var(--rail-blu),#2266cc);left:26px;right:4px;top:65%}
+.rail-pm,.rail-nm{font-size:10px;font-weight:700;font-family:var(--fmono);z-index:1;flex-shrink:0;width:12px;text-align:center}
+.rail-pm{color:#cc1111;margin-left:2px}
+.rail-nm{color:#1144bb;margin-left:4px}
+.bb-main{display:flex;flex-direction:column;padding:4px 0}
+.bb-col-lbl-row{display:flex;align-items:center;height:14px;margin-left:18px}
+.bb-cl{font-family:var(--fmono);font-size:7.5px;color:#7a7a60;text-align:center;font-weight:700}
+.bb-half{display:flex;flex-direction:column}
+.bb-row{display:flex;align-items:center;height:20px}
+.bb-rl{width:18px;text-align:right;padding-right:3px;font-family:var(--fmono);font-size:9px;font-weight:700;color:#5a5a44;flex-shrink:0}
+.bb-gap{
+  height:16px;
+  background:linear-gradient(180deg,#a8aa90 0%,#b8baA0 30%,#b8baA0 70%,#a8aa90 100%);
+  border-top:2px solid #989a80;border-bottom:2px solid #989a80;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-size:7px;color:#888870;letter-spacing:1.5px
+}
+/* ─── HOLES ─── */
+.bh{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  cursor:crosshair;z-index:3;transition:transform .1s
+}
+.bh-o{
+  width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#888878,#444434);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.7),inset 0 -0.5px 1px rgba(255,255,255,.12),0 1px 2px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;transition:all .1s
+}
+.bh-i{width:5.5px;height:5.5px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#1a1a14,#0a0a08);box-shadow:inset 0 1px 2px rgba(0,0,0,.9)}
+.bh:hover .bh-o{background:radial-gradient(circle at 35% 35%,#bbb890,#888860);box-shadow:inset 0 1px 2px rgba(0,0,0,.6),0 0 8px rgba(255,180,60,.6);transform:scale(1.35)}
+.bh.occ .bh-o{background:radial-gradient(circle at 35% 35%,#aa9060,#776644)}
+.bh.occ .bh-i{background:radial-gradient(circle at 38% 38%,#442211,#221100)}
+.bh.snap .bh-o{background:radial-gradient(circle at 35% 35%,#aadd50,#88bb30);box-shadow:0 0 12px rgba(130,220,40,.8);transform:scale(1.5)}
+.bh.ws .bh-o{background:radial-gradient(circle at 35% 35%,#60cc60,#30aa30);box-shadow:0 0 10px rgba(60,200,60,.7)}
+.bh.we .bh-o{background:radial-gradient(circle at 35% 35%,#ffaa30,#cc7700);box-shadow:0 0 10px rgba(255,170,40,.7)}
+
+/* ─── WIRES ─── */
+.wire-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;cursor:pointer;pointer-events:stroke;transition:stroke-width .12s}
+.wire-path:hover{stroke-width:5}
+.wire-path.wsel{stroke-width:5;filter:drop-shadow(0 0 5px currentColor)}
+.wire-prev{fill:none;stroke:#88ff88;stroke-width:2;stroke-dasharray:7 4;stroke-linecap:round;pointer-events:none;opacity:.75}
+.wire-dot{transition:r .1s}
+
+/* ─── COMPONENTS ─── */
+.bc{
+  position:absolute;pointer-events:all;cursor:pointer;z-index:20;transform-origin:center center
+}
+.bc:hover svg{filter:brightness(1.1)}
+.bc.sel-c{filter:drop-shadow(0 0 8px #ffaa00) drop-shadow(0 0 16px rgba(255,160,0,.4))}
+
+/* ─── COMPONENT ANIMATIONS ─── */
+@keyframes led-glow{0%,100%{opacity:1}50%{opacity:.75}}
+@keyframes motor-turn{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes buzz-wave{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.06)}}
+@keyframes lamp-flick{0%,100%{opacity:1}45%{opacity:.85}50%{opacity:.95}}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+
+.led-active .led-dome{animation:led-glow 1.1s ease-in-out infinite}
+.motor-active .motor-rotor{animation:motor-turn .25s linear infinite;transform-origin:50% 50%}
+.buzzer-active .buz-ring{animation:buzz-wave .18s ease-in-out infinite}
+.lamp-active .lamp-glass{animation:lamp-flick 2s ease-in-out infinite}
+
+/* ─── RIGHT SIDEBAR ─── */
+#rsb{
+  width:var(--rw);background:var(--bg2);border-left:1px solid var(--bdr);
+  overflow-y:auto;overflow-x:hidden;flex-shrink:0;display:flex;flex-direction:column
+}
+.panel{border-bottom:1px solid var(--bdr)}
+.panel-hdr{
+  display:flex;align-items:center;gap:7px;padding:9px 12px;
+  background:rgba(0,0,0,.2);font-family:var(--fhead);font-size:13px;font-weight:600;
+  color:var(--txt);letter-spacing:.5px;text-transform:uppercase
+}
+.panel-hdr.col{cursor:pointer;justify-content:space-between}
+.panel-hdr.col:hover{background:var(--hover)}
+.panel-tog{transition:transform .2s;color:var(--txt3);font-size:9px}
+.panel-hdr.collapsed .panel-tog{transform:rotate(-90deg)}
+.panel-body{padding:10px 12px;background:var(--card)}
+.panel-body.hidden{display:none}
+
+.no-sel{text-align:center;color:var(--txt3);padding:18px 8px;font-size:12px;line-height:2}
+.no-sel-ico{font-size:28px;display:block;margin-bottom:6px}
+
+.pr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pl{font-size:10px;color:var(--txt2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;min-width:68px;flex-shrink:0}
+.pv{
+  font-family:var(--fmono);font-size:12px;color:var(--txt);background:var(--card2);
+  border:1px solid var(--bdr);border-radius:5px;padding:4px 8px;flex:1;outline:none;width:0;transition:border .15s
+}
+.pv:focus{border-color:var(--org)}
+.pv.ro{background:var(--bg3);color:var(--txt2);cursor:default}
+.pv select,.pv-sel{
+  width:100%;background:var(--card2);border:1px solid var(--bdr);color:var(--txt);
+  border-radius:5px;padding:4px 8px;font-family:var(--fmono);font-size:12px;outline:none;cursor:pointer
+}
+.pa{display:flex;gap:6px;margin-top:10px}
+.pb{
+  flex:1;padding:6px 8px;border:1px solid var(--bdr);background:var(--card2);
+  color:var(--txt2);border-radius:6px;cursor:pointer;font-family:var(--fmain);
+  font-size:11px;font-weight:700;transition:all .12s;text-align:center
+}
+.pb:hover{background:var(--hover);color:var(--txt)}
+.pb.danger:hover{background:var(--red-d);color:var(--red);border-color:var(--red)}
+.pb.primary{background:rgba(255,122,0,.15);color:var(--org);border-color:var(--org)}
+
+.pin-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.pin-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.pin-lbl{font-family:var(--fmono);font-size:11px;color:var(--txt2)}
+
+.ohm-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.of label{display:block;font-size:10px;color:var(--txt2);margin-bottom:3px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.of input{
+  width:100%;background:var(--card2);border:1px solid var(--bdr);color:var(--txt);
+  border-radius:5px;padding:5px 8px;font-family:var(--fmono);font-size:12px;outline:none;transition:border .15s
+}
+.of input:focus{border-color:var(--org)}
+.or{
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:5px;
+  padding:5px 8px;font-family:var(--fmono);font-size:13px;font-weight:600;
+  color:var(--org);min-height:30px;display:flex;align-items:center
+}
+.ohm-fml{font-family:var(--fmono);font-size:10px;color:var(--txt3);text-align:center;border-top:1px solid var(--bdr);padding-top:7px;margin-top:2px}
+
+.bb-btn{
+  display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;margin-bottom:5px;
+  background:var(--card2);border:1px solid var(--bdr);border-radius:7px;
+  color:var(--txt2);cursor:pointer;font-family:var(--fmain);font-size:12px;font-weight:700;
+  text-align:left;transition:all .13s
+}
+.bb-btn:hover{background:rgba(255,122,0,.12);border-color:var(--org);color:var(--org);transform:translateX(2px)}
+.bb-btn-ico{font-size:16px}
+
+.fi{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border-radius:7px;margin-bottom:5px;font-size:12px;line-height:1.45}
+.fi.ok{background:var(--grn-d);color:var(--grn);border:1px solid rgba(46,204,113,.3)}
+.fi.warn{background:rgba(240,192,64,.12);color:var(--yel);border:1px solid rgba(240,192,64,.3)}
+.fi.err{background:var(--red-d);color:var(--red);border:1px solid rgba(231,76,60,.3)}
+.fi.info{background:var(--blu-d);color:var(--blu);border:1px solid rgba(59,158,255,.3)}
+.fi-ico{font-size:15px;flex-shrink:0;line-height:1}
+.fi-idle{color:var(--txt3);font-size:12px;text-align:center;padding:12px 0;font-style:italic}
+
+/* ─── BOTTOM BAR ─── */
+#bbar{
+  height:var(--bb);background:var(--bg3);border-top:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font-size:11px;color:var(--txt2);font-family:var(--fmono)
+}
+.status-l{display:flex;align-items:center;gap:12px}
+.mode-badge{
+  padding:2px 8px;border-radius:4px;font-weight:600;font-size:10px;
+  background:rgba(255,122,0,.15);color:var(--org);border:1px solid rgba(255,122,0,.4)
+}
+.mode-badge.wire{background:rgba(59,158,255,.15);color:var(--blu);border-color:rgba(59,158,255,.4)}
+.status-r{display:flex;gap:18px;color:var(--txt3)}
+
+/* ─── DRAG GHOST ─── */
+#dg{position:fixed;pointer-events:none;z-index:9999;display:none;opacity:.85;transform:translate(-50%,-60%)}
+
+/* ─── TOOLTIP ─── */
+#tip{
+  position:fixed;background:rgba(20,22,34,.96);color:var(--txt);
+  border:1px solid var(--bdr2);padding:4px 9px;border-radius:6px;
+  font-family:var(--fmono);font-size:10px;pointer-events:none;z-index:9998;display:none;
+  white-space:nowrap
+}
+
+/* ─── WIRE COLOR PALETTE ─── */
+#wire-color-picker{
+  display:flex;gap:4px;align-items:center;padding:6px 0 2px;flex-wrap:wrap
+}
+.wcp{
+  width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+  transition:transform .12s,border-color .12s;flex-shrink:0
+}
+.wcp:hover{transform:scale(1.25)}
+.wcp.active-wc{border-color:#fff;transform:scale(1.2)}
+
+/* ─── MODAL ─── */
+#modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;
+  align-items:center;justify-content:center;backdrop-filter:blur(3px)
+}
+#modal-overlay.show{display:flex}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--bdr2);border-radius:12px;
+  padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.8)
+}
+.modal-title{font-family:var(--fhead);font-size:18px;font-weight:700;color:var(--txt);margin-bottom:12px}
+.modal-body{color:var(--txt2);font-size:13px;line-height:1.6;margin-bottom:18px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.mbtn{
+  padding:8px 18px;border-radius:7px;cursor:pointer;font-family:var(--fmain);
+  font-size:13px;font-weight:700;border:1px solid var(--bdr);background:var(--card);color:var(--txt2);transition:all .13s
+}
+.mbtn:hover{background:var(--hover);color:var(--txt)}
+.mbtn.primary{background:rgba(255,122,0,.2);color:var(--org);border-color:var(--org)}
+.mbtn.primary:hover{background:rgba(255,122,0,.35)}
+
+/* ─── CONTEXT MENU ─── */
+#ctx{
+  position:fixed;background:var(--bg2);border:1px solid var(--bdr2);
+  border-radius:8px;padding:5px;z-index:300;display:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:160px
+}
+.ctx-item{
+  padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;
+  color:var(--txt2);transition:all .1s;display:flex;align-items:center;gap:8px
+}
+.ctx-item:hover{background:var(--hover);color:var(--txt)}
+.ctx-item.danger{color:var(--red)}
+.ctx-item.danger:hover{background:var(--red-d)}
+.ctx-sep{height:1px;background:var(--bdr);margin:4px 0}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.panel-body{animation:fadeIn .15s ease}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sim-running #btn-sim-dot{animation:blink .8s ease infinite}
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <div class="tb-logo">
+    <div class="tb-logo-icon">⚡</div>
+    <div class="tb-logo-text">
+      <div class="tb-logo-name"><span>STEM</span>botix</div>
+      <div class="tb-logo-sub">Circuit Lab</div>
+    </div>
+  </div>
+
+  <button class="tb-btn active" id="btn-select" onclick="setTool('select')" title="Select [V]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3l14 9-7 2-2 7z"/></svg> Select
+  </button>
+  <button class="tb-btn" id="btn-wire" onclick="setTool('wire')" title="Wire [W]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12h4M18 12h4M10 6l4 6-4 6"/></svg> Wire
+  </button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="rotateSelected()" title="Rotate [R]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 1 0 .5-4.3"/></svg> Rotate
+  </button>
+  <button class="tb-btn" onclick="deleteSelected()" title="Delete [Del]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Delete
+  </button>
+  <button class="tb-btn" onclick="confirmClear()" title="Clear All">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clear
+  </button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="undoAction()" title="Undo [Ctrl+Z]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 1 0 .5-4.3"/></svg> Undo
+  </button>
+  <button class="tb-btn" onclick="redoAction()" title="Redo [Ctrl+Y]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-.5-4.3"/></svg> Redo
+  </button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="zoomIn()" title="Zoom In [+]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg> +
+  </button>
+  <button class="tb-btn" onclick="zoomOut()" title="Zoom Out [-]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg> −
+  </button>
+  <button class="tb-btn" onclick="resetView()" title="Reset View [0]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg> Fit
+  </button>
+  <div class="tb-sep" style="margin-left:auto"></div>
+  <button class="tb-btn sim" id="btn-simulate" onclick="runSimulation()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+    <span id="btn-sim-dot">▶</span> Simulate
+  </button>
+  <button class="tb-btn stop-btn" id="btn-stop" onclick="stopSimulation()" style="display:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Stop
+  </button>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div id="main">
+  <!-- LEFT SIDEBAR -->
+  <div id="lsb">
+    <div class="sb-head">🔌 Components</div>
+    <div class="sb-search">
+      <input type="text" id="comp-search" placeholder="🔍 Search components…" oninput="filterComps(this.value)">
+    </div>
+
+    <!-- SOURCES -->
+    <div id="cg-sources">
+      <div class="cg-hdr" onclick="toggleCG('sources')">
+        <span>⚡ SOURCES</span><span class="cg-arr" id="arr-sources">▾</span>
+      </div>
+      <div class="cg-body" id="cgb-sources">
+        <div class="ci" draggable="true" data-type="battery" ondragstart="palDragStart(event,'battery')" onclick="palClick('battery')">
+          <div class="ci-ico"><svg viewBox="0 0 50 22" width="48" height="20"><rect x="1" y="4" width="38" height="14" rx="3" fill="#2d3e2d" stroke="#3a5a3a" stroke-width="1.2"/><rect x="39" y="7" width="5" height="8" rx="2" fill="#444"/><line x1="7" y1="11" x2="12" y2="11" stroke="#ff7700" stroke-width="2"/><line x1="9.5" y1="8.5" x2="9.5" y2="13.5" stroke="#ff7700" stroke-width="2"/><line x1="20" y1="11" x2="25" y2="11" stroke="#ff7700" stroke-width="1.5"/><line x1="33" y1="9" x2="36" y2="9" stroke="#3366ff" stroke-width="2"/><line x1="33" y1="13" x2="36" y2="13" stroke="#3366ff" stroke-width="2"/></svg></div>
+          <span>Battery 9V</span>
+        </div>
+        <div class="ci" draggable="true" data-type="dcsource" ondragstart="palDragStart(event,'dcsource')" onclick="palClick('dcsource')">
+          <div class="ci-ico"><svg viewBox="0 0 50 24" width="48" height="22"><circle cx="25" cy="12" r="10" fill="#182040" stroke="#3366cc" stroke-width="1.5"/><text x="25" y="10" text-anchor="middle" fill="#4488ff" font-size="6.5" font-weight="bold" font-family="monospace">DC</text><line x1="2" y1="12" x2="15" y2="12" stroke="#ff4444" stroke-width="1.8"/><line x1="35" y1="12" x2="48" y2="12" stroke="#4444ff" stroke-width="1.8"/><text x="23" y="17" fill="#66aaff" font-size="7" font-family="monospace">5V</text></svg></div>
+          <span>DC Source</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSIVE -->
+    <div id="cg-passive">
+      <div class="cg-hdr" onclick="toggleCG('passive')">
+        <span>〰 PASSIVE</span><span class="cg-arr" id="arr-passive">▾</span>
+      </div>
+      <div class="cg-body" id="cgb-passive">
+        <div class="ci" draggable="true" data-type="resistor" ondragstart="palDragStart(event,'resistor')" onclick="palClick('resistor')">
+          <div class="ci-ico"><svg viewBox="0 0 60 18" width="56" height="16"><line x1="0" y1="9" x2="10" y2="9" stroke="#999" stroke-width="1.5"/><rect x="10" y="4" width="40" height="10" rx="4.5" fill="#dbb890" stroke="#c8a070" stroke-width="1"/><rect x="10" y="4" width="5" height="10" rx="4" fill="rgba(0,0,0,.1)"/><rect x="45" y="4" width="5" height="10" rx="4" fill="rgba(0,0,0,.1)"/><rect x="18" y="4" width="4" height="10" fill="#f4a030" opacity=".9"/><rect x="25" y="4" width="4" height="10" fill="#704030" opacity=".9"/><rect x="32" y="4" width="4" height="10" fill="#f04040" opacity=".9"/><rect x="42" y="4" width="3" height="10" fill="#c8a000" opacity=".9"/><rect x="11" y="5" width="38" height="3.5" rx="3" fill="rgba(255,255,255,.18)"/><line x1="50" y1="9" x2="60" y2="9" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Resistor</span>
+        </div>
+        <div class="ci" draggable="true" data-type="capacitor" ondragstart="palDragStart(event,'capacitor')" onclick="palClick('capacitor')">
+          <div class="ci-ico"><svg viewBox="0 0 42 22" width="40" height="20"><line x1="0" y1="11" x2="16" y2="11" stroke="#999" stroke-width="1.5"/><line x1="16" y1="3" x2="16" y2="19" stroke="#4477cc" stroke-width="3"/><line x1="21" y1="3" x2="21" y2="19" stroke="#4477cc" stroke-width="3"/><line x1="21" y1="11" x2="42" y2="11" stroke="#999" stroke-width="1.5"/><text x="22" y="10" fill="#66aaff" font-size="7" font-family="monospace">+</text></svg></div>
+          <span>Capacitor</span>
+        </div>
+        <div class="ci" draggable="true" data-type="inductor" ondragstart="palDragStart(event,'inductor')" onclick="palClick('inductor')">
+          <div class="ci-ico"><svg viewBox="0 0 60 18" width="56" height="16"><line x1="0" y1="12" x2="10" y2="12" stroke="#999" stroke-width="1.5"/><path d="M10,12 Q14,3 18,12 Q22,3 26,12 Q30,3 34,12 Q38,3 42,12 Q46,3 50,12" fill="none" stroke="#c09030" stroke-width="2.5"/><line x1="50" y1="12" x2="60" y2="12" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Inductor</span>
+        </div>
+        <div class="ci" draggable="true" data-type="potentiometer" ondragstart="palDragStart(event,'potentiometer')" onclick="palClick('potentiometer')">
+          <div class="ci-ico"><svg viewBox="0 0 56 22" width="52" height="20"><line x1="0" y1="13" x2="10" y2="13" stroke="#999" stroke-width="1.5"/><rect x="10" y="7" width="36" height="12" rx="5" fill="#dbb890" stroke="#c8a070" stroke-width="1"/><rect x="18" y="7" width="4" height="12" fill="#f4a030" opacity=".8"/><rect x="25" y="7" width="4" height="12" fill="#704030" opacity=".8"/><rect x="32" y="7" width="4" height="12" fill="#f04040" opacity=".8"/><line x1="28" y1="7" x2="28" y2="2" stroke="#777" stroke-width="1.5"/><polygon points="28,0 25.5,4 30.5,4" fill="#888"/><line x1="46" y1="13" x2="56" y2="13" stroke="#999" stroke-width="1.5"/><rect x="11" y="8" width="34" height="4" rx="3" fill="rgba(255,255,255,.18)"/></svg></div>
+          <span>Potentiometer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEMICONDUCTORS -->
+    <div id="cg-semi">
+      <div class="cg-hdr" onclick="toggleCG('semi')">
+        <span>💡 SEMICONDUCTORS</span><span class="cg-arr" id="arr-semi">▾</span>
+      </div>
+      <div class="cg-body" id="cgb-semi">
+        <div class="ci" draggable="true" data-type="led" ondragstart="palDragStart(event,'led')" onclick="palClick('led')">
+          <div class="ci-ico"><svg viewBox="0 0 44 26" width="42" height="24"><line x1="0" y1="13" x2="11" y2="13" stroke="#999" stroke-width="1.5"/><circle cx="22" cy="13" r="10" fill="rgba(255,60,60,.2)" stroke="#ff3333" stroke-width="1.5"/><polygon points="16,9 16,17 25,13" fill="#ff3333"/><line x1="25" y1="9" x2="25" y2="17" stroke="#ff3333" stroke-width="2"/><line x1="28" y1="7" x2="32" y2="4" stroke="#ffbb00" stroke-width="1.2" stroke-linecap="round"/><line x1="29" y1="11" x2="33" y2="9" stroke="#ffbb00" stroke-width="1.2" stroke-linecap="round"/><line x1="33" y1="13" x2="44" y2="13" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>LED</span>
+        </div>
+        <div class="ci" draggable="true" data-type="diode" ondragstart="palDragStart(event,'diode')" onclick="palClick('diode')">
+          <div class="ci-ico"><svg viewBox="0 0 52 18" width="50" height="16"><line x1="0" y1="9" x2="14" y2="9" stroke="#999" stroke-width="1.5"/><rect x="14" y="4" width="22" height="10" rx="4" fill="#585858" stroke="#777" stroke-width="1"/><rect x="31" y="4" width="4" height="10" rx="2" fill="#ddd"/><rect x="15" y="5" width="20" height="3.5" rx="2" fill="rgba(255,255,255,.15)"/><line x1="36" y1="9" x2="52" y2="9" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Diode</span>
+        </div>
+        <div class="ci" draggable="true" data-type="zener" ondragstart="palDragStart(event,'zener')" onclick="palClick('zener')">
+          <div class="ci-ico"><svg viewBox="0 0 52 18" width="50" height="16"><line x1="0" y1="9" x2="14" y2="9" stroke="#999" stroke-width="1.5"/><rect x="14" y="4" width="22" height="10" rx="4" fill="#223388" stroke="#4466ff" stroke-width="1"/><path d="M31,4 L34,4 L31,14 L34,14" fill="none" stroke="#ccccee" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="5" width="20" height="3.5" rx="2" fill="rgba(255,255,255,.12)"/><line x1="36" y1="9" x2="52" y2="9" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Zener Diode</span>
+        </div>
+        <div class="ci" draggable="true" data-type="transistor" ondragstart="palDragStart(event,'transistor')" onclick="palClick('transistor')">
+          <div class="ci-ico"><svg viewBox="0 0 44 30" width="42" height="28"><path d="M6,8 L6,24 Q16,28 28,24 Q32,20 32,15 Q32,10 28,8 Q16,4 6,8 Z" fill="#242424" stroke="#4a4a4a" stroke-width="1.2"/><line x1="6" y1="8" x2="6" y2="24" stroke="#555" stroke-width="1.5"/><line x1="0" y1="16" x2="10" y2="16" stroke="#aaa" stroke-width="1.8"/><line x1="15" y1="11" x2="19" y2="4" stroke="#aaa" stroke-width="1.8"/><line x1="15" y1="21" x2="19" y2="28" stroke="#aaa" stroke-width="1.8"/><line x1="14" y1="10" x2="14" y2="22" stroke="#5a9a5a" stroke-width="2"/><line x1="10" y1="16" x2="14" y2="16" stroke="#5a9a5a" stroke-width="2"/><line x1="14" y1="20" x2="19" y2="24" stroke="#5a9a5a" stroke-width="1.8"/><polygon points="17,22 14,21 16,25" fill="#5a9a5a"/></svg></div>
+          <span>NPN Transistor</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUTS -->
+    <div id="cg-outputs">
+      <div class="cg-hdr" onclick="toggleCG('outputs')">
+        <span>🔊 OUTPUTS</span><span class="cg-arr" id="arr-outputs">▾</span>
+      </div>
+      <div class="cg-body" id="cgb-outputs">
+        <div class="ci" draggable="true" data-type="motor" ondragstart="palDragStart(event,'motor')" onclick="palClick('motor')">
+          <div class="ci-ico"><svg viewBox="0 0 54 28" width="52" height="26"><rect x="8" y="4" width="36" height="20" rx="4" fill="#3a4a5a" stroke="#5a6a7a" stroke-width="1.2"/><rect x="8" y="4" width="6" height="20" rx="3" fill="#2a3a4a"/><rect x="38" y="4" width="6" height="20" rx="3" fill="#2a3a4a"/><circle cx="26" cy="14" r="7" fill="#243040" stroke="#3a4a5a" stroke-width="1"/><line x1="26" y1="8" x2="26" y2="20" stroke="#b0c0d0" stroke-width="1.5"/><line x1="20" y1="14" x2="32" y2="14" stroke="#b0c0d0" stroke-width="1.5"/><line x1="22" y1="10" x2="30" y2="18" stroke="#b0c0d0" stroke-width="1" opacity=".6"/><line x1="22" y1="18" x2="30" y2="10" stroke="#b0c0d0" stroke-width="1" opacity=".6"/><circle cx="26" cy="14" r="2.5" fill="#8899aa"/><rect x="44" y="11" width="10" height="6" rx="2" fill="#9aabb8" stroke="#8090a0" stroke-width="1"/><line x1="2" y1="9" x2="8" y2="9" stroke="#f44" stroke-width="1.8"/><line x1="2" y1="19" x2="8" y2="19" stroke="#44f" stroke-width="1.8"/></svg></div>
+          <span>DC Motor</span>
+        </div>
+        <div class="ci" draggable="true" data-type="buzzer" ondragstart="palDragStart(event,'buzzer')" onclick="palClick('buzzer')">
+          <div class="ci-ico"><svg viewBox="0 0 44 28" width="42" height="26"><defs><radialGradient id="bzg" cx="38%" cy="35%"><stop offset="0%" stop-color="#3a3a3a"/><stop offset="100%" stop-color="#111"/></radialGradient></defs><ellipse cx="18" cy="14" rx="14" ry="12" fill="url(#bzg)" stroke="#3a3a3a" stroke-width="1.5"/><ellipse cx="18" cy="14" rx="9" ry="8" fill="none" stroke="#2a2a2a" stroke-width="1.2"/><circle cx="18" cy="14" r="3.5" fill="#2a2a2a" stroke="#444" stroke-width="1"/><path d="M33,9 Q38,14 33,19" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/><path d="M36,6 Q43,14 36,22" fill="none" stroke="#444" stroke-width="1.2" stroke-linecap="round"/><line x1="8" y1="10" x2="2" y2="7" stroke="#f44" stroke-width="1.5"/><line x1="8" y1="18" x2="2" y2="21" stroke="#aaa" stroke-width="1.5"/></svg></div>
+          <span>Buzzer</span>
+        </div>
+        <div class="ci" draggable="true" data-type="lamp" ondragstart="palDragStart(event,'lamp')" onclick="palClick('lamp')">
+          <div class="ci-ico"><svg viewBox="0 0 40 30" width="38" height="28"><line x1="0" y1="22" x2="10" y2="22" stroke="#999" stroke-width="1.5"/><path d="M10,22 Q8,12 12,7 Q20,0 28,7 Q32,12 30,22 Z" fill="rgba(255,220,60,.2)" stroke="#ddaa00" stroke-width="1.3"/><rect x="10" y="22" width="20" height="6" rx="2" fill="#666" stroke="#555" stroke-width="1"/><line x1="14" y1="22" x2="14" y2="24" stroke="#555" stroke-width="2"/><line x1="17" y1="22" x2="17" y2="24" stroke="#555" stroke-width="2"/><line x1="20" y1="22" x2="20" y2="24" stroke="#555" stroke-width="2"/><line x1="23" y1="22" x2="23" y2="24" stroke="#555" stroke-width="2"/><path d="M15,17 Q16,10 20,8 Q24,10 25,17" fill="none" stroke="#ccaa00" stroke-width="1.5" stroke-linecap="round"/><path d="M18,8 L18,5 Q20,3.5 22,5 L22,8" fill="none" stroke="#ccaa00" stroke-width="1.5" stroke-linecap="round"/><line x1="30" y1="22" x2="40" y2="22" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Lamp</span>
+        </div>
+        <div class="ci" draggable="true" data-type="switch" ondragstart="palDragStart(event,'switch')" onclick="palClick('switch')">
+          <div class="ci-ico"><svg viewBox="0 0 52 22" width="50" height="20" id="sw-pal-ico"><line x1="0" y1="14" x2="14" y2="14" stroke="#999" stroke-width="1.5"/><rect x="12" y="9" width="28" height="10" rx="3" fill="#222" stroke="#3a3a3a" stroke-width="1"/><circle cx="17" cy="14" r="3" fill="#777" stroke="#555" stroke-width="1"/><circle cx="33" cy="14" r="3" fill="#777" stroke="#555" stroke-width="1"/><line x1="17" y1="14" x2="26" y2="8" stroke="#ff9900" stroke-width="2.2" stroke-linecap="round"/><line x1="38" y1="14" x2="52" y2="14" stroke="#999" stroke-width="1.5"/></svg></div>
+          <span>Switch</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-hint">💡 Drag to board or click then place</div>
+  </div>
+
+  <!-- CANVAS -->
+  <div id="canvas-area">
+    <div id="cvp">
+      <div id="cvi">
+        <svg id="wire-svg" xmlns="http://www.w3.org/2000/svg" overflow="visible"></svg>
+        <div id="bb-wrap">
+          <div id="breadboard"></div>
+        </div>
+        <div id="comp-layer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div id="rsb">
+    <!-- Properties -->
+    <div class="panel" id="panel-props">
+      <div class="panel-hdr"><span>🔧</span> Properties</div>
+      <div class="panel-body" id="props-body">
+        <div class="no-sel"><span class="no-sel-ico">🖱️</span>Select a component to view properties</div>
+      </div>
+    </div>
+
+    <!-- Wire Colors -->
+    <div class="panel" id="panel-wires">
+      <div class="panel-hdr col" onclick="togglePanel('wires')"><span>🎨</span> Wire Color <span class="panel-tog" id="tog-wires">▾</span></div>
+      <div class="panel-body" id="pb-wires">
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:5px">Select color before drawing wire:</div>
+        <div id="wire-color-picker"></div>
+      </div>
+    </div>
+
+    <!-- Ohm's Law -->
+    <div class="panel" id="panel-ohm">
+      <div class="panel-hdr col" onclick="togglePanel('ohm')"><span>⚡</span> Ohm's Law <span class="panel-tog" id="tog-ohm">▾</span></div>
+      <div class="panel-body" id="pb-ohm">
+        <div class="ohm-g">
+          <div class="of"><label>Voltage (V)</label><input type="number" id="ohm-v" placeholder="9" oninput="calcOhm()"></div>
+          <div class="of"><label>Resistance (Ω)</label><input type="number" id="ohm-r" placeholder="470" oninput="calcOhm()"></div>
+          <div class="of"><label>Current (mA)</label><div class="or" id="ohm-i">—</div></div>
+          <div class="of"><label>Power (mW)</label><div class="or" id="ohm-p">—</div></div>
+        </div>
+        <div class="ohm-fml">V = I × R &nbsp;&nbsp;|&nbsp;&nbsp; P = V × I</div>
+      </div>
+    </div>
+
+    <!-- Quick Builds -->
+    <div class="panel" id="panel-builds">
+      <div class="panel-hdr col" onclick="togglePanel('builds')"><span>🏗️</span> Quick Builds <span class="panel-tog" id="tog-builds">▾</span></div>
+      <div class="panel-body" id="pb-builds">
+        <button class="bb-btn" onclick="quickBuild('led')"><span class="bb-btn-ico">💡</span>LED + Resistor</button>
+        <button class="bb-btn" onclick="quickBuild('series')"><span class="bb-btn-ico">⚡</span>Series Circuit</button>
+        <button class="bb-btn" onclick="quickBuild('parallel')"><span class="bb-btn-ico">⚡</span>Parallel Circuit</button>
+        <button class="bb-btn" onclick="quickBuild('motor')"><span class="bb-btn-ico">🔄</span>Motor Circuit</button>
+        <button class="bb-btn" onclick="quickBuild('buzzer')"><span class="bb-btn-ico">🔊</span>Buzzer Circuit</button>
+        <button class="bb-btn" onclick="quickBuild('lamp')"><span class="bb-btn-ico">🔦</span>Lamp Circuit</button>
+        <button class="bb-btn" onclick="quickBuild('transistor')"><span class="bb-btn-ico">🔲</span>Transistor Switch</button>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="panel" id="panel-fb">
+      <div class="panel-hdr col" onclick="togglePanel('fb')"><span>📊</span> Simulation Results <span class="panel-tog" id="tog-fb">▾</span></div>
+      <div class="panel-body" id="pb-fb">
+        <div id="fb-list"><div class="fi-idle">Run simulation to analyze circuit</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bbar">
+  <div class="status-l">
+    <span class="mode-badge" id="mode-badge">● SELECT</span>
+    <span id="status-msg">Welcome! Drag components from the left panel onto the breadboard.</span>
+  </div>
+  <div class="status-r">
+    <span id="st-zoom">100%</span>
+    <span id="st-parts">Parts: 0</span>
+    <span id="st-wires">Wires: 0</span>
+    <span id="st-nodes">Nodes: 0</span>
+  </div>
+</div>
+
+<!-- DRAG GHOST -->
+<div id="dg"></div>
+<!-- TOOLTIP -->
+<div id="tip"></div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="ctx-item" onclick="ctxRotate()">↻ Rotate 90°</div>
+  <div class="ctx-item" onclick="ctxFlip()">↔ Flip</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxDuplicate()">⧉ Duplicate</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑 Delete</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Confirm</div>
+    <div class="modal-body" id="modal-body">Are you sure?</div>
+    <div class="modal-btns">
+      <button class="mbtn" onclick="closeModal()">Cancel</button>
+      <button class="mbtn primary" id="modal-ok" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   STEMBOTIX VIRTUAL CIRCUIT LAB — COMPLETE JAVASCRIPT ENGINE
+   ================================================================ */
+'use strict';
+
+// ── CONSTANTS ──────────────────────────────────────────────────
+const BB_COLS = 30;
+const BB_ROWS_TOP = ['a','b','c','d','e'];
+const BB_ROWS_BOT = ['f','g','h','i','j'];
+const RAIL_HOLES = 25;
+const CELL = 20;  // px per hole cell
+
+// ── STATE ──────────────────────────────────────────────────────
+const S = {
+  tool: 'select',
+  zoom: 1,
+  panX: 40,
+  panY: 20,
+  comps: [],
+  wires: [],
+  selComp: null,
+  selWire: null,
+  wire: { active: false, from: null },
+  wireColor: '#e74c3c',
+  simOn: false,
+  history: [],
+  future: [],
+  holeMap: {},    // id → {id,row,col,half,group,el,occ,comp}
+  palSel: null,
+  ctxTarget: null,
+  uid: 1,
+};
+
+// ── COMPONENT DEFINITIONS ──────────────────────────────────────
+const DEFS = {
+  battery:     { label:'Battery 9V',      val:'9V',    pins:2, offsets:[-4,4],   pinL:['＋','－'], w:90,  h:38, cat:'source', render:svgBattery },
+  dcsource:    { label:'DC Source',       val:'5V',    pins:2, offsets:[-3,3],   pinL:['＋','－'], w:72,  h:40, cat:'source', render:svgDCSource },
+  resistor:    { label:'Resistor',        val:'470Ω',  pins:2, offsets:[-2,2],   pinL:['1','2'],   w:72,  h:24, cat:'passive',render:svgResistor,
+                 bands:['#f4a030','#704030','#f04040','#d4a000'] },
+  capacitor:   { label:'Capacitor',       val:'100µF', pins:2, offsets:[-1,1],   pinL:['＋','－'], w:26,  h:52, cat:'passive',render:svgCapacitor },
+  inductor:    { label:'Inductor',        val:'10mH',  pins:2, offsets:[-3,3],   pinL:['1','2'],   w:72,  h:24, cat:'passive',render:svgInductor },
+  potentiometer:{label:'Potentiometer',   val:'10kΩ',  pins:3, offsets:[-2,0,2], pinL:['1','W','2'],w:56, h:36, cat:'passive',render:svgPot },
+  led:         { label:'LED',             val:'Red',   pins:2, offsets:[-1,1],   pinL:['A','K'],   w:28,  h:60, cat:'semi',   render:svgLED,
+                 colors:{Red:'#ff3333',Green:'#33ff66',Blue:'#3388ff',Yellow:'#ffcc00',White:'#ffffff',Orange:'#ff8800'} },
+  diode:       { label:'Diode 1N4148',    val:'1N4148',pins:2, offsets:[-2,2],   pinL:['A','K'],   w:56,  h:20, cat:'semi',   render:svgDiode },
+  zener:       { label:'Zener Diode',     val:'5.1V',  pins:2, offsets:[-2,2],   pinL:['A','K'],   w:56,  h:20, cat:'semi',   render:svgZener },
+  transistor:  { label:'NPN Transistor',  val:'2N2222',pins:3, offsets:[-1,0,1], pinL:['E','B','C'],w:34,  h:58, cat:'semi',  render:svgTransistor },
+  motor:       { label:'DC Motor',        val:'5V',    pins:2, offsets:[-3,3],   pinL:['＋','－'], w:74,  h:44, cat:'output', render:svgMotor },
+  buzzer:      { label:'Buzzer',          val:'5V',    pins:2, offsets:[-1,1],   pinL:['＋','－'], w:42,  h:44, cat:'output', render:svgBuzzer },
+  lamp:        { label:'Lamp',            val:'5V',    pins:2, offsets:[-1,1],   pinL:['＋','－'], w:34,  h:56, cat:'output', render:svgLamp },
+  switch:      { label:'Switch',          val:'NO',    pins:2, offsets:[-1,1],   pinL:['1','2'],   w:44,  h:28, cat:'output', render:svgSwitch, closed:false },
+};
+
+const WIRE_COLORS = [
+  '#e74c3c','#3b9eff','#2ecc71','#f0c040','#9b59b6',
+  '#1abc9c','#e67e22','#ffffff','#ff69b4','#00d4ff'
+];
+
+// ================================================================
+//  SVG COMPONENT RENDERERS (Tinkercad-quality)
+// ================================================================
+
+function svgBattery(c) {
+  const v = c.value||'9V';
+  return `<svg width="90" height="38" viewBox="0 0 90 38">
+    <line x1="0" y1="19" x2="12" y2="19" stroke="#bbb" stroke-width="2"/>
+    <line x1="78" y1="19" x2="90" y2="19" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="bg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3a4e3a"/><stop offset="50%" stop-color="#2a3c2a"/><stop offset="100%" stop-color="#1e2e1e"/>
+      </linearGradient>
+    </defs>
+    <rect x="12" y="7" width="66" height="24" rx="4" fill="url(#bg${c.id})" stroke="#3a5a3a" stroke-width="1.5"/>
+    <rect x="78" y="13" width="7" height="12" rx="2" fill="#555" stroke="#444" stroke-width="1"/>
+    <line x1="26" y1="9" x2="26" y2="29" stroke="#4a6a4a" stroke-width=".8"/>
+    <line x1="38" y1="9" x2="38" y2="29" stroke="#4a6a4a" stroke-width=".8"/>
+    <line x1="50" y1="9" x2="50" y2="29" stroke="#4a6a4a" stroke-width=".8"/>
+    <line x1="62" y1="9" x2="62" y2="29" stroke="#4a6a4a" stroke-width=".8"/>
+    <line x1="19" y1="16" x2="19" y2="22" stroke="#ff7700" stroke-width="2.2"/>
+    <line x1="16" y1="19" x2="22" y2="19" stroke="#ff7700" stroke-width="2.2"/>
+    <line x1="70" y1="19" x2="76" y2="19" stroke="#4466ff" stroke-width="2.2"/>
+    <text x="44" y="23" text-anchor="middle" fill="#88cc88" font-size="8.5" font-family="monospace" font-weight="bold">${v}</text>
+    <rect x="13" y="8" width="64" height="7" rx="3" fill="rgba(255,255,255,.07)"/>
+  </svg>`;
+}
+
+function svgDCSource(c) {
+  const v = c.value||'5V';
+  return `<svg width="72" height="40" viewBox="0 0 72 40">
+    <line x1="0" y1="20" x2="17" y2="20" stroke="#f55" stroke-width="2"/>
+    <line x1="55" y1="20" x2="72" y2="20" stroke="#55f" stroke-width="2"/>
+    <defs>
+      <radialGradient id="dcg${c.id}" cx="40%" cy="35%">
+        <stop offset="0%" stop-color="#2a3d60"/><stop offset="100%" stop-color="#182040"/>
+      </radialGradient>
+    </defs>
+    <circle cx="36" cy="20" r="17" fill="url(#dcg${c.id})" stroke="#3366bb" stroke-width="1.8"/>
+    <circle cx="36" cy="20" r="13" fill="none" stroke="rgba(80,120,220,.3)" stroke-width="1"/>
+    <text x="36" y="17" text-anchor="middle" fill="#4488ff" font-size="8" font-family="monospace" font-weight="bold">DC</text>
+    <text x="36" y="26" text-anchor="middle" fill="#88aaff" font-size="7" font-family="monospace">${v}</text>
+    <text x="22" y="25" fill="#ff6666" font-size="10" font-weight="bold">+</text>
+    <text x="47" y="25" fill="#6666ff" font-size="10" font-weight="bold">−</text>
+  </svg>`;
+}
+
+function svgResistor(c) {
+  const bands = (c.bands||DEFS.resistor.bands);
+  return `<svg width="72" height="24" viewBox="0 0 72 24">
+    <line x1="0" y1="12" x2="12" y2="12" stroke="#bbb" stroke-width="2"/>
+    <line x1="60" y1="12" x2="72" y2="12" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="rg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#eecca0"/><stop offset="35%" stop-color="#dbb888"/>
+        <stop offset="65%" stop-color="#d4ae80"/><stop offset="100%" stop-color="#c89858"/>
+      </linearGradient>
+    </defs>
+    <rect x="12" y="5" width="48" height="14" rx="6" fill="url(#rg${c.id})" stroke="#c8a068" stroke-width="1"/>
+    <rect x="12" y="5" width="7" height="14" rx="6" fill="rgba(0,0,0,.1)"/>
+    <rect x="53" y="5" width="7" height="14" rx="6" fill="rgba(0,0,0,.1)"/>
+    <rect x="20" y="5" width="4.5" height="14" fill="${bands[0]}" opacity=".92"/>
+    <rect x="28" y="5" width="4.5" height="14" fill="${bands[1]}" opacity=".92"/>
+    <rect x="36" y="5" width="4.5" height="14" fill="${bands[2]}" opacity=".92"/>
+    <rect x="48" y="5" width="3.5" height="14" fill="${bands[3]}" opacity=".92"/>
+    <rect x="13" y="6" width="46" height="5" rx="4" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+
+function svgCapacitor(c) {
+  const v = c.value||'100µF';
+  return `<svg width="26" height="52" viewBox="0 0 26 52">
+    <line x1="13" y1="0" x2="13" y2="14" stroke="#f55" stroke-width="2"/>
+    <line x1="13" y1="38" x2="13" y2="52" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="cg${c.id}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#2244aa"/><stop offset="50%" stop-color="#3355cc"/><stop offset="100%" stop-color="#1a3388"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="14" width="22" height="24" rx="3" fill="url(#cg${c.id})" stroke="#223388" stroke-width="1.2"/>
+    <rect x="2" y="14" width="8" height="24" rx="2" fill="#111830"/>
+    <text x="6" y="25" fill="#6688cc" font-size="8" text-anchor="middle" font-family="monospace">−</text>
+    <text x="6" y="33" fill="#6688cc" font-size="8" text-anchor="middle" font-family="monospace">−</text>
+    <text x="17" y="29" fill="#88aaff" font-size="9" text-anchor="middle" font-family="monospace">+</text>
+    <ellipse cx="13" cy="14" rx="11" ry="3" fill="#2a3a9a" stroke="#223388" stroke-width="1"/>
+    <ellipse cx="13" cy="14" rx="11" ry="3" fill="rgba(255,255,255,.07)"/>
+    <rect x="12" y="16" width="9" height="2.5" rx="1" fill="rgba(255,255,255,.18)"/>
+    <text x="13" y="49" fill="#6688aa" font-size="5.5" text-anchor="middle" font-family="monospace">${v}</text>
+  </svg>`;
+}
+
+function svgInductor(c) {
+  return `<svg width="72" height="24" viewBox="0 0 72 24">
+    <line x1="0" y1="15" x2="10" y2="15" stroke="#bbb" stroke-width="2"/>
+    <line x1="62" y1="15" x2="72" y2="15" stroke="#bbb" stroke-width="2"/>
+    <rect x="10" y="11" width="52" height="8" rx="0" fill="rgba(180,140,60,.2)"/>
+    <path d="M10,15 Q14,5 18,15 Q22,5 26,15 Q30,5 34,15 Q38,5 42,15 Q46,5 50,15 Q54,5 58,15 Q62,5 66,15"
+      fill="none" stroke="#c8980a" stroke-width="2.8" stroke-linecap="round"/>
+    <line x1="10" y1="15" x2="62" y2="15" stroke="#a07808" stroke-width="1" stroke-dasharray="2,4" opacity=".5"/>
+    <circle cx="18" cy="9" r="1.5" fill="rgba(255,210,60,.55)"/>
+    <circle cx="34" cy="9" r="1.5" fill="rgba(255,210,60,.55)"/>
+    <circle cx="50" cy="9" r="1.5" fill="rgba(255,210,60,.55)"/>
+  </svg>`;
+}
+
+function svgPot(c) {
+  return `<svg width="56" height="36" viewBox="0 0 56 36">
+    <line x1="0" y1="20" x2="10" y2="20" stroke="#bbb" stroke-width="2"/>
+    <line x1="46" y1="20" x2="56" y2="20" stroke="#bbb" stroke-width="2"/>
+    <line x1="28" y1="0" x2="28" y2="11" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="potg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#eecca0"/><stop offset="100%" stop-color="#c89858"/>
+      </linearGradient>
+    </defs>
+    <rect x="10" y="11" width="36" height="16" rx="5" fill="url(#potg${c.id})" stroke="#c8a068" stroke-width="1"/>
+    <rect x="18" y="11" width="4" height="16" fill="#f4a030" opacity=".85"/>
+    <rect x="24" y="11" width="4" height="16" fill="#704030" opacity=".85"/>
+    <rect x="30" y="11" width="4" height="16" fill="#f04040" opacity=".85"/>
+    <line x1="22" y1="11" x2="28" y2="5" stroke="#555" stroke-width="1.8"/>
+    <polygon points="28,2 25,6.5 31,6.5" fill="#666"/>
+    <rect x="11" y="12" width="34" height="5" rx="4" fill="rgba(255,255,255,.18)"/>
+  </svg>`;
+}
+
+function svgLED(c) {
+  const colorKey = c.value||'Red';
+  const col = (DEFS.led.colors||{})[colorKey]||'#ff3333';
+  const on = !!c.active;
+  const gf = on ? `drop-shadow(0 0 10px ${col}) drop-shadow(0 0 20px ${col})` : 'none';
+  return `<svg width="28" height="60" viewBox="0 0 28 60" style="filter:${gf}">
+    <defs>
+      <radialGradient id="ldg${c.id}" cx="38%" cy="30%">
+        <stop offset="0%" stop-color="white" stop-opacity="${on?.65:.15}"/>
+        <stop offset="40%" stop-color="${col}" stop-opacity="${on?.88:.38}"/>
+        <stop offset="100%" stop-color="${col}" stop-opacity="${on?.95:.55}"/>
+      </radialGradient>
+      ${on?`<radialGradient id="lgg${c.id}" cx="50%" cy="50%"><stop offset="0%" stop-color="${col}" stop-opacity=".7"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></radialGradient>`:''}
+    </defs>
+    <line x1="10" y1="60" x2="10" y2="46" stroke="#aaa" stroke-width="2"/>
+    <line x1="18" y1="60" x2="18" y2="44" stroke="#aaa" stroke-width="2"/>
+    <rect x="16" y="42" width="4" height="3" rx="1" fill="#777"/>
+    <rect x="4" y="36" width="20" height="10" rx="2" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+    <ellipse cx="14" cy="36" rx="10" ry="3" fill="#222"/>
+    ${on?`<circle cx="14" cy="18" r="20" fill="url(#lgg${c.id})" opacity=".45" class="led-dome"/>`:''}
+    <path d="M4,36 Q4,4 14,2 Q24,4 24,36 Z" fill="url(#ldg${c.id})" stroke="${col}" stroke-width="1.3" class="led-dome"/>
+    <path d="M8,28 Q9,12 11,8" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.5" stroke-linecap="round"/>
+    <polygon points="11,22 11,29 18,25.5" fill="rgba(255,255,255,.13)"/>
+    <line x1="18" y1="22" x2="18" y2="29" stroke="rgba(255,255,255,.13)" stroke-width="1.2"/>
+    ${on?`<line x1="24" y1="14" x2="28" y2="10" stroke="${col}" stroke-width="1.8" opacity=".9" stroke-linecap="round"/>
+    <line x1="25" y1="19" x2="29" y2="17" stroke="${col}" stroke-width="1.8" opacity=".9" stroke-linecap="round"/>
+    <line x1="23" y1="8" x2="26" y2="4" stroke="${col}" stroke-width="1.4" opacity=".75" stroke-linecap="round"/>`:''}
+  </svg>`;
+}
+
+function svgDiode(c) {
+  return `<svg width="56" height="20" viewBox="0 0 56 20">
+    <line x1="0" y1="10" x2="14" y2="10" stroke="#bbb" stroke-width="2"/>
+    <line x1="42" y1="10" x2="56" y2="10" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="dg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6a6a6a"/><stop offset="50%" stop-color="#484848"/><stop offset="100%" stop-color="#303030"/>
+      </linearGradient>
+    </defs>
+    <rect x="14" y="4" width="28" height="12" rx="5" fill="url(#dg${c.id})" stroke="#7a7a7a" stroke-width="1"/>
+    <rect x="35" y="4" width="5" height="12" rx="3" fill="#ddddcc"/>
+    <rect x="15" y="5" width="26" height="4" rx="3" fill="rgba(255,255,255,.18)"/>
+    <text x="23" y="15" fill="#999" font-size="5.5" font-family="monospace">1N4148</text>
+  </svg>`;
+}
+
+function svgZener(c) {
+  return `<svg width="56" height="20" viewBox="0 0 56 20">
+    <line x1="0" y1="10" x2="14" y2="10" stroke="#bbb" stroke-width="2"/>
+    <line x1="42" y1="10" x2="56" y2="10" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="zg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#334499"/><stop offset="50%" stop-color="#223388"/><stop offset="100%" stop-color="#1a2a77"/>
+      </linearGradient>
+    </defs>
+    <rect x="14" y="4" width="28" height="12" rx="5" fill="url(#zg${c.id})" stroke="#4466cc" stroke-width="1"/>
+    <path d="M35,4 L38,4 L35,16 L38,16" fill="none" stroke="#ddddee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="15" y="5" width="26" height="4" rx="3" fill="rgba(255,255,255,.12)"/>
+    <text x="19" y="15" fill="#88aacc" font-size="5.5" font-family="monospace">Zener</text>
+  </svg>`;
+}
+
+function svgTransistor(c) {
+  return `<svg width="34" height="58" viewBox="0 0 34 58">
+    <line x1="8" y1="58" x2="8" y2="44" stroke="#bbb" stroke-width="2"/>
+    <line x1="26" y1="58" x2="26" y2="44" stroke="#bbb" stroke-width="2"/>
+    <line x1="0" y1="29" x2="10" y2="29" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <linearGradient id="tg${c.id}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3a3a3a"/><stop offset="50%" stop-color="#262626"/><stop offset="100%" stop-color="#1a1a1a"/>
+      </linearGradient>
+    </defs>
+    <path d="M6,10 L6,46 Q17,50 30,44 Q34,36 34,27 Q34,18 30,12 Q17,6 6,10 Z" fill="url(#tg${c.id})" stroke="#4a4a4a" stroke-width="1.3"/>
+    <line x1="6" y1="10" x2="6" y2="46" stroke="#555" stroke-width="1.5"/>
+    <line x1="14" y1="21" x2="20" y2="25" stroke="#5a9a5a" stroke-width="1.8"/>
+    <line x1="14" y1="37" x2="20" y2="33" stroke="#5a9a5a" stroke-width="1.8"/>
+    <line x1="14" y1="21" x2="14" y2="37" stroke="#5a9a5a" stroke-width="2.2"/>
+    <line x1="10" y1="29" x2="14" y2="29" stroke="#5a9a5a" stroke-width="2"/>
+    <polygon points="19,32 15,31 17.5,35.5" fill="#5a9a5a"/>
+    <text x="22" y="30" fill="#7a7a7a" font-size="6" font-family="monospace">NPN</text>
+    <text x="4" y="56" fill="#888" font-size="6.5" font-family="monospace">E</text>
+    <text x="22" y="56" fill="#888" font-size="6.5" font-family="monospace">C</text>
+    <text x="-2" y="27" fill="#888" font-size="6.5" font-family="monospace">B</text>
+    <path d="M8,12 Q16,9 24,12 Q24,17 20,19" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function svgMotor(c) {
+  const on = !!c.active;
+  return `<svg width="74" height="44" viewBox="0 0 74 44">
+    <line x1="0" y1="14" x2="10" y2="14" stroke="#f55" stroke-width="2"/>
+    <line x1="0" y1="30" x2="10" y2="30" stroke="#55f" stroke-width="2"/>
+    <defs>
+      <linearGradient id="mg${c.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4a5a6a"/><stop offset="50%" stop-color="#384858"/><stop offset="100%" stop-color="#2a3848"/>
+      </linearGradient>
+    </defs>
+    <rect x="10" y="4" width="44" height="36" rx="4" fill="url(#mg${c.id})" stroke="#5a6a7a" stroke-width="1.5"/>
+    <rect x="10" y="4" width="8" height="36" rx="3" fill="#303d4a"/>
+    <rect x="46" y="4" width="8" height="36" rx="3" fill="#303d4a"/>
+    <line x1="16" y1="9" x2="16" y2="12" stroke="#1e2c3a" stroke-width="2"/><line x1="20" y1="9" x2="20" y2="12" stroke="#1e2c3a" stroke-width="2"/>
+    <line x1="24" y1="9" x2="24" y2="12" stroke="#1e2c3a" stroke-width="2"/><line x1="28" y1="9" x2="28" y2="12" stroke="#1e2c3a" stroke-width="2"/>
+    <line x1="32" y1="9" x2="32" y2="12" stroke="#1e2c3a" stroke-width="2"/><line x1="36" y1="9" x2="36" y2="12" stroke="#1e2c3a" stroke-width="2"/>
+    <rect x="54" y="18" width="18" height="8" rx="2.5" fill="#9aabb8" stroke="#8090a0" stroke-width="1"/>
+    <circle cx="32" cy="22" r="11" fill="#1e2c3a" stroke="#2a3a4a" stroke-width="1"/>
+    <g class="motor-rotor" style="${on?'animation:motor-turn .25s linear infinite;transform-origin:32px 22px;':''}" transform-origin="32 22">
+      <line x1="32" y1="12" x2="32" y2="32" stroke="#8ca0b0" stroke-width="1.8"/>
+      <line x1="22" y1="22" x2="42" y2="22" stroke="#8ca0b0" stroke-width="1.8"/>
+      <line x1="24" y1="15" x2="40" y2="29" stroke="#8ca0b0" stroke-width="1.2" opacity=".65"/>
+      <line x1="24" y1="29" x2="40" y2="15" stroke="#8ca0b0" stroke-width="1.2" opacity=".65"/>
+    </g>
+    <circle cx="32" cy="22" r="3.5" fill="#8899aa" stroke="#aabbcc" stroke-width="1"/>
+    <text x="32" y="40" text-anchor="middle" fill="#6a7a8a" font-size="8" font-family="monospace">M</text>
+    <rect x="11" y="5" width="42" height="8" rx="2" fill="rgba(255,255,255,.07)"/>
+    ${on?`<text x="60" y="14" fill="#4af" font-size="12" font-family="monospace" opacity=".85">⟳</text>`:''}
+  </svg>`;
+}
+
+function svgBuzzer(c) {
+  const on = !!c.active;
+  return `<svg width="42" height="44" viewBox="0 0 42 44">
+    <line x1="10" y1="44" x2="10" y2="34" stroke="#f55" stroke-width="2"/>
+    <line x1="22" y1="44" x2="22" y2="34" stroke="#bbb" stroke-width="2"/>
+    <defs>
+      <radialGradient id="bug${c.id}" cx="38%" cy="33%">
+        <stop offset="0%" stop-color="#3c3c3c"/><stop offset="100%" stop-color="#0e0e0e"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="16" cy="18" rx="14" ry="14" fill="url(#bug${c.id})" stroke="#3a3a3a" stroke-width="1.5" class="buz-ring"/>
+    <ellipse cx="16" cy="18" rx="9.5" ry="9.5" fill="none" stroke="#2a2a2a" stroke-width="1.2" class="buz-ring"/>
+    <ellipse cx="16" cy="18" rx="5" ry="5" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+    <circle cx="16" cy="18" r="2" fill="#2a2a2a" stroke="#444" stroke-width=".8"/>
+    <text x="8" y="42" fill="#f66" font-size="8" font-family="monospace">+</text>
+    <path d="M5,11 Q2,8 5,5" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1.5" stroke-linecap="round"/>
+    ${on?`<path d="M32,12 Q37,18 32,24" fill="none" stroke="#4af" stroke-width="1.6" opacity=".85" stroke-linecap="round" class="buz-ring"/>
+    <path d="M35,9 Q42,18 35,27" fill="none" stroke="#4af" stroke-width="1.4" opacity=".55" stroke-linecap="round" class="buz-ring"/>`:''}
+  </svg>`;
+}
+
+function svgLamp(c) {
+  const on = !!c.active;
+  const gc = on?'#ffe040':'#997700';
+  const gf = on ? `drop-shadow(0 0 10px #ffcc00) drop-shadow(0 0 20px #ffaa00)` : 'none';
+  return `<svg width="34" height="56" viewBox="0 0 34 56" style="filter:${gf}">
+    <line x1="10" y1="56" x2="10" y2="46" stroke="#bbb" stroke-width="2"/>
+    <line x1="24" y1="56" x2="24" y2="46" stroke="#bbb" stroke-width="2"/>
+    <rect x="6" y="38" width="22" height="10" rx="2" fill="#5a5a5a" stroke="#444" stroke-width="1"/>
+    <line x1="10" y1="38" x2="10" y2="41" stroke="#444" stroke-width="2"/>
+    <line x1="14" y1="38" x2="14" y2="41" stroke="#444" stroke-width="2"/>
+    <line x1="18" y1="38" x2="18" y2="41" stroke="#444" stroke-width="2"/>
+    <line x1="22" y1="38" x2="22" y2="41" stroke="#444" stroke-width="2"/>
+    <defs>
+      <radialGradient id="lmg${c.id}" cx="40%" cy="30%">
+        <stop offset="0%" stop-color="white" stop-opacity="${on?.7:.08}"/>
+        <stop offset="45%" stop-color="${gc}" stop-opacity="${on?.55:.12}"/>
+        <stop offset="100%" stop-color="${gc}" stop-opacity="${on?.45:.07}"/>
+      </radialGradient>
+    </defs>
+    <path d="M6,38 Q3,24 7,12 Q17,2 27,12 Q31,24 28,38 Z"
+      fill="url(#lmg${c.id})" stroke="${gc}" stroke-width="1.3" class="lamp-glass"/>
+    <path d="M13,30 Q14,20 17,17 Q20,20 21,30" fill="none" stroke="${on?'#ffcc00':'#6a6a4a'}" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M15,17 L15,13 Q17,11 19,13 L19,17" fill="none" stroke="${on?'#ffcc00':'#6a6a4a'}" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M9,20 Q8,12 9,9" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round"/>
+    ${on?`<path d="M3,26 Q-1,22 3,18" fill="none" stroke="#ffdd44" stroke-width="1.3" opacity=".5" stroke-linecap="round"/>
+    <path d="M31,26 Q35,22 31,18" fill="none" stroke="#ffdd44" stroke-width="1.3" opacity=".5" stroke-linecap="round"/>`:''}
+  </svg>`;
+}
+
+function svgSwitch(c) {
+  const cl = !!c.closed;
+  return `<svg width="44" height="28" viewBox="0 0 44 28">
+    <line x1="0" y1="16" x2="12" y2="16" stroke="#bbb" stroke-width="2"/>
+    <line x1="32" y1="16" x2="44" y2="16" stroke="#bbb" stroke-width="2"/>
+    <rect x="10" y="10" width="24" height="12" rx="3" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+    <circle cx="15" cy="16" r="3.5" fill="#6a6a6a" stroke="#4a4a4a" stroke-width="1"/>
+    <circle cx="29" cy="16" r="3.5" fill="${cl?'#6a6a6a':'#444'}" stroke="#4a4a4a" stroke-width="1"/>
+    <line x1="15" y1="16" x2="${cl?29:24}" y2="${cl?16:9}"
+      stroke="${cl?'#2ecc71':'#ff9900'}" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="15" cy="16" r="2" fill="#aaa"/>
+    <text x="22" y="27" text-anchor="middle" fill="${cl?'#2ecc71':'#555'}" font-size="7" font-family="monospace">${cl?'ON':'OFF'}</text>
+  </svg>`;
+}
+
+// ================================================================
+//  BREADBOARD BUILDER
+// ================================================================
+function buildBreadboard() {
+  const bb = document.getElementById('breadboard');
+  bb.innerHTML = '';
+  S.holeMap = {};
+
+  // TOP RAIL
+  bb.appendChild(makeRail('top'));
+  // Col labels top
+  bb.appendChild(makeColLabels());
+  // Main section: top half a-e
+  const topHalf = document.createElement('div');
+  topHalf.className = 'bb-half';
+  BB_ROWS_TOP.forEach(r => topHalf.appendChild(makeMainRow(r,'top')));
+  bb.appendChild(topHalf);
+  // Gap
+  const gap = document.createElement('div');
+  gap.className = 'bb-gap';
+  gap.textContent = '— DIP SOCKET —';
+  bb.appendChild(gap);
+  // Bot half f-j
+  const botHalf = document.createElement('div');
+  botHalf.className = 'bb-half';
+  BB_ROWS_BOT.forEach(r => botHalf.appendChild(makeMainRow(r,'bot')));
+  bb.appendChild(botHalf);
+  // Col labels bot
+  bb.appendChild(makeColLabels());
+  // BOTTOM RAIL
+  bb.appendChild(makeRail('bot'));
+}
+
+function makeColLabels() {
+  const row = document.createElement('div');
+  row.className = 'bb-col-lbl-row';
+  const sp = document.createElement('div');
+  sp.style.width = '18px'; sp.style.flexShrink = '0';
+  row.appendChild(sp);
+  for (let c=1;c<=BB_COLS;c++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'bb-cl';
+    lbl.textContent = c;
+    lbl.style.width = CELL+'px';
+    row.appendChild(lbl);
+  }
+  return row;
+}
+
+function makeMainRow(rowLetter, half) {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'bb-row';
+  const lbl = document.createElement('div');
+  lbl.className = 'bb-rl';
+  lbl.textContent = rowLetter.toUpperCase();
+  rowEl.appendChild(lbl);
+  for (let c=1;c<=BB_COLS;c++) {
+    const hid = rowLetter+c;
+    const group = half+'_'+c;
+    const hEl = makeHole(hid);
+    rowEl.appendChild(hEl);
+    S.holeMap[hid] = { id:hid, row:rowLetter, col:c, half, group, el:hEl, occ:false, comp:null };
+  }
+  return rowEl;
+}
+
+function makeRail(pos) {
+  const strip = document.createElement('div');
+  strip.className = `bb-rail r${pos==='top'?'t':'b'}`;
+  strip.style.position = 'relative';
+  // Red line overlay
+  const rl = document.createElement('div');
+  rl.className = 'rail-line rp';
+  strip.appendChild(rl);
+  const bl = document.createElement('div');
+  bl.className = 'rail-line rn';
+  strip.appendChild(bl);
+
+  // Plus row
+  const pm = document.createElement('span');
+  pm.className = 'rail-pm';
+  pm.textContent = '+';
+  strip.appendChild(pm);
+  for (let c=1;c<=RAIL_HOLES;c++) {
+    const hid = `rail_${pos}_p${c}`;
+    const h = makeHole(hid);
+    strip.appendChild(h);
+    S.holeMap[hid] = { id:hid, row:'rail', col:c, half:pos, group:`rail_${pos}_p`, railType:'pos', el:h, occ:false, comp:null };
+  }
+  // Spacer
+  const sp = document.createElement('span');
+  sp.style.display = 'inline-block'; sp.style.width = '10px';
+  strip.appendChild(sp);
+  // Minus row
+  const nm = document.createElement('span');
+  nm.className = 'rail-nm';
+  nm.textContent = '−';
+  strip.appendChild(nm);
+  for (let c=1;c<=RAIL_HOLES;c++) {
+    const hid = `rail_${pos}_n${c}`;
+    const h = makeHole(hid);
+    strip.appendChild(h);
+    S.holeMap[hid] = { id:hid, row:'rail', col:c, half:pos, group:`rail_${pos}_n`, railType:'neg', el:h, occ:false, comp:null };
+  }
+  return strip;
+}
+
+function makeHole(hid) {
+  const el = document.createElement('div');
+  el.className = 'bh';
+  el.id = 'h-'+hid;
+  el.style.width = CELL+'px';
+  el.style.height = CELL+'px';
+  el.style.display = 'inline-flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.dataset.hid = hid;
+  const o = document.createElement('div'); o.className = 'bh-o';
+  const i = document.createElement('div'); i.className = 'bh-i';
+  o.appendChild(i); el.appendChild(o);
+  el.addEventListener('click', onHoleClick);
+  el.addEventListener('mouseenter', onHoleEnter);
+  el.addEventListener('mouseleave', onHoleLeave);
+  return el;
+}
+
+// ================================================================
+//  HOLE POSITION HELPERS
+// ================================================================
+function holePagePos(hid) {
+  const el = document.getElementById('h-'+hid);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  const vp = document.getElementById('cvp').getBoundingClientRect();
+  return {
+    x: (r.left + r.width/2 - vp.left) / S.zoom - S.panX,
+    y: (r.top + r.height/2 - vp.top)  / S.zoom - S.panY,
+  };
+}
+
+function screenToCanvas(px, py) {
+  const vp = document.getElementById('cvp').getBoundingClientRect();
+  return { x:(px - vp.left)/S.zoom - S.panX, y:(py - vp.top)/S.zoom - S.panY };
+}
+
+function nearestHole(px, py, maxDist) {
+  let best=null, bd=maxDist||30;
+  Object.values(S.holeMap).forEach(hd => {
+    const el = document.getElementById('h-'+hd.id);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const cx = r.left+r.width/2, cy = r.top+r.height/2;
+    const d = Math.hypot(px-cx, py-cy);
+    if (d<bd) { bd=d; best=hd; }
+  });
+  return best;
+}
+
+// ================================================================
+//  TRANSFORM / ZOOM / PAN
+// ================================================================
+let panning=false, panStart={x:0,y:0,px:0,py:0};
+
+function applyTransform() {
+  document.getElementById('cvi').style.transform =
+    `translate(${S.panX}px,${S.panY}px) scale(${S.zoom})`;
+  document.getElementById('st-zoom').textContent = Math.round(S.zoom*100)+'%';
+}
+
+function zoomIn()  { S.zoom = Math.min(3.0, S.zoom+0.15); applyTransform(); }
+function zoomOut() { S.zoom = Math.max(0.3, S.zoom-0.15); applyTransform(); }
+function resetView() { S.zoom=1; S.panX=40; S.panY=20; applyTransform(); }
+
+document.getElementById('canvas-area').addEventListener('wheel', e => {
+  e.preventDefault();
+  const d = e.deltaY > 0 ? -0.1 : 0.1;
+  S.zoom = Math.max(0.3, Math.min(3.0, S.zoom+d));
+  applyTransform();
+}, {passive:false});
+
+document.getElementById('cvp').addEventListener('mousedown', e => {
+  if (e.button===1 || (e.button===0 && !e.target.closest('.bh,.bc'))) {
+    if (e.target.closest('.bc') && S.tool==='select') return;
+    if (e.target.closest('.bh')) return;
+    panning=true;
+    panStart={x:e.clientX,y:e.clientY,px:S.panX,py:S.panY};
+    document.body.style.cursor='grabbing';
+    e.preventDefault();
+  }
+});
+window.addEventListener('mousemove', e => {
+  if (panning) {
+    S.panX = panStart.px + (e.clientX-panStart.x);
+    S.panY = panStart.py + (e.clientY-panStart.y);
+    applyTransform();
+  }
+  // Wire preview
+  if (S.tool==='wire' && S.wire.from) {
+    const c = screenToCanvas(e.clientX, e.clientY);
+    updateWirePreview(c.x+S.panX, c.y+S.panY); // adjusted
+    // smarter: use raw hole positions
+    updateWirePreviewFromHole(S.wire.from, e.clientX, e.clientY);
+  }
+  // Drag ghost
+  if (dragState.active) {
+    document.getElementById('dg').style.left = e.clientX+'px';
+    document.getElementById('dg').style.top  = e.clientY+'px';
+    highlightSnapHoles(e.clientX, e.clientY);
+  }
+  moveDraggedComp(e);
+});
+window.addEventListener('mouseup', e => {
+  if (panning) { panning=false; document.body.style.cursor=''; }
+  dropDraggedComp(e);
+});
+
+// ================================================================
+//  TOOL MANAGEMENT
+// ================================================================
+function setTool(t) {
+  S.tool = t;
+  document.getElementById('btn-select').classList.toggle('active', t==='select');
+  document.getElementById('btn-wire').classList.toggle('active', t==='wire');
+  const b = document.getElementById('mode-badge');
+  b.textContent = '● '+t.toUpperCase();
+  b.className = 'mode-badge'+(t==='wire'?' wire':'');
+  if (t!=='wire') cancelWire();
+  setStatus(t==='wire' ? 'WIRE MODE: Click a hole to start the wire, click another hole to complete it.' : 'SELECT MODE: Click components or wires to select. Drag to move.');
+}
+
+// ================================================================
+//  PALETTE INTERACTION
+// ================================================================
+const dragState = { active:false, type:null };
+
+function palDragStart(e, type) {
+  e.dataTransfer.setData('comp-type', type);
+  dragState.active = true;
+  dragState.type = type;
+  const dg = document.getElementById('dg');
+  const def = DEFS[type];
+  dg.innerHTML = def.render({id:'gh', value:def.val, active:false, closed:def.closed||false});
+  dg.style.display = 'block';
+  dg.style.left = e.clientX+'px';
+  dg.style.top  = e.clientY+'px';
+  try { e.dataTransfer.setDragImage(new Image(), 0, 0); } catch(ex){}
+}
+
+function palClick(type) {
+  S.palSel = type;
+  document.querySelectorAll('.ci').forEach(el => el.classList.remove('sel-pal'));
+  document.querySelector(`.ci[data-type="${type}"]`)?.classList.add('sel-pal');
+  setStatus(`Click any hole on the breadboard to place ${DEFS[type].label}`);
+}
+
+function filterComps(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.ci').forEach(el => {
+    el.style.display = el.querySelector('span').textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+document.getElementById('canvas-area').addEventListener('dragover', e => e.preventDefault());
+document.getElementById('canvas-area').addEventListener('drop', e => {
+  e.preventDefault();
+  dragState.active = false;
+  document.getElementById('dg').style.display = 'none';
+  clearSnapHighlights();
+  const type = e.dataTransfer.getData('comp-type') || dragState.type;
+  if (!type) return;
+  const h = nearestHole(e.clientX, e.clientY, 40);
+  if (h) { saveHistory(); placeComp(type, h.id); }
+  else {
+    const p = screenToCanvas(e.clientX, e.clientY);
+    saveHistory(); placeCompFree(type, p.x+S.panX, p.y+S.panY);
+  }
+});
+document.getElementById('canvas-area').addEventListener('dragleave', () => {
+  clearSnapHighlights();
+});
+
+function highlightSnapHoles(mx, my) {
+  clearSnapHighlights();
+  const h = nearestHole(mx, my, 50);
+  if (h) document.getElementById('h-'+h.id)?.classList.add('snap');
+}
+function clearSnapHighlights() {
+  document.querySelectorAll('.bh.snap').forEach(el => el.classList.remove('snap'));
+}
+
+// ================================================================
+//  HOLE EVENTS
+// ================================================================
+function onHoleEnter(e) {
+  const hid = e.currentTarget.dataset.hid;
+  const hd = S.holeMap[hid];
+  if (!hd) return;
+  const tip = document.getElementById('tip');
+  const label = hd.row==='rail' ? `Rail ${hd.half.toUpperCase()} ${hd.railType==='pos'?'(+VCC)':'(GND)'}` : `${hd.row.toUpperCase()}${hd.col} — Group: ${hd.group}`;
+  tip.textContent = label;
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX+12)+'px';
+  tip.style.top  = (e.clientY-8)+'px';
+  if (S.tool==='wire' && S.wire.from) e.currentTarget.classList.add('we');
+  else if (S.palSel) e.currentTarget.classList.add('snap');
+  setStatus(label);
+}
+function onHoleLeave(e) {
+  document.getElementById('tip').style.display = 'none';
+  e.currentTarget.classList.remove('snap','we');
+}
+
+function onHoleClick(e) {
+  e.stopPropagation();
+  const hid = e.currentTarget.dataset.hid;
+  if (S.tool==='wire') { handleWireClick(hid, e.currentTarget); return; }
+  if (S.palSel) {
+    saveHistory();
+    placeComp(S.palSel, hid);
+    S.palSel = null;
+    document.querySelectorAll('.ci').forEach(el=>el.classList.remove('sel-pal'));
+    return;
+  }
+  const hd = S.holeMap[hid];
+  if (hd && hd.comp) selectComp(hd.comp);
+  else deselectAll();
+}
+
+// ================================================================
+//  PLACE COMPONENT
+// ================================================================
+let uid = 1;
+
+function placeComp(type, anchorHid) {
+  const def = DEFS[type];
+  const anchor = S.holeMap[anchorHid];
+  if (!anchor) return;
+
+  const comp = {
+    id: 'c'+(uid++),
+    type, value: def.val, rotation: 0,
+    active: false, closed: def.closed||false,
+    bands: def.bands ? [...def.bands] : undefined,
+    anchorHole: anchorHid, freeX:null, freeY:null,
+    pins: [],
+  };
+
+  // Compute pin holes
+  if (anchor.row !== 'rail') {
+    comp.pins = def.offsets.map(off => {
+      const col = anchor.col + off;
+      if (col<1||col>BB_COLS) return null;
+      return anchor.row + col;
+    }).filter(Boolean);
+  } else {
+    comp.pins = [anchorHid];
+  }
+
+  // Mark occupied
+  comp.pins.forEach(pid => {
+    const hd = S.holeMap[pid];
+    if (hd) { hd.occ=true; hd.comp=comp.id; document.getElementById('h-'+pid)?.classList.add('occ'); }
+  });
+
+  S.comps.push(comp);
+  renderComp(comp);
+  updateCounts();
+  selectComp(comp.id);
+}
+
+function placeCompFree(type, x, y) {
+  const def = DEFS[type];
+  const comp = {
+    id: 'c'+(uid++), type, value: def.val, rotation:0,
+    active:false, closed:def.closed||false,
+    bands: def.bands?[...def.bands]:undefined,
+    anchorHole:null, freeX:x, freeY:y, pins:[],
+  };
+  S.comps.push(comp);
+  renderComp(comp);
+  updateCounts();
+  selectComp(comp.id);
+}
+
+// ================================================================
+//  RENDER COMPONENT ON BOARD
+// ================================================================
+function renderComp(comp) {
+  const layer = document.getElementById('comp-layer');
+  document.getElementById(comp.id)?.remove();
+
+  const def = DEFS[comp.type];
+  const el = document.createElement('div');
+  el.id = comp.id;
+  el.className = 'bc';
+  if (S.simOn) el.classList.toggle('led-active', comp.type==='led'&&comp.active);
+  if (S.simOn) el.classList.toggle('motor-active', comp.type==='motor'&&comp.active);
+  if (S.simOn) el.classList.toggle('buzzer-active', comp.type==='buzzer'&&comp.active);
+  if (S.simOn) el.classList.toggle('lamp-active', comp.type==='lamp'&&comp.active);
+
+  el.innerHTML = def.render(comp);
+
+  // Position
+  let cx, cy;
+  if (comp.anchorHole) {
+    const pos = holePagePos(comp.anchorHole);
+    if (pos) {
+      const anchorHd = S.holeMap[comp.anchorHole];
+      // For vertical comps
+      const vtype = ['led','capacitor','lamp','transistor','buzzer'].includes(comp.type);
+      if (vtype) {
+        cx = pos.x - def.w/2 + CELL/2;
+        cy = pos.y - def.h + 12;
+      } else {
+        // Center the middle pin offset
+        const midOff = def.offsets[Math.floor(def.offsets.length/2)];
+        cx = pos.x - (midOff)*CELL - def.w/2;
+        cy = pos.y - def.h/2;
+      }
+    }
+  } else if (comp.freeX!==null) {
+    cx = comp.freeX - def.w/2;
+    cy = comp.freeY - def.h/2;
+  }
+
+  if (cx!==undefined) {
+    el.style.left = cx+'px';
+    el.style.top  = cy+'px';
+  }
+  el.style.transform = `rotate(${comp.rotation}deg)`;
+
+  el.addEventListener('click', e => { e.stopPropagation(); if (S.tool==='select') selectComp(comp.id); if (comp.type==='switch') {toggleSwitch(comp.id); } });
+  el.addEventListener('dblclick', e => { e.stopPropagation(); if (comp.type==='switch') toggleSwitch(comp.id); });
+  el.addEventListener('mousedown', e => { if(S.tool==='select') startCompDrag(e, comp.id); });
+  el.addEventListener('contextmenu', e => { e.preventDefault(); showCtxMenu(e, comp.id); });
+
+  layer.appendChild(el);
+  if (comp.id===S.selComp) el.classList.add('sel-c');
+}
+
+// ================================================================
+//  COMPONENT DRAGGING ON BOARD
+// ================================================================
+let compDrag = { active:false, id:null, startMX:0, startMY:0, startLeft:0, startTop:0 };
+
+function startCompDrag(e, compId) {
+  if (panning) return;
+  e.stopPropagation();
+  const el = document.getElementById(compId);
+  if (!el) return;
+  selectComp(compId);
+  compDrag = {
+    active:true, id:compId,
+    startMX:e.clientX, startMY:e.clientY,
+    startLeft:parseInt(el.style.left)||0, startTop:parseInt(el.style.top)||0
+  };
+}
+
+function moveDraggedComp(e) {
+  if (!compDrag.active) return;
+  const el = document.getElementById(compDrag.id);
+  if (!el) return;
+  const dx = (e.clientX - compDrag.startMX)/S.zoom;
+  const dy = (e.clientY - compDrag.startMY)/S.zoom;
+  el.style.left = (compDrag.startLeft+dx)+'px';
+  el.style.top  = (compDrag.startTop +dy)+'px';
+  // Highlight nearest hole
+  highlightSnapHoles(e.clientX, e.clientY);
+  redrawCompWires(compDrag.id);
+}
+
+function dropDraggedComp(e) {
+  if (!compDrag.active) return;
+  compDrag.active = false;
+  clearSnapHighlights();
+  const comp = S.comps.find(c=>c.id===compDrag.id);
+  if (!comp) return;
+  const dx = Math.abs(e.clientX-compDrag.startMX);
+  const dy = Math.abs(e.clientY-compDrag.startMY);
+  if (dx<4 && dy<4) return; // just a click, not drag
+
+  saveHistory();
+  // Try to snap to nearest hole
+  const nh = nearestHole(e.clientX, e.clientY, 45);
+  if (nh) {
+    freePins(comp);
+    comp.anchorHole = nh.id; comp.freeX=null; comp.freeY=null;
+    const def = DEFS[comp.type];
+    if (nh.row!=='rail') {
+      comp.pins = def.offsets.map(off=>{
+        const col=nh.col+off;
+        if(col<1||col>BB_COLS) return null;
+        return nh.row+col;
+      }).filter(Boolean);
+    } else comp.pins=[nh.id];
+    comp.pins.forEach(pid=>{
+      const hd=S.holeMap[pid];
+      if(hd){hd.occ=true;hd.comp=comp.id;document.getElementById('h-'+pid)?.classList.add('occ');}
+    });
+    renderComp(comp);
+  } else {
+    const el=document.getElementById(comp.id);
+    freePins(comp); comp.anchorHole=null;
+    comp.freeX=(parseInt(el.style.left)+DEFS[comp.type].w/2);
+    comp.freeY=(parseInt(el.style.top)+DEFS[comp.type].h/2);
+  }
+  redrawCompWires(comp.id);
+}
+
+function freePins(comp) {
+  comp.pins.forEach(pid=>{
+    const hd=S.holeMap[pid];
+    if(hd){hd.occ=false;hd.comp=null;document.getElementById('h-'+pid)?.classList.remove('occ');}
+  });
+  comp.pins=[];
+}
+
+// ================================================================
+//  WIRE SYSTEM
+// ================================================================
+let wireColorIdx = 0;
+
+function handleWireClick(hid, el) {
+  if (!S.wire.from) {
+    S.wire.from = hid;
+    el.classList.add('ws');
+    setStatus(`Wire started at ${hid.toUpperCase()} — now click any other hole to complete the wire.`);
+  } else {
+    if (S.wire.from === hid) { cancelWire(); return; }
+    saveHistory();
+    const wire = { id:'w'+(uid++), from:S.wire.from, to:hid, color:S.wireColor };
+    S.wires.push(wire);
+    renderWire(wire);
+    document.getElementById('h-'+S.wire.from)?.classList.remove('ws');
+    document.getElementById('h-'+S.wire.from)?.classList.add('occ');
+    document.getElementById('h-'+hid)?.classList.add('occ');
+    cancelWire();
+    updateCounts();
+    setStatus(`Wire connected from ${S.wire.from||hid} to ${hid}. Click another hole to start a new wire.`);
+    S.wire.from=null; // already cleared by cancelWire but double safe
+  }
+}
+
+function cancelWire() {
+  if (S.wire.from) {
+    document.getElementById('h-'+S.wire.from)?.classList.remove('ws');
+    S.wire.from = null;
+  }
+  document.getElementById('w-preview')?.remove();
+}
+
+function renderWire(wire) {
+  const svg = document.getElementById('wire-svg');
+  document.getElementById(wire.id)?.remove();
+  document.getElementById(wire.id+'-d1')?.remove();
+  document.getElementById(wire.id+'-d2')?.remove();
+
+  const fp = holePagePos(wire.from);
+  const tp = holePagePos(wire.to);
+  if (!fp||!tp) return;
+
+  const d = makeWirePath(fp.x+S.panX, fp.y+S.panY, tp.x+S.panX, tp.y+S.panY);
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.id = wire.id;
+  path.setAttribute('class','wire-path');
+  path.setAttribute('d',d);
+  path.setAttribute('stroke',wire.color);
+  path.addEventListener('click', e=>{e.stopPropagation(); selectWire(wire.id);});
+  path.addEventListener('contextmenu', e=>{e.preventDefault(); S.selWire=wire.id; showWireCtx(e);});
+  svg.appendChild(path);
+
+  // Terminal dots
+  [['d1',fp],['d2',tp]].forEach(([sfx,p])=>{
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.id = wire.id+'-'+sfx;
+    c.setAttribute('cx',p.x+S.panX); c.setAttribute('cy',p.y+S.panY); c.setAttribute('r','4');
+    c.setAttribute('fill',wire.color); c.setAttribute('stroke','rgba(0,0,0,.4)'); c.setAttribute('stroke-width','1');
+    c.setAttribute('pointer-events','none');
+    svg.appendChild(c);
+  });
+
+  if (wire.id===S.selWire) path.classList.add('wsel');
+}
+
+function makeWirePath(x1,y1,x2,y2) {
+  const dx=Math.abs(x2-x1), dy=Math.abs(y2-y1);
+  if (dx<4) return `M${x1},${y1} L${x2},${y2}`;
+  if (dy<4) return `M${x1},${y1} L${x2},${y2}`;
+  const mx=x1+(x2-x1)*0.5;
+  const r=8, sx=x2>x1?r:-r, sy=y2>y1?r:-r;
+  return `M${x1},${y1} H${mx-sx} Q${mx},${y1} ${mx},${y1+sy} V${y2-sy} Q${mx},${y2} ${mx+sx},${y2} H${x2}`;
+}
+
+function updateWirePreviewFromHole(fromHid, mx, my) {
+  const fp = holePagePos(fromHid);
+  if (!fp) return;
+  const vp = document.getElementById('cvp').getBoundingClientRect();
+  const tx = (mx-vp.left)/S.zoom - S.panX + S.panX; // just mx - vp.left relative to SVG
+  const ty = (my-vp.top)/S.zoom  - S.panY + S.panY;
+  // SVG coords = canvas inner coords
+  const cx2 = (mx-vp.left)/S.zoom;
+  const cy2 = (my-vp.top)/S.zoom;
+  const cx1 = fp.x+S.panX;
+  const cy1 = fp.y+S.panY;
+
+  const svg = document.getElementById('wire-svg');
+  let prev = document.getElementById('w-preview');
+  if (!prev) {
+    prev = document.createElementNS('http://www.w3.org/2000/svg','path');
+    prev.id='w-preview'; prev.setAttribute('class','wire-prev');
+    svg.appendChild(prev);
+  }
+  prev.setAttribute('d', makeWirePath(cx1,cy1,cx2,cy2));
+}
+
+function updateWirePreview(){} // placeholder
+
+function redrawAllWires() {
+  S.wires.forEach(w => renderWire(w));
+}
+
+function redrawCompWires(compId) {
+  const comp = S.comps.find(c=>c.id===compId);
+  if (!comp) return;
+  S.wires.forEach(w=>{
+    if(comp.pins.includes(w.from)||comp.pins.includes(w.to)) renderWire(w);
+  });
+}
+
+// ================================================================
+//  SELECTION
+// ================================================================
+function selectComp(id) {
+  deselectAll();
+  S.selComp = id;
+  document.getElementById(id)?.classList.add('sel-c');
+  showProps(id);
+}
+
+function selectWire(id) {
+  deselectAll();
+  S.selWire = id;
+  document.getElementById(id)?.classList.add('wsel');
+  setStatus('Wire selected — press Delete to remove, or right-click for options.');
+}
+
+function deselectAll() {
+  if(S.selComp){document.getElementById(S.selComp)?.classList.remove('sel-c');S.selComp=null;}
+  if(S.selWire){document.getElementById(S.selWire)?.classList.remove('wsel');S.selWire=null;}
+  showNoProps();
+}
+
+document.getElementById('cvp').addEventListener('click', e=>{
+  if (!e.target.closest('.bc,.bh')) deselectAll();
+  closeCtxMenu();
+});
+document.addEventListener('keydown', e=>{
+  if (e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if (e.key==='Delete'||e.key==='Backspace') deleteSelected();
+  if (e.key==='r'||e.key==='R') rotateSelected();
+  if (e.key==='v'||e.key==='V') setTool('select');
+  if (e.key==='w'||e.key==='W') setTool('wire');
+  if (e.key==='Escape') { cancelWire(); deselectAll(); S.palSel=null; document.querySelectorAll('.ci').forEach(el=>el.classList.remove('sel-pal')); }
+  if ((e.ctrlKey||e.metaKey)&&e.key==='z') { e.preventDefault(); undoAction(); }
+  if ((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='z'))) { e.preventDefault(); redoAction(); }
+  if (e.key==='='||e.key==='+') zoomIn();
+  if (e.key==='-') zoomOut();
+  if (e.key==='0') resetView();
+});
+
+// ================================================================
+//  DELETE / ROTATE / FLIP
+// ================================================================
+function deleteSelected() {
+  saveHistory();
+  if (S.selComp) {
+    const comp = S.comps.find(c=>c.id===S.selComp);
+    if (comp) {
+      freePins(comp);
+      S.wires = S.wires.filter(w=>{
+        if (comp.pins.includes(w.from)||comp.pins.includes(w.to)) {
+          document.getElementById(w.id)?.remove();
+          document.getElementById(w.id+'-d1')?.remove();
+          document.getElementById(w.id+'-d2')?.remove();
+          return false;
+        }
+        return true;
+      });
+    }
+    document.getElementById(S.selComp)?.remove();
+    S.comps = S.comps.filter(c=>c.id!==S.selComp);
+    S.selComp=null; showNoProps(); updateCounts();
+  }
+  if (S.selWire) {
+    document.getElementById(S.selWire)?.remove();
+    document.getElementById(S.selWire+'-d1')?.remove();
+    document.getElementById(S.selWire+'-d2')?.remove();
+    S.wires = S.wires.filter(w=>w.id!==S.selWire);
+    S.selWire=null; updateCounts();
+  }
+}
+
+function rotateSelected() {
+  if (!S.selComp) return;
+  const comp = S.comps.find(c=>c.id===S.selComp);
+  if (!comp) return;
+  saveHistory();
+  comp.rotation = (comp.rotation+90)%360;
+  const el=document.getElementById(comp.id);
+  if (el) el.style.transform=`rotate(${comp.rotation}deg)`;
+  showProps(comp.id);
+}
+
+function flipSelected() {
+  if (!S.selComp) return;
+  const comp = S.comps.find(c=>c.id===S.selComp);
+  if (!comp) return;
+  saveHistory();
+  comp.rotation = (comp.rotation+180)%360;
+  const el=document.getElementById(comp.id);
+  if(el) el.style.transform=`rotate(${comp.rotation}deg)`;
+  showProps(comp.id);
+}
+
+function toggleSwitch(id) {
+  const comp = S.comps.find(c=>c.id===id);
+  if (!comp||comp.type!=='switch') return;
+  comp.closed = !comp.closed;
+  renderComp(comp);
+  if (S.simOn) runSimulation();
+}
+
+function duplicateSelected() {
+  if (!S.selComp) return;
+  const comp = S.comps.find(c=>c.id===S.selComp);
+  if (!comp) return;
+  saveHistory();
+  const nc = JSON.parse(JSON.stringify(comp));
+  nc.id = 'c'+(uid++);
+  nc.anchorHole = null; nc.pins = [];
+  const el = document.getElementById(comp.id);
+  nc.freeX = (parseInt(el.style.left||0)) + 40 + DEFS[nc.type].w/2;
+  nc.freeY = (parseInt(el.style.top||0))  + 20 + DEFS[nc.type].h/2;
+  S.comps.push(nc);
+  renderComp(nc);
+  selectComp(nc.id);
+  updateCounts();
+}
+
+// ================================================================
+//  CONTEXT MENU
+// ================================================================
+function showCtxMenu(e, compId) {
+  S.ctxTarget = compId;
+  selectComp(compId);
+  const ctx = document.getElementById('ctx');
+  ctx.style.display='block';
+  ctx.style.left = e.clientX+'px';
+  ctx.style.top  = e.clientY+'px';
+}
+function showWireCtx(e) {
+  const ctx = document.getElementById('ctx');
+  ctx.innerHTML = `
+    <div class="ctx-item danger" onclick="ctxDeleteWire()">🗑 Delete Wire</div>
+  `;
+  ctx.style.display='block';
+  ctx.style.left=e.clientX+'px';
+  ctx.style.top=e.clientY+'px';
+}
+function closeCtxMenu() { document.getElementById('ctx').style.display='none'; document.getElementById('ctx').innerHTML=`<div class="ctx-item" onclick="ctxRotate()">↻ Rotate 90°</div><div class="ctx-item" onclick="ctxFlip()">↔ Flip</div><div class="ctx-sep"></div><div class="ctx-item" onclick="ctxDuplicate()">⧉ Duplicate</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="ctxDelete()">🗑 Delete</div>`; }
+function ctxRotate() { closeCtxMenu(); rotateSelected(); }
+function ctxFlip()   { closeCtxMenu(); flipSelected(); }
+function ctxDuplicate(){ closeCtxMenu(); duplicateSelected(); }
+function ctxDelete() { closeCtxMenu(); deleteSelected(); }
+function ctxDeleteWire(){ closeCtxMenu(); deleteSelected(); }
+document.addEventListener('click', ()=>closeCtxMenu());
+
+// ================================================================
+//  PROPERTIES PANEL
+// ================================================================
+function showNoProps() {
+  document.getElementById('props-body').innerHTML = `<div class="no-sel"><span class="no-sel-ico">🖱️</span>Select a component to view properties</div>`;
+}
+
+function showProps(id) {
+  const comp = S.comps.find(c=>c.id===id);
+  if (!comp) return;
+  const def = DEFS[comp.type];
+  const PIN_COLORS = ['#ff7700','#3b9eff','#2ecc71','#f0c040'];
+
+  let valueHTML = '';
+  if (comp.type==='led') {
+    valueHTML = `<select class="pv-sel" onchange="updateVal('${id}',this.value)">
+      ${Object.keys(def.colors).map(k=>`<option ${comp.value===k?'selected':''}>${k}</option>`).join('')}
+    </select>`;
+  } else if (comp.type==='resistor') {
+    valueHTML = `<input class="pv" type="text" value="${comp.value}" onchange="updateVal('${id}',this.value)">`;
+  } else {
+    valueHTML = `<input class="pv" type="text" value="${comp.value}" onchange="updateVal('${id}',this.value)">`;
+  }
+
+  let extra = '';
+  if (comp.type==='switch') {
+    extra = `<div class="pr"><span class="pl">State</span>
+      <button class="pb primary" onclick="toggleSwitch('${id}')" style="flex:1">${comp.closed?'🟢 CLOSED (ON)':'⚪ OPEN (OFF)'}</button>
+    </div>`;
+  }
+  if (comp.type==='resistor') {
+    extra += `<div style="margin:6px 0 2px;font-size:10px;color:var(--txt2);font-weight:700;text-transform:uppercase">Color Bands</div>
+      <div style="display:flex;gap:4px;margin-bottom:8px">
+        ${(comp.bands||DEFS.resistor.bands).map((b,i)=>`<div style="width:20px;height:28px;background:${b};border-radius:3px;border:1px solid rgba(255,255,255,.15);cursor:pointer" title="Band ${i+1}" onclick="cycleBand('${id}',${i})"></div>`).join('')}
+      </div>`;
+  }
+
+  const pinsHTML = comp.pins.length ? `
+    <div style="margin:8px 0 4px;font-size:10px;color:var(--txt2);font-weight:700;text-transform:uppercase">Pin Map</div>
+    ${comp.pins.map((pid,i)=>`
+      <div class="pin-row">
+        <div class="pin-dot" style="background:${PIN_COLORS[i%PIN_COLORS.length]}"></div>
+        <div class="pin-lbl">${def.pinL[i]||i+1}: ${pid?pid.toUpperCase():'—'}</div>
+      </div>`).join('')}` : '';
+
+  document.getElementById('props-body').innerHTML = `
+    <div class="pr"><span class="pl">Type</span><div class="pv ro">${def.label}</div></div>
+    <div class="pr"><span class="pl">ID</span><div class="pv ro" style="font-size:11px">${comp.id}</div></div>
+    <div class="pr"><span class="pl">Value</span>${valueHTML}</div>
+    <div class="pr"><span class="pl">Rotation</span><div class="pv ro">${comp.rotation}°</div></div>
+    ${extra}${pinsHTML}
+    <div class="pa">
+      <button class="pb" onclick="rotateSelected()">↻ Rotate</button>
+      <button class="pb" onclick="duplicateSelected()">⧉ Copy</button>
+      <button class="pb danger" onclick="deleteSelected()">🗑 Delete</button>
+    </div>`;
+}
+
+function updateVal(id, val) {
+  const comp = S.comps.find(c=>c.id===id);
+  if (!comp) return;
+  comp.value = val;
+  renderComp(comp);
+  if (S.simOn) runSimulation();
+}
+
+const BAND_COLORS = ['#1a1a1a','#6a3000','#c00','#f80','#ff0','#080','#00c','#7030a0','#aaa','#fff'];
+function cycleBand(id, bandIdx) {
+  const comp = S.comps.find(c=>c.id===id);
+  if (!comp||!comp.bands) return;
+  const ci = BAND_COLORS.indexOf(comp.bands[bandIdx]);
+  comp.bands[bandIdx] = BAND_COLORS[(ci+1)%BAND_COLORS.length];
+  renderComp(comp);
+  showProps(id);
+}
+
+// ================================================================
+//  OHM'S LAW
+// ================================================================
+function calcOhm() {
+  const v=parseFloat(document.getElementById('ohm-v').value);
+  const r=parseFloat(document.getElementById('ohm-r').value);
+  if(!isNaN(v)&&!isNaN(r)&&r!==0){
+    document.getElementById('ohm-i').textContent=(v/r*1000).toFixed(3)+' mA';
+    document.getElementById('ohm-p').textContent=(v*v/r*1000).toFixed(3)+' mW';
+  } else {
+    document.getElementById('ohm-i').textContent='—';
+    document.getElementById('ohm-p').textContent='—';
+  }
+}
+
+// ================================================================
+//  WIRE COLOR PICKER
+// ================================================================
+function buildWireColorPicker() {
+  const picker = document.getElementById('wire-color-picker');
+  picker.innerHTML='';
+  WIRE_COLORS.forEach(col=>{
+    const d=document.createElement('div');
+    d.className='wcp'+(col===S.wireColor?' active-wc':'');
+    d.style.background=col;
+    d.title=col;
+    d.onclick=()=>{
+      S.wireColor=col;
+      document.querySelectorAll('.wcp').forEach(el=>el.classList.remove('active-wc'));
+      d.classList.add('active-wc');
+    };
+    picker.appendChild(d);
+  });
+}
+
+// ================================================================
+//  PANEL TOGGLES
+// ================================================================
+function togglePanel(name) {
+  const pb=document.getElementById('pb-'+name);
+  const tog=document.getElementById('tog-'+name);
+  const hdr=tog.parentElement;
+  const hidden=pb.classList.toggle('hidden');
+  hdr.classList.toggle('collapsed',hidden);
+}
+
+function toggleCG(name) {
+  const body=document.getElementById('cgb-'+name);
+  const arr=document.getElementById('arr-'+name);
+  const vis=body.style.display!=='none';
+  body.style.display=vis?'none':'';
+  arr.textContent=vis?'▸':'▾';
+}
+
+// ================================================================
+//  MODAL
+// ================================================================
+let modalCb = null;
+function showModal(title, body, okCb) {
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').textContent=body;
+  document.getElementById('modal-overlay').classList.add('show');
+  modalCb=okCb;
+  document.getElementById('modal-ok').onclick=()=>{ closeModal(); if(modalCb) modalCb(); };
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+function confirmClear() {
+  showModal('Clear Lab','This will remove all components and wires. Are you sure?', clearLab);
+}
+
+// ================================================================
+//  HISTORY / UNDO / REDO
+// ================================================================
+function snapshot() {
+  return JSON.stringify({
+    comps: S.comps.map(c=>({...c, bands:c.bands?[...c.bands]:undefined})),
+    wires: S.wires.map(w=>({...w})),
+  });
+}
+
+function saveHistory() {
+  S.history.push(snapshot());
+  if (S.history.length>50) S.history.shift();
+  S.future=[];
+}
+
+function restoreSnapshot(snap) {
+  const d=JSON.parse(snap);
+  // Clear board
+  S.comps.forEach(c=>{freePins(c);document.getElementById(c.id)?.remove();});
+  S.wires.forEach(w=>{document.getElementById(w.id)?.remove();document.getElementById(w.id+'-d1')?.remove();document.getElementById(w.id+'-d2')?.remove();});
+  document.getElementById('wire-svg').innerHTML='';
+  S.comps=[]; S.wires=[]; S.selComp=null; S.selWire=null;
+  // Restore
+  d.comps.forEach(comp=>{
+    S.comps.push(comp);
+    comp.pins.forEach(pid=>{
+      const hd=S.holeMap[pid];
+      if(hd){hd.occ=true;hd.comp=comp.id;document.getElementById('h-'+pid)?.classList.add('occ');}
+    });
+    renderComp(comp);
+  });
+  d.wires.forEach(w=>{S.wires.push(w);renderWire(w);});
+  showNoProps(); updateCounts();
+}
+
+function undoAction() {
+  if (!S.history.length){setStatus('Nothing to undo.');return;}
+  S.future.push(snapshot());
+  restoreSnapshot(S.history.pop());
+  setStatus('Undo.');
+}
+function redoAction() {
+  if (!S.future.length){setStatus('Nothing to redo.');return;}
+  S.history.push(snapshot());
+  restoreSnapshot(S.future.pop());
+  setStatus('Redo.');
+}
+
+// ================================================================
+//  CLEAR LAB
+// ================================================================
+function clearLab() {
+  saveHistory();
+  S.comps.forEach(c=>{freePins(c);document.getElementById(c.id)?.remove();});
+  S.wires.forEach(w=>{
+    document.getElementById(w.id)?.remove();
+    document.getElementById(w.id+'-d1')?.remove();
+    document.getElementById(w.id+'-d2')?.remove();
+  });
+  document.getElementById('wire-svg').innerHTML='';
+  S.comps=[]; S.wires=[]; S.selComp=null; S.selWire=null;
+  showNoProps(); updateCounts(); stopSimulation();
+  setStatus('Lab cleared. Start fresh!');
+}
+
+// ================================================================
+//  SIMULATION ENGINE
+// ================================================================
+function runSimulation() {
+  S.simOn=true;
+  document.getElementById('btn-simulate').style.display='none';
+  document.getElementById('btn-stop').style.display='flex';
+  document.body.classList.add('sim-running');
+
+  const results = analyzeCircuit();
+  showFeedback(results.feedback);
+
+  S.comps.forEach(c=>{c.active=false;});
+  results.powered.forEach(id=>{
+    const c=S.comps.find(x=>x.id===id);
+    if(c) c.active=true;
+  });
+  S.comps.forEach(c=>renderComp(c));
+  if(S.selComp) showProps(S.selComp);
+  setStatus(results.powered.length>0 ? `Simulation: ${results.powered.length} component(s) active.` : 'Simulation running — no active output components detected.');
+}
+
+function stopSimulation() {
+  S.simOn=false;
+  document.getElementById('btn-simulate').style.display='flex';
+  document.getElementById('btn-stop').style.display='none';
+  document.body.classList.remove('sim-running');
+  S.comps.forEach(c=>{c.active=false;renderComp(c);});
+  document.getElementById('fb-list').innerHTML='<div class="fi-idle">Run simulation to analyze circuit</div>';
+  setStatus('Simulation stopped.');
+}
+
+function analyzeCircuit() {
+  const feedback=[], powered=[];
+
+  const sources = S.comps.filter(c=>c.type==='battery'||c.type==='dcsource');
+  if (!sources.length) {
+    feedback.push({t:'warn',i:'⚠️',m:'No power source. Add a Battery or DC Source.'});
+    return {feedback,powered};
+  }
+
+  const src = sources[0];
+  const sv = parseFloat(src.value)||9;
+  feedback.push({t:'info',i:'⚡',m:`Power source: ${src.value} (${DEFS[src.type].label})`});
+
+  const adj = buildAdj();
+  const srcPins = src.pins.length>=2 ? src.pins : [];
+  if (!srcPins.length) {
+    feedback.push({t:'warn',i:'🔌',m:'Power source not placed on breadboard holes.'});
+    return {feedback,powered};
+  }
+
+  const posReach = bfs(srcPins.slice(0,1), adj);
+  const negReach = bfs(srcPins.slice(1,2), adj);
+
+  // Check switches
+  const openSw = S.comps.filter(c=>c.type==='switch'&&!c.closed);
+  if (openSw.length) feedback.push({t:'warn',i:'🔀',m:`${openSw.length} switch(es) open — circuit may be broken.`});
+
+  // Analyze loads
+  const loads = S.comps.filter(c=>['led','lamp','motor','buzzer'].includes(c.type));
+  if (!loads.length) { feedback.push({t:'info',i:'ℹ️',m:'No output components (LED/Lamp/Motor/Buzzer) found.'}); }
+
+  loads.forEach(load=>{
+    if (!load.pins.length) { feedback.push({t:'warn',i:'🔌',m:`${DEFS[load.type].label} not on breadboard.`}); return; }
+
+    const pin0reach = posReach.has(load.pins[0])||posReach.has(getGroup(load.pins[0]));
+    const pin1reach = negReach.has(load.pins[load.pins.length-1])||negReach.has(getGroup(load.pins[load.pins.length-1]));
+    const connected = pin0reach||pin1reach;
+
+    if (!connected) {
+      feedback.push({t:'warn',i:'🔌',m:`${DEFS[load.type].label} — not connected to source.`}); return;
+    }
+
+    // Check polarity for LED
+    if (load.type==='led' && !checkLEDPolarity(load,posReach)) {
+      feedback.push({t:'err',i:'❌',m:`LED — reverse polarity! Anode must connect to (+).`}); return;
+    }
+
+    // Check series resistor for LED
+    const res = findSeriesR(load);
+    if (load.type==='led'&&!res) feedback.push({t:'warn',i:'⚠️',m:`LED — no series resistor! May burn out.`});
+
+    powered.push(load.id);
+    const rv = res ? (parseFloat(res.value)||470) : 470;
+    let msg='';
+    if (load.type==='led') {
+      const imA=((sv-2.0)/rv*1000).toFixed(1);
+      msg=`LED ON — ~${imA}mA${res?'':' (add resistor!)'}`;
+    } else if (load.type==='lamp') msg=`Lamp ON — ${sv}V`;
+    else if (load.type==='motor') msg=`Motor spinning — ${sv}V`;
+    else if (load.type==='buzzer') msg=`Buzzer active — ${sv}V`;
+    feedback.push({t:'ok',i:'✅',m:msg});
+  });
+
+  // Short circuit check
+  if (srcPins.length>=2) {
+    const directPath = posReach.has(srcPins[1])||posReach.has(getGroup(srcPins[1]));
+    const hasLoad = S.comps.some(c=>['led','lamp','motor','buzzer','resistor'].includes(c.type)&&c.pins.length);
+    if (directPath&&!hasLoad) feedback.push({t:'err',i:'💥',m:'SHORT CIRCUIT detected — no load between + and −!'});
+  }
+
+  return {feedback,powered};
+}
+
+function buildAdj() {
+  const adj={};
+  const addEdge=(a,b)=>{
+    if(!adj[a]) adj[a]=new Set();
+    if(!adj[b]) adj[b]=new Set();
+    adj[a].add(b); adj[b].add(a);
+  };
+  // BB column groups
+  Object.values(S.holeMap).forEach(hd=>{
+    // Connect same-group holes
+    const peers = Object.values(S.holeMap).filter(h=>h.group===hd.group&&h.id!==hd.id);
+    peers.forEach(h=>addEdge(hd.id,h.id));
+  });
+  // Wires
+  S.wires.forEach(w=>addEdge(w.from,w.to));
+  // Component connections (passives/switch conduct)
+  S.comps.forEach(c=>{
+    if (c.type==='resistor'||c.type==='inductor') {
+      if(c.pins.length>=2) addEdge(c.pins[0],c.pins[1]);
+    }
+    if (c.type==='switch'&&c.closed&&c.pins.length>=2) addEdge(c.pins[0],c.pins[1]);
+    if (c.type==='diode'||c.type==='zener') {
+      if(c.pins.length>=2) addEdge(c.pins[0],c.pins[1]); // simplified fwd
+    }
+    if ((c.type==='battery'||c.type==='dcsource')&&c.pins.length>=2) {
+      addEdge('__SRC_POS__',c.pins[0]);
+      addEdge('__SRC_NEG__',c.pins[1]);
+    }
+  });
+  return adj;
+}
+
+function bfs(starts, adj) {
+  const vis=new Set(starts);
+  const q=[...starts];
+  while(q.length){
+    const n=q.shift();
+    (adj[n]||new Set()).forEach(nb=>{if(!vis.has(nb)){vis.add(nb);q.push(nb);}});
+  }
+  return vis;
+}
+
+function getGroup(hid) { return S.holeMap[hid]?.group||hid; }
+
+function checkLEDPolarity(led, posReach) {
+  if (!led.pins.length) return false;
+  return posReach.has(led.pins[0])||posReach.has(getGroup(led.pins[0]))||true; // simplified
+}
+
+function findSeriesR(load) {
+  const adj=buildAdj();
+  const reach=bfs(load.pins, adj);
+  return S.comps.find(c=>c.type==='resistor'&&c.pins.some(p=>reach.has(p)));
+}
+
+function showFeedback(items) {
+  if (!items.length) {
+    document.getElementById('fb-list').innerHTML='<div class="fi-idle">No issues found.</div>'; return;
+  }
+  document.getElementById('fb-list').innerHTML = items.map(f=>`
+    <div class="fi ${f.t}"><span class="fi-ico">${f.i}</span><span>${f.m}</span></div>`).join('');
+}
+
+// ================================================================
+//  QUICK BUILDS
+// ================================================================
+function quickBuild(type) {
+  clearLab();
+  setTimeout(()=>{
+    saveHistory();
+    const builders = {
+      led:()=>{
+        addComp('battery','a3'); addComp('resistor','a10'); addComp('led','a16');
+        setTimeout(()=>{
+          addWire('a3','rail_top_p2','#e74c3c');
+          addWire('a5','a10','#2ecc71');
+          addWire('a12','a16','#2ecc71');
+          addWire('a18','rail_top_n2','#3b9eff');
+          addWire('rail_top_p2','rail_bot_p2','#e74c3c');
+          addWire('rail_top_n2','rail_bot_n2','#3b9eff');
+        },80);
+      },
+      series:()=>{
+        addComp('battery','a3'); addComp('resistor','a9'); addComp('resistor','a15'); addComp('lamp','a20');
+        setTimeout(()=>{
+          addWire('a3','a9','#e74c3c'); addWire('a11','a15','#2ecc71'); addWire('a17','a20','#2ecc71');
+          addWire('a5','a22','#3b9eff');
+        },80);
+      },
+      parallel:()=>{
+        addComp('battery','a3'); addComp('resistor','c9'); addComp('resistor','e9'); addComp('lamp','c17'); addComp('lamp','e17');
+        setTimeout(()=>{
+          addWire('a3','rail_top_p2','#e74c3c');
+          addWire('c9','rail_top_p4','#e74c3c'); addWire('e9','rail_top_p4','#e74c3c');
+          addWire('c11','c17','#2ecc71'); addWire('e11','e17','#2ecc71');
+          addWire('c19','rail_top_n4','#3b9eff'); addWire('e19','rail_top_n4','#3b9eff');
+          addWire('a5','rail_top_n2','#3b9eff');
+        },80);
+      },
+      motor:()=>{
+        addComp('battery','a3'); addComp('switch','a10'); addComp('motor','a17');
+        setTimeout(()=>{
+          addWire('a3','a10','#e74c3c'); addWire('a12','a17','#2ecc71'); addWire('a5','a20','#3b9eff');
+        },80);
+      },
+      buzzer:()=>{
+        addComp('battery','a3'); addComp('switch','a10'); addComp('buzzer','a16');
+        setTimeout(()=>{
+          addWire('a3','a10','#e74c3c'); addWire('a12','a16','#f0c040'); addWire('a5','a18','#3b9eff');
+        },80);
+      },
+      lamp:()=>{
+        addComp('battery','a3'); addComp('resistor','a10'); addComp('lamp','a16');
+        setTimeout(()=>{
+          addWire('a3','a10','#e74c3c'); addWire('a12','a16','#2ecc71'); addWire('a5','a18','#3b9eff');
+        },80);
+      },
+      transistor:()=>{
+        addComp('battery','a3'); addComp('resistor','a10'); addComp('transistor','a16'); addComp('led','a20'); addComp('resistor','a23');
+        setTimeout(()=>{
+          addWire('a3','a10','#e74c3c'); addWire('a12','a16','#2ecc71'); addWire('a18','a20','#f0c040'); addWire('a5','a25','#3b9eff');
+        },80);
+      },
+    };
+    if (builders[type]) builders[type]();
+    setTimeout(()=>{ runSimulation(); setStatus(`Quick build: ${type} circuit loaded and simulated!`); }, 250);
+  }, 100);
+}
+
+function addComp(type, hid) {
+  const def = DEFS[type];
+  const anchor = S.holeMap[hid];
+  if (!anchor) return;
+  const comp = {
+    id:'c'+(uid++), type, value:def.val, rotation:0,
+    active:false, closed:def.closed||false,
+    bands:def.bands?[...def.bands]:undefined,
+    anchorHole:hid, freeX:null, freeY:null, pins:[],
+  };
+  if (anchor.row!=='rail') {
+    comp.pins=def.offsets.map(off=>{
+      const col=anchor.col+off;
+      if(col<1||col>BB_COLS) return null;
+      return anchor.row+col;
+    }).filter(Boolean);
+  } else comp.pins=[hid];
+  comp.pins.forEach(pid=>{
+    const hd=S.holeMap[pid];
+    if(hd){hd.occ=true;hd.comp=comp.id;document.getElementById('h-'+pid)?.classList.add('occ');}
+  });
+  S.comps.push(comp);
+  renderComp(comp);
+  updateCounts();
+}
+
+function addWire(from, to, color) {
+  if (!S.holeMap[from]||!S.holeMap[to]) return;
+  const w={id:'w'+(uid++),from,to,color:color||S.wireColor};
+  S.wires.push(w);
+  renderWire(w);
+  updateCounts();
+}
+
+// ================================================================
+//  STATUS & COUNTS
+// ================================================================
+function setStatus(msg) { document.getElementById('status-msg').textContent=msg; }
+function updateCounts() {
+  document.getElementById('st-parts').textContent='Parts: '+S.comps.length;
+  document.getElementById('st-wires').textContent='Wires: '+S.wires.length;
+  // Count unique nodes
+  const groups=new Set(S.comps.flatMap(c=>c.pins.map(p=>S.holeMap[p]?.group||p)));
+  document.getElementById('st-nodes').textContent='Nodes: '+groups.size;
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+function init() {
+  buildBreadboard();
+  buildWireColorPicker();
+  applyTransform();
+  setTool('select');
+  setStatus('Welcome to STEMbotix Virtual Circuit Lab! Drag components from the left panel or use Quick Builds →');
+
+  // Register hole elements
+  setTimeout(()=>{
+    Object.keys(S.holeMap).forEach(hid=>{
+      const el=document.getElementById('h-'+hid);
+      if(el) S.holeMap[hid].el=el;
+    });
+  }, 100);
+
+  console.log('STEMbotix Circuit Lab initialized.');
+  console.log('Holes registered:',Object.keys(S.holeMap).length);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

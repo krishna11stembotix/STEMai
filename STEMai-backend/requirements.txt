@@ -1,0 +1,46 @@
+# =============================================================================
+# STEMbotix AI Backend — Python Requirements
+# Python >= 3.10 required (str | None and list[str] syntax used in source)
+# =============================================================================
+requests
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+gunicorn==23.0.0
+python-multipart==0.0.12          # required for UploadFile (voice endpoint)
+
+# ── Async HTTP client ─────────────────────────────────────────────────────────
+httpx==0.28.1
+
+# ── Config / environment ──────────────────────────────────────────────────────
+python-dotenv==1.0.1
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.7.0
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
+itsdangerous==2.2.0               # URLSafeTimedSerializer for JWT-style tokens
+
+# ── Browser automation — Blockzie / StemX ────────────────────────────────────
+playwright==1.49.0
+pyvirtualdisplay==3.0             # Xvfb wrapper for headless Linux VPS
+
+# ── Voice pipeline ────────────────────────────────────────────────────────────
+faster-whisper==1.1.0             # STT — downloads ~150 MB model on first run
+edge-tts==6.1.12                  # TTS — uses Microsoft Edge TTS (no API key needed)
+
+# ── Standard async support ────────────────────────────────────────────────────
+anyio==4.6.2
+
+# =============================================================================
+# SYSTEM PACKAGES required (apt / Docker — NOT pip):
+#   ffmpeg          — audio conversion in voice_pipeline.py
+#   xvfb            — virtual display for Chrome on headless VPS
+#   x11-utils       — Xvfb companion tools
+#   chromium-browser — browser for Playwright / Blockzie
+#
+# Install once on VPS:
+#   apt install -y ffmpeg xvfb x11-utils chromium-browser
+#   playwright install-deps chromium
+# =============================================================================

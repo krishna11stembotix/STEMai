@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+
+# Secrets — NEVER commit these
+.env
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Build caches
+.arduino_build_cache/
+blockzie_debug.png
+error.txt
+
+# Playwright / browser
+/ms-playwright/
+.stemx_browser_data/
+
+# Whisper model cache
+.cache/
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
