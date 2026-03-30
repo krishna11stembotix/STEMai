@@ -2,3 +2,19 @@
 /STEMai-frontend/node_modules
 /STEMai-frontend/venv
 /STEMai-frontend/static/blockzie
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Env files
+.env
+
+# Databases
+*.db
+
+# Node (if frontend uses it later)
+node_modules/
+
+# OS
+.DS_Store
