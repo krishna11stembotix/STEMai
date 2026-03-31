@@ -1612,6 +1612,8 @@
     });
   </script>
 
+  <!-- NLP Intent Detection — must load BEFORE app.js -->
+  <script src="{{ url_for('static', filename='nlp_blockzie_intent.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
