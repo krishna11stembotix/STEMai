@@ -17,9 +17,21 @@ SESSIONS = {}
 # =============================================================
 # AI CALL
 # =============================================================
-async def call_ai(prompt):
+async def call_ai(prompt, code_only: bool = True):
+    """Call the AI and (when code_only=True) return ONLY the source code,
+    stripping any prose, markdown fences, or explanations the model adds."""
+    import re
+
     if not OPENROUTER_API_KEY:
         return f"# AI not configured\n# {prompt}"
+
+    # System instruction forces the model to return raw code with no prose
+    system_msg = (
+        "You are an expert coding assistant. "
+        "Return ONLY the raw source code — no explanations, no prose, "
+        "no markdown fences, no extra text. "
+        "If you must include a comment, use a code comment (#, //, /*, etc.)."
+    ) if code_only else "You are a helpful coding assistant."
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
@@ -28,16 +40,25 @@ async def call_ai(prompt):
                 headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
                 json={
                     "model": "openai/gpt-4o-mini",
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user",   "content": prompt}
+                    ],
                 }
             )
 
         text = r.json()["choices"][0]["message"]["content"]
 
-        # 🔥 REMOVE MARKDOWN CODE BLOCKS
-        if text.startswith("```"):
-            lines = text.split("\n")
-            text = "\n".join(lines[1:-1])
+        if code_only:
+            # Robustly extract the first fenced code block if present
+            # (handles ```python, ```py, ``` or any language tag)
+            code_block = re.search(
+                r"```[\w+\-]*\n?(.*?)```",
+                text,
+                re.DOTALL
+            )
+            if code_block:
+                text = code_block.group(1)
 
         return text.strip()
 
@@ -176,7 +197,14 @@ async def agentic(req: Request):
     prompt = data.get("prompt", "")
     lang = data.get("language", "python")
 
-    code = await call_ai(prompt)
+    # Build an explicit code-generation prompt so the model
+    # knows the target language and returns pure code.
+    code_prompt = (
+        f"Write a complete, runnable {lang} program that does the following:\n"
+        f"{prompt}\n\n"
+        f"Return ONLY the {lang} source code. No explanations."
+    )
+    code = await call_ai(code_prompt, code_only=True)
     output = await asyncio.to_thread(run_code, code, lang)
 
     return {
@@ -224,8 +252,13 @@ async def generate_stream(req: Request):
 async def fix(req: Request):
     data = await req.json()
     code = data.get("code", "")
+    lang = data.get("language", "python")
 
-    fixed = await call_ai(f"Fix this code:\n{code}")
+    fix_prompt = (
+        f"Fix any bugs or errors in the following {lang} code. "
+        f"Return ONLY the corrected source code, nothing else.\n\n{code}"
+    )
+    fixed = await call_ai(fix_prompt, code_only=True)
 
     return {
         "success": True,
